@@ -43,8 +43,8 @@
         </page>
 
         <!--支持指定网页地址(用PIO自带的浏览器打开)-->
-        <page html="https://www.baidu.com/">
-            <title>打开百度</title>
+        <page html="https://www.bing.com/">
+            <title>打开bing</title>
             <desc>使用内置浏览器
                 打开，网页将可以调用WebAPI执行脚本，请不要轻易打开不受信任的界面！</desc>
         </page>

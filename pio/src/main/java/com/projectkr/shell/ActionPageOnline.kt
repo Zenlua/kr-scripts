@@ -198,7 +198,10 @@ class ActionPageOnline : AppCompatActivity() {
                 progressBarDialog.showDialog(getString(R.string.please_wait))
                 progressBarDialog.setOnButtonClickListener {
                     progressBarDialog.hideDialog()
-                    finish()
+                    if (kr_online_webview.canGoBack()) {
+                        kr_online_webview.goBack()
+                    } else
+                        finish()
                 }
             }
 
