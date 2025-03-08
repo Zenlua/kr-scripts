@@ -52,7 +52,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         setTitle(R.string.app_name)
 
-        krScriptConfig = KrScriptConfig()
+        krScriptConfig = KrScriptConfig().init(this)
 
 
         main_tabhost.setup()
