@@ -197,6 +197,7 @@ class ActionPageOnline : AppCompatActivity() {
                 super.onPageStarted(view, url, favicon)
                 progressBarDialog.showDialog(getString(R.string.please_wait))
                 progressBarDialog.setOnButtonClickListener(View.OnClickListener {
+                    progressBarDialog.hideDialog()
                     finish()
                 })
             }
