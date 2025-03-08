@@ -284,6 +284,7 @@ class ActionPageOnline : AppCompatActivity() {
 
     override fun onDestroy() {
         stopWatchDownloadProgress()
+        kr_online_webview.destroy()
         super.onDestroy()
     }
 
