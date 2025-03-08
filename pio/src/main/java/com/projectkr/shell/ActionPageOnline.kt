@@ -196,10 +196,10 @@ class ActionPageOnline : AppCompatActivity() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
                 progressBarDialog.showDialog(getString(R.string.please_wait))
-                progressBarDialog.setOnButtonClickListener(View.OnClickListener {
+                progressBarDialog.setOnButtonClickListener {
                     progressBarDialog.hideDialog()
                     finish()
-                })
+                }
             }
 
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
