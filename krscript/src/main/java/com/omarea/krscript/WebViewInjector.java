@@ -210,7 +210,7 @@ public class WebViewInjector {
                             webView.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    webView.evaluateJavascript(callbackFunction + "(" + message.toString() + ")", new ValueCallback<String>() {
+                                    webView.evaluateJavascript(callbackFunction + "(" + message + ")", new ValueCallback<String>() {
                                         @Override
                                         public void onReceiveValue(String value) {
                                         }
@@ -272,7 +272,7 @@ public class WebViewInjector {
                                 webView.post(new Runnable() {
                                     @Override
                                     public void run() {
-                                        webView.evaluateJavascript(callbackFunction + "(" + message.toString() + ")", new ValueCallback<String>() {
+                                        webView.evaluateJavascript(callbackFunction + "(" + message + ")", new ValueCallback<String>() {
                                             @Override
                                             public void onReceiveValue(String value) {
 

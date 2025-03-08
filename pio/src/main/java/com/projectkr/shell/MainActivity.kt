@@ -101,7 +101,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (!(checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE) && checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 111);
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 111)
         }
     }
 
@@ -218,26 +218,26 @@ class MainActivity : AppCompatActivity() {
     private fun chooseFilePath(fileSelectedInterface: ParamsFileChooserRender.FileSelectedInterface): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, getString(R.string.kr_write_external_storage), Toast.LENGTH_LONG).show()
-            requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 2);
+            requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 2)
             return false
         } else {
             return try {
                 val suffix = fileSelectedInterface.suffix()
-                if (suffix != null && suffix.isNotEmpty()) {
+                if (!suffix.isNullOrEmpty()) {
                     chooseFilePath(suffix)
                 } else {
-                    val intent = Intent(Intent.ACTION_GET_CONTENT);
+                    val intent = Intent(Intent.ACTION_GET_CONTENT)
                     val mimeType = fileSelectedInterface.mimeType()
                     if (mimeType != null) {
                         intent.type = mimeType
                     } else {
                         intent.type = "*/*"
                     }
-                    intent.addCategory(Intent.CATEGORY_OPENABLE);
-                    startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE)
+                    startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER)
                 }
                 this.fileSelectedInterface = fileSelectedInterface
-                true;
+                true
             } catch (ex: java.lang.Exception) {
                 false
             }
@@ -295,7 +295,7 @@ class MainActivity : AppCompatActivity() {
             R.id.option_menu_info -> {
                 val layoutInflater = LayoutInflater.from(this)
                 val layout = layoutInflater.inflate(R.layout.dialog_about, null)
-                val transparentUi = layout.findViewById<CompoundButton>(R.id.transparent_ui);
+                val transparentUi = layout.findViewById<CompoundButton>(R.id.transparent_ui)
                 val themeConfig = ThemeConfig(this)
                 transparentUi.setOnClickListener {
                     val isChecked = (it as CompoundButton).isChecked

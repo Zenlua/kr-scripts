@@ -51,7 +51,7 @@ class PathAnalysis(private var context: Context, private var parentDir: String =
         }
 
         return (if (isAssets) ASSETS_FILE  else "" )+ ( when {
-            !(parentDir.isEmpty() || parentDir.endsWith("/")) -> parentDir + "/"
+            !(parentDir.isEmpty() || parentDir.endsWith("/")) -> "$parentDir/"
             else -> parentDir
         } + (if (target.startsWith("./")) target.substring(2) else target))
     }

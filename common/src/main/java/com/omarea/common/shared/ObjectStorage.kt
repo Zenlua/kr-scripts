@@ -22,12 +22,8 @@ open class ObjectStorage<T : Serializable>(private val context: Context) {
             } catch (ex: Exception) {
             } finally {
                 try {
-                    if (objectInputStream != null) {
-                        objectInputStream.close()
-                    }
-                    if (fileInputStream != null) {
-                        fileInputStream.close()
-                    }
+                    objectInputStream?.close()
+                    fileInputStream?.close()
                 } catch (ex: Exception) {
                 }
             }
@@ -54,12 +50,8 @@ open class ObjectStorage<T : Serializable>(private val context: Context) {
                 return false
             } finally {
                 try {
-                    if (objectOutputStream != null) {
-                        objectOutputStream.close()
-                    }
-                    if (fileOutputStream != null) {
-                        fileOutputStream.close()
-                    }
+                    objectOutputStream?.close()
+                    fileOutputStream?.close()
                 } catch (ex: Exception) {
                 }
             }

@@ -62,7 +62,7 @@ class ParamsColorPicker(private val actionParamInfo: ActionParamInfo, private va
     }
 
     private fun currentColor(colorStr: CharSequence?): Int {
-        if (colorStr != null && colorStr.isNotEmpty()) {
+        if (!colorStr.isNullOrEmpty()) {
             try {
                 return Color.parseColor(colorStr.toString())
             } catch (ex: Exception) {

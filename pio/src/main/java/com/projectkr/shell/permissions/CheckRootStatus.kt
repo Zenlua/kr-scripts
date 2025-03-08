@@ -1,7 +1,6 @@
 package com.projectkr.shell.permissions
 
 import android.Manifest
-import android.app.AlertDialog
 import android.content.Context
 import android.os.Build
 import android.os.Handler
@@ -12,7 +11,6 @@ import androidx.core.content.PermissionChecker
 import com.omarea.common.shell.KeepShellPublic
 import com.omarea.common.ui.DialogHelper
 import com.projectkr.shell.R
-import kotlin.concurrent.thread
 import kotlin.system.exitProcess
 
 /**
@@ -20,11 +18,11 @@ import kotlin.system.exitProcess
  * Created by helloklf on 2017/6/3.
  */
 
-public class CheckRootStatus(var context: Context, private var next: Runnable? = null) {
+class CheckRootStatus(var context: Context, private var next: Runnable? = null) {
     var myHandler: Handler = Handler(Looper.getMainLooper())
 
     var therad: Thread? = null
-    public fun forceGetRoot() {
+    fun forceGetRoot() {
         if (lastCheckResult) {
             if (next != null) {
                 myHandler.post(next)
@@ -50,14 +48,14 @@ public class CheckRootStatus(var context: Context, private var next: Runnable? =
                         val layout = layoutInflater.inflate(R.layout.alertdialog, null)
 
                         // first u need to get button from layout by its id
-                        (layout.findViewById(R.id.button_exit) as Button).setOnClickListener {
+                        (layout.findViewById<Button>(R.id.button_exit)!!).setOnClickListener {
                             exitProcess(0)
                         }
-                        (layout.findViewById(R.id.button_skip) as Button).setOnClickListener {
+                        (layout.findViewById<Button>(R.id.button_skip)!!).setOnClickListener {
                             if (next != null){
                                 myHandler.post(next)}
                         }
-                        (layout.findViewById(R.id.button_retry) as Button).setOnClickListener {
+                        (layout.findViewById<Button>(R.id.button_retry)!!).setOnClickListener {
                                KeepShellPublic.tryExit()
                             if (therad != null && therad!!.isAlive && !therad!!.isInterrupted){
                                 therad!!.interrupt()

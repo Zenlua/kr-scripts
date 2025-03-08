@@ -202,9 +202,9 @@ class ActionParamsLayoutRender(private var linearLayout: LinearLayout, activity:
                         try {
                             val value = text.toInt()
                             if (value < actionParamInfo.min) {
-                                throw Exception("${getFieldTips(actionParamInfo)} ${value} < ${actionParamInfo.min} !!!")
+                                throw Exception("${getFieldTips(actionParamInfo)} $value < ${actionParamInfo.min} !!!")
                             } else if (value > actionParamInfo.max) {
-                                throw Exception("${getFieldTips(actionParamInfo)} ${value} > ${actionParamInfo.max} !!!")
+                                throw Exception("${getFieldTips(actionParamInfo)} $value > ${actionParamInfo.max} !!!")
                             }
                         } catch (ex: java.lang.NumberFormatException) {
                         }
@@ -241,10 +241,10 @@ class ActionParamsLayoutRender(private var linearLayout: LinearLayout, activity:
                 if (actionParamInfo.required) {
                     throw Exception(getFieldTips(actionParamInfo) + context.getString(R.string.do_not_empty))
                 } else {
-                    params.set(actionParamInfo.name!!, "")
+                    params[actionParamInfo.name!!] = ""
                 }
             } else {
-                params.set(actionParamInfo.name!!, actionParamInfo.value!!)
+                params[actionParamInfo.name!!] = actionParamInfo.value!!
             }
         }
         return params

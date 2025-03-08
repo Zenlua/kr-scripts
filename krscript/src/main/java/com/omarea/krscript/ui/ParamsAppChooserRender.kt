@@ -96,7 +96,7 @@ class ParamsAppChooserRender(private var actionParamInfo: ActionParamInfo, priva
             val current = packages.find { it.packageName == currentValue }
             val currentIndex = if (current != null) packages.indexOf(current) else -1
             if (currentIndex > -1) {
-                packages.get(currentIndex).selected = true
+                packages[currentIndex].selected = true
             }
         }
     }
@@ -143,8 +143,8 @@ class ParamsAppChooserRender(private var actionParamInfo: ActionParamInfo, priva
 
     override fun onConfirm(apps: List<AdapterAppChooser.AppInfo>) {
         if (actionParamInfo.multiple) {
-            val values = apps.map { it.packageName }.joinToString(actionParamInfo.separator)
-            val labels = apps.map { it.appName }.joinToString("，")
+            val values = apps.joinToString(actionParamInfo.separator) { it.packageName }
+            val labels = apps.joinToString("，") { it.appName }
             valueView.text = values
             nameView.text = labels
         } else {

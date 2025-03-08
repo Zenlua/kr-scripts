@@ -25,7 +25,7 @@ class ListItemGroup(context: Context,
 
     fun triggerActionByKey(key: String): Boolean {
         for (child in this.children) {
-            if (child is ListItemClickable && child.key.equals(key)) {
+            if (child is ListItemClickable && child.key == key) {
                 child.triggerAction()
                 return true
             } else if (child is ListItemGroup && child.triggerActionByKey(key)) {
@@ -37,7 +37,7 @@ class ListItemGroup(context: Context,
 
     fun triggerActionByIndex(index: String): Boolean {
         for (child in this.children) {
-            if (child is ListItemClickable && child.index.equals(index)) {
+            if (child is ListItemClickable && child.index == index) {
                 child.triggerAction()
                 return true
             }
@@ -47,13 +47,13 @@ class ListItemGroup(context: Context,
 
     fun triggerUpdateByKey(keys: Array<String>) {
         for (key in keys) {
-            if (key.equals(this.key)) {
+            if (key == this.key) {
                 triggerUpdate()
             } else {
                 for (child in this.children) {
                     if (child is ListItemGroup) {
                         child.triggerUpdateByKey(keys)
-                    } else if (child.key.equals(key)) {
+                    } else if (child.key == key) {
                         child.updateViewByShell()
                     }
                 }

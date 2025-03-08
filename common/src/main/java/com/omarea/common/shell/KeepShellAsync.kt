@@ -3,7 +3,6 @@ package com.omarea.common.shell
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.widget.Toast
 import java.io.BufferedReader
 import java.io.BufferedWriter
@@ -20,9 +19,9 @@ public class KeepShellAsync(private var context: Context?, private var rootMode:
         fun getInstance(key: String): KeepShellAsync {
             synchronized(keepShells) {
                 if (!keepShells.containsKey(key)) {
-                    keepShells.put(key, KeepShellAsync(null))
+                    keepShells[key] = KeepShellAsync(null)
                 }
-                return keepShells.get(key)!!
+                return keepShells[key]!!
             }
         }
 
@@ -31,7 +30,7 @@ public class KeepShellAsync(private var context: Context?, private var rootMode:
                 if (!keepShells.containsKey(key)) {
                     return
                 } else {
-                    val keepShell = keepShells.get(key)!!
+                    val keepShell = keepShells[key]!!
                     keepShells.remove(key)
                     keepShell.tryExit()
                 }
@@ -42,7 +41,7 @@ public class KeepShellAsync(private var context: Context?, private var rootMode:
             synchronized(keepShells) {
                 while (keepShells.isNotEmpty()) {
                     val key = keepShells.keys.first()
-                    val keepShell = keepShells.get(key)!!
+                    val keepShell = keepShells[key]!!
                     keepShells.remove(key)
                     keepShell.tryExit()
                 }
@@ -181,7 +180,7 @@ public class KeepShellAsync(private var context: Context?, private var rootMode:
     }
 
     //执行脚本
-    public fun doCmd(cmd: String, isRedo: Boolean = false) {
+    fun doCmd(cmd: String, isRedo: Boolean = false) {
         try {
             //tryExit()
             if (p == null || isRedo || out == null) {

@@ -160,18 +160,18 @@ class FragmentHome : androidx.fragment.app.Fragment() {
             val core = CpuCoreInfo()
 
             core.currentFreq = CpuFrequencyUtils.getCurrentFrequency("cpu$coreIndex")
-            if (!maxFreqs.containsKey(coreIndex) || (core.currentFreq != "" && maxFreqs.get(coreIndex).isNullOrEmpty())) {
-                maxFreqs.put(coreIndex, CpuFrequencyUtils.getCurrentMaxFrequency("cpu" + coreIndex))
+            if (!maxFreqs.containsKey(coreIndex) || (core.currentFreq != "" && maxFreqs[coreIndex].isNullOrEmpty())) {
+                maxFreqs[coreIndex] = CpuFrequencyUtils.getCurrentMaxFrequency("cpu$coreIndex")
             }
-            core.maxFreq = maxFreqs.get(coreIndex)
+            core.maxFreq = maxFreqs[coreIndex]
 
-            if (!minFreqs.containsKey(coreIndex) || (core.currentFreq != "" && minFreqs.get(coreIndex).isNullOrEmpty())) {
-                minFreqs.put(coreIndex, CpuFrequencyUtils.getCurrentMinFrequency("cpu" + coreIndex))
+            if (!minFreqs.containsKey(coreIndex) || (core.currentFreq != "" && minFreqs[coreIndex].isNullOrEmpty())) {
+                minFreqs[coreIndex] = CpuFrequencyUtils.getCurrentMinFrequency("cpu$coreIndex")
             }
-            core.minFreq = minFreqs.get(coreIndex)
+            core.minFreq = minFreqs[coreIndex]
 
             if (loads.containsKey(coreIndex)) {
-                core.loadRatio = loads.get(coreIndex)!!
+                core.loadRatio = loads[coreIndex]!!
             }
             cores.add(core)
         }
@@ -187,8 +187,8 @@ class FragmentHome : androidx.fragment.app.Fragment() {
                     home_gpu_chat.setData(100.toFloat(), (100 - gpuLoad).toFloat())
                 }
                 if (loads.containsKey(-1)) {
-                    cpu_core_total_load.text = String.format(getString(R.string.monitor_laod), loads.get(-1)!!.toInt())
-                    home_cpu_chat.setData(100.toFloat(), (100 - loads.get(-1)!!.toInt()).toFloat())
+                    cpu_core_total_load.text = String.format(getString(R.string.monitor_laod), loads[-1]!!.toInt())
+                    home_cpu_chat.setData(100.toFloat(), (100 - loads[-1]!!.toInt()).toFloat())
                 }
                 if (cpu_core_list.adapter == null) {
                     if (cores.size < 6) {

@@ -46,7 +46,7 @@ class ActionShortcutManager(private var context: Context) {
             shortcut.putExtra(Intent.EXTRA_SHORTCUT_ICON, (drawable as BitmapDrawable).bitmap)
 
             val shortcutIntent = Intent(Intent.ACTION_MAIN)
-            shortcutIntent.setClassName(context.getApplicationContext(), intent.component!!.className)
+            shortcutIntent.setClassName(context.applicationContext, intent.component!!.className)
             shortcutIntent.putExtras(intent)
 
             shortcut.putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent)
@@ -69,7 +69,7 @@ class ActionShortcutManager(private var context: Context) {
     }
 
     // 读取快捷方式的页面信息对象
-    public fun getShortcutTarget(shortcutId: String): PageNode? {
+    fun getShortcutTarget(shortcutId: String): PageNode? {
         return ObjectStorage<PageNode>(context).load(shortcutId)
     }
 

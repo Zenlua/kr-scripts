@@ -73,13 +73,13 @@ public class ShellExecutor {
                         try {
                             process.destroyForcibly();
                         } catch (Exception ex) {
-                            Log.e("KrScriptError", "" + ex.getMessage());
+                            Log.e("KrScriptError", ex.getMessage());
                         }
                     } else {
                         try {
                             process.destroy();
                         } catch (Exception ex) {
-                            Log.e("KrScriptError", "" + ex.getMessage());
+                            Log.e("KrScriptError", ex.getMessage());
                         }
                     }
                 }

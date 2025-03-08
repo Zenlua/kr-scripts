@@ -266,7 +266,7 @@ class ActionListFragment : androidx.fragment.app.Fragment(), PageLayoutRender.On
                             if (item.multiple) {
                                 pickerExecute(item, (selected.map { "" + it.value }).joinToString(item.separator), onCompleted)
                             } else {
-                                if (selected.size > 0) {
+                                if (selected.isNotEmpty()) {
                                     pickerExecute(item, "" + (
                                             if (selected.size > 0) {
                                                 "" + selected[0].value
@@ -441,7 +441,7 @@ class ActionListFragment : androidx.fragment.app.Fragment(), PageLayoutRender.On
     private fun getParamOptions(actionParamInfo: ActionParamInfo, nodeInfoBase: NodeInfoBase): ArrayList<SelectItem>? {
         val options = ArrayList<SelectItem>()
         var shellResult = ""
-        if (!actionParamInfo.optionsSh.isEmpty()) {
+        if (actionParamInfo.optionsSh.isNotEmpty()) {
             shellResult = executeScriptGetResult(actionParamInfo.optionsSh, nodeInfoBase)
         }
 

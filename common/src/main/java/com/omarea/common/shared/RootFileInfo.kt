@@ -27,7 +27,7 @@ class RootFileInfo {
         }
 
     val absolutePath: String
-        get() = parentDir + "/" + fileName
+        get() = "$parentDir/$fileName"
 
 
     public fun exists(): Boolean {

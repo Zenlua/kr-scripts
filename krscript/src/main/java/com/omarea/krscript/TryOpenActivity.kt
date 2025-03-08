@@ -32,9 +32,9 @@ class TryOpenActivity(private val context:  Context, private val activity:String
                 return true
             } catch (ex: SecurityException) {
                 val success = if (activity.contains("/")) {
-                    KeepShellPublic.doCmdSync("am start-activity -W -n " + activity).contains("ok")
+                    KeepShellPublic.doCmdSync("am start-activity -W -n $activity").contains("ok")
                 } else {
-                    KeepShellPublic.doCmdSync("am start-activity -W -a " + activity).contains("ok")
+                    KeepShellPublic.doCmdSync("am start-activity -W -a $activity").contains("ok")
                 }
                 if (success) {
                     return true

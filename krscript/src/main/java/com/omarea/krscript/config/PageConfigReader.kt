@@ -54,7 +54,7 @@ class PageConfigReader {
                 Handler(Looper.getMainLooper()).post {
                     Toast.makeText(context, "解析配置文件失败\n" + ex.message, Toast.LENGTH_LONG).show()
                 }
-                Log.e("KrConfig Fail！", "" + ex.message)
+                Log.e("KrConfig Fail！", ex.message.toString())
             }
 
         }

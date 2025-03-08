@@ -9,9 +9,9 @@ object KeepShellPublic {
     fun getInstance(key: String, rootMode: Boolean): KeepShell {
         synchronized(keepShells) {
             if (!keepShells.containsKey(key)) {
-                keepShells.put(key, KeepShell(rootMode))
+                keepShells[key] = KeepShell(rootMode)
             }
-            return keepShells.get(key)!!
+            return keepShells[key]!!
         }
     }
 
@@ -20,7 +20,7 @@ object KeepShellPublic {
             if (!keepShells.containsKey(key)) {
                 return
             } else {
-                val keepShell = keepShells.get(key)!!
+                val keepShell = keepShells[key]!!
                 keepShells.remove(key)
                 keepShell.tryExit()
             }
@@ -31,15 +31,15 @@ object KeepShellPublic {
         synchronized(keepShells) {
             while (keepShells.isNotEmpty()) {
                 val key = keepShells.keys.first()
-                val keepShell = keepShells.get(key)!!
+                val keepShell = keepShells[key]!!
                 keepShells.remove(key)
                 keepShell.tryExit()
             }
         }
     }
 
-    public val defaultKeepShell = KeepShell()
-    public val secondaryKeepShell = KeepShell()
+    val defaultKeepShell = KeepShell()
+    val secondaryKeepShell = KeepShell()
 
     fun getDefaultInstance(): KeepShell {
         return if (defaultKeepShell.isIdle || !secondaryKeepShell.isIdle) {

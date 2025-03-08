@@ -12,7 +12,7 @@ import java.util.HashMap;
 
 public class ExtractAssets {
     // 用于记录已经提取过的资源，避免重复提取浪费性能
-    private static HashMap<String, String> extractHisotry = new HashMap<String, String>();
+    private static HashMap<String, String> extractHisotry = new HashMap<>();
 
     private Context context;
 

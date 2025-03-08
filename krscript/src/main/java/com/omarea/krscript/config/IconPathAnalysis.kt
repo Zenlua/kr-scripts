@@ -17,13 +17,13 @@ class IconPathAnalysis {
 
     // 获取快捷方式的图标
     fun loadLogo(context: Context, clickableNode: ClickableNode, useDefault: Boolean): Drawable? {
-        if (!clickableNode.logoPath.isEmpty()) {
+        if (clickableNode.logoPath.isNotEmpty()) {
             val inputStream = PathAnalysis(context, clickableNode.pageConfigDir).parsePath(clickableNode.logoPath)
             inputStream?.run {
                 return bitmap2Drawable(BitmapFactory.decodeStream(this)) // BitmapDrawable.createFromStream(inputStream, "")
             }
         }
-        if (!clickableNode.iconPath.isEmpty()) {
+        if (clickableNode.iconPath.isNotEmpty()) {
             val inputStream = PathAnalysis(context, clickableNode.pageConfigDir).parsePath(clickableNode.iconPath)
             inputStream?.run {
                 return bitmap2Drawable(BitmapFactory.decodeStream(this)) // BitmapDrawable.createFromStream(inputStream, "")
@@ -33,7 +33,7 @@ class IconPathAnalysis {
     }
 
     fun loadIcon(context: Context, clickableNode: ClickableNode): Drawable? {
-        if (!clickableNode.iconPath.isEmpty()) {
+        if (clickableNode.iconPath.isNotEmpty()) {
             val inputStream = PathAnalysis(context, clickableNode.pageConfigDir).parsePath(clickableNode.iconPath)
             inputStream?.run {
                 return bitmap2Drawable(BitmapFactory.decodeStream(this)) // BitmapDrawable.createFromStream(inputStream, "")

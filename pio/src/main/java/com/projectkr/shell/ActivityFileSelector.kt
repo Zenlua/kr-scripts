@@ -52,7 +52,7 @@ class ActivityFileSelector : AppCompatActivity() {
                     extension = ".$extension"
                 }
                 if (extension.isNotEmpty()) {
-                    title = title.toString() + "($extension)"
+                    title = "$title($extension)"
                 }
             }
             if (containsKey("mode")) {
@@ -79,7 +79,7 @@ class ActivityFileSelector : AppCompatActivity() {
         var grant = true
         for (result in grantResults) {
             if (result == PackageManager.PERMISSION_DENIED) {
-                grant = false;
+                grant = false
             }
         }
 
@@ -94,7 +94,7 @@ class ActivityFileSelector : AppCompatActivity() {
 
     private fun checkPermission(permission: String): Boolean = PermissionChecker.checkSelfPermission(this, permission) == PermissionChecker.PERMISSION_GRANTED
     private fun requestPermissions() {
-        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 111);
+        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 111)
     }
 
     override fun onResume() {

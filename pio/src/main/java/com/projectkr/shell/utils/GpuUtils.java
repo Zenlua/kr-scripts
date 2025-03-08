@@ -47,7 +47,7 @@ public class GpuUtils {
             }
         }
 
-        if (GPU_LOAD_PATH.equals("")) {
+        if (GPU_LOAD_PATH.isEmpty()) {
             return -1;
         } else {
             String load = KernelProrp.INSTANCE.getProp(GPU_LOAD_PATH);

@@ -64,7 +64,7 @@ class PageLayoutRender(private val mContext: Context,
             try {
                 val item = findItemByDynamicIndex(key, itemConfigList)
                 if (item == null) {
-                    Log.e("onItemClick", "找不到指定ID的项 index: " + key)
+                    Log.e("onItemClick", "找不到指定ID的项 index: $key")
                     return
                 } else {
                     onItemClick(item, listItemView)
