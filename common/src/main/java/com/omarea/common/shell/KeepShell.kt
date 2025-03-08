@@ -32,10 +32,12 @@ public class KeepShell(private var rootMode: Boolean = true) {
             if (reader != null)
                 reader!!.close()
         } catch (ex: Exception) {
+            Log.w("w", ex.message.toString())
         }
         try {
             p!!.destroy()
         } catch (ex: Exception) {
+            Log.w("w", ex.message.toString())
         }
         enterLockTime = 0L
         out = null
@@ -69,7 +71,7 @@ public class KeepShell(private var rootMode: Boolean = true) {
 
     fun checkRoot(): Boolean {
         val r = doCmdSync(checkRootState).toLowerCase(Locale.getDefault())
-        return if (r == "error" || r.contains("permission denied") || r.contains("not allowed") || r.equals("not found")) {
+        return if (r == "error" || r.contains("permission denied") || r.contains("not allowed") || r == "not found") {
             if (rootMode) {
                 tryExit()
             }
@@ -91,6 +93,9 @@ public class KeepShell(private var rootMode: Boolean = true) {
                 mLock.lockInterruptibly()
                 enterLockTime = System.currentTimeMillis()
                 p = if (rootMode) ShellExecutor.getSuperUserRuntime() else ShellExecutor.getRuntime()
+                if (p != null ){
+                    return@Runnable
+                }
                 out = p!!.outputStream
                 reader = p!!.inputStream.bufferedReader()
                 if (rootMode) {
@@ -101,17 +106,11 @@ public class KeepShell(private var rootMode: Boolean = true) {
                 }
                 Thread(Runnable {
                     try {
-                        val errorReader =
-                                p!!.errorStream.bufferedReader()
-                        while (true) {
-                            Log.e("KeepShellPublic", errorReader.readLine())
-                        }
-                    } catch (ex: Exception) {
-                        Log.e("c", "" + ex.message)
-                    }
-                }).start()
+                        val errorReader = p!!.errorStream.bufferedReader()
+                        while (true) { Log.e("KeepShellPublic", errorReader.readLine())}
+                    } catch (ex: Exception) { Log.e("c", ex.message.toString()) }}).start()
             } catch (ex: Exception) {
-                Log.e("getRuntime", "" + ex.message)
+                Log.e("getRuntime", ex.message.toString())
             } finally {
                 enterLockTime = 0L
                 mLock.unlock()
@@ -156,7 +155,7 @@ public class KeepShell(private var rootMode: Boolean = true) {
             }
 
             var unstart = true
-            while (true && reader != null) {
+            while (reader != null) {
                 val line = reader!!.readLine()
                 if (line == null) {
                     break
