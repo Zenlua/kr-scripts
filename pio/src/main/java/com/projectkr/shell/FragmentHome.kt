@@ -6,22 +6,33 @@ import android.content.Context.ACTIVITY_SERVICE
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Handler
-import com.google.android.material.snackbar.Snackbar
-import androidx.fragment.app.Fragment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import com.google.android.material.snackbar.Snackbar
 import com.omarea.common.shell.KeepShellPublic
 import com.projectkr.shell.ui.AdapterCpuCores
 import com.projectkr.shell.utils.CpuFrequencyUtils
 import com.projectkr.shell.utils.GpuUtils
-import kotlinx.android.synthetic.main.fragment_home.*
+import kotlinx.android.synthetic.main.fragment_home.cpu_core_count
+import kotlinx.android.synthetic.main.fragment_home.cpu_core_list
+import kotlinx.android.synthetic.main.fragment_home.cpu_core_total_load
+import kotlinx.android.synthetic.main.fragment_home.home_clear_ram
+import kotlinx.android.synthetic.main.fragment_home.home_clear_swap
+import kotlinx.android.synthetic.main.fragment_home.home_cpu_chat
+import kotlinx.android.synthetic.main.fragment_home.home_gpu_chat
+import kotlinx.android.synthetic.main.fragment_home.home_gpu_freq
+import kotlinx.android.synthetic.main.fragment_home.home_gpu_load
+import kotlinx.android.synthetic.main.fragment_home.home_raminfo
+import kotlinx.android.synthetic.main.fragment_home.home_raminfo_text
+import kotlinx.android.synthetic.main.fragment_home.home_swapstate_chat
+import kotlinx.android.synthetic.main.fragment_home.home_zramsize_text
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.util.*
-import kotlin.collections.HashMap
+import java.util.Timer
+import java.util.TimerTask
 
 
 class FragmentHome : androidx.fragment.app.Fragment() {

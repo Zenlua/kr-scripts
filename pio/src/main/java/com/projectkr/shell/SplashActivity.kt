@@ -42,21 +42,21 @@ class SplashActivity : Activity() {
      * 界面主题样式调整
      */
     private fun updateThemeStyle() {
-        getWindow().setNavigationBarColor(getColorAccent())
+        window.navigationBarColor = getColorAccent()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            window.setNavigationBarColor(getColor(R.color.splash_bg_color))
+            window.navigationBarColor = getColor(R.color.splash_bg_color)
         } else {
-            window.setNavigationBarColor(resources.getColor(R.color.splash_bg_color))
+            window.navigationBarColor = resources.getColor(R.color.splash_bg_color)
         }
 
         //  得到当前界面的装饰视图
         if (Build.VERSION.SDK_INT >= 21) {
-            val decorView = getWindow().getDecorView();
+            val decorView = window.decorView;
             //让应用主题内容占用系统状态栏的空间,注意:下面两个参数必须一起使用 stable 牢固的
             val option = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            decorView.setSystemUiVisibility(option);
+            decorView.systemUiVisibility = option;
             //设置状态栏颜色为透明
-            getWindow().setStatusBarColor(Color.TRANSPARENT)
+            window.statusBarColor = Color.TRANSPARENT
         }
     }
 
@@ -172,7 +172,8 @@ class SplashActivity : Activity() {
                         someIgnored = true
                     }
                     notificationMessageRows.add(log)
-                    logView.setText(notificationMessageRows.joinToString("\n", if (someIgnored) "……\n" else "").trim())
+                    logView.text =
+                        notificationMessageRows.joinToString("\n", if (someIgnored) "……\n" else "").trim()
                 }
             }
         }
@@ -183,7 +184,7 @@ class SplashActivity : Activity() {
     }
 
     private class BeforeStartThread(private var context: Context, private val config: KrScriptConfig, private var updateLogViewHandler: UpdateLogViewHandler) : Thread() {
-        val params = config.getVariables();
+        val params: HashMap<String, String> = config.variables;
 
         override fun run() {
             try {

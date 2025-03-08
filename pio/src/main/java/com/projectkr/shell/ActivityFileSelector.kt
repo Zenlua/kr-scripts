@@ -2,12 +2,10 @@ package com.projectkr.shell
 
 import android.Manifest
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Environment
-import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
@@ -17,7 +15,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.PermissionChecker
 import com.omarea.common.ui.ProgressBarDialog
 import com.projectkr.shell.ui.AdapterFileSelector
-import kotlinx.android.synthetic.main.activity_file_selector.*
+import kotlinx.android.synthetic.main.activity_file_selector.file_selector_list
 import java.io.File
 
 class ActivityFileSelector : AppCompatActivity() {
@@ -48,7 +46,7 @@ class ActivityFileSelector : AppCompatActivity() {
         }
 
         intent.extras?.run {
-            if (containsKey("extension") == true) {
+            if (containsKey("extension")) {
                 extension = "" + intent.extras.getString("extension")
                 if (!extension.startsWith(".")) {
                     extension = ".$extension"
@@ -57,7 +55,7 @@ class ActivityFileSelector : AppCompatActivity() {
                     title = title.toString() + "($extension)"
                 }
             }
-            if (containsKey("mode") == true) {
+            if (containsKey("mode")) {
                 mode = getInt("mode")
                 if (mode == MODE_FOLDER) {
                     title = getString(R.string.title_activity_folder_selector)
@@ -86,7 +84,7 @@ class ActivityFileSelector : AppCompatActivity() {
         }
 
         if (requestCode == 111) {
-            if (grant == false) {
+            if (!grant) {
                 Toast.makeText(applicationContext, "没有读取文件的权限！", Toast.LENGTH_LONG).show()
             } else {
                 loadData()

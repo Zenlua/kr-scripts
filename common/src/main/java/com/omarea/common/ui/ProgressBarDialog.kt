@@ -6,11 +6,13 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.view.LayoutInflater
+import android.view.View
+import android.view.View.OnClickListener
+import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import com.omarea.common.R
 import com.omarea.common.shell.AsynSuShellUnit
-import java.util.LinkedHashSet
 
 open class ProgressBarDialog(private var context: Activity, private var uniqueId: String? = null) {
     private var alert: DialogHelper.DialogWrap? = null
@@ -118,5 +120,11 @@ open class ProgressBarDialog(private var context: Activity, private var uniqueId
         }
 
         return this
+    }
+
+    public fun setOnButtonClickListener(listener: OnClickListener) {
+        val btn = alert!!.dialog.findViewById(R.id.dialog_button) as Button
+        btn.setOnClickListener(listener)
+        btn.visibility = View.VISIBLE
     }
 }
