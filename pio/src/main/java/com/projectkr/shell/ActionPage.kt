@@ -25,13 +25,19 @@ import com.omarea.krscript.config.IconPathAnalysis
 import com.omarea.krscript.config.PageConfigReader
 import com.omarea.krscript.config.PageConfigSh
 import com.omarea.krscript.executor.ScriptEnvironmen
-import com.omarea.krscript.model.*
+import com.omarea.krscript.model.AutoRunTask
+import com.omarea.krscript.model.ClickableNode
+import com.omarea.krscript.model.KrScriptActionHandler
+import com.omarea.krscript.model.NodeInfoBase
+import com.omarea.krscript.model.PageMenuOption
+import com.omarea.krscript.model.PageNode
+import com.omarea.krscript.model.RunnableNode
 import com.omarea.krscript.shortcut.ActionShortcutManager
 import com.omarea.krscript.ui.ActionListFragment
 import com.omarea.krscript.ui.DialogLogFragment
-import com.omarea.krscript.ui.ParamsFileChooserRender
 import com.omarea.krscript.ui.PageMenuLoader
-import kotlinx.android.synthetic.main.activity_action_page.*
+import com.omarea.krscript.ui.ParamsFileChooserRender
+import kotlinx.android.synthetic.main.activity_action_page.action_page_fab
 
 
 class ActionPage : AppCompatActivity() {
@@ -250,6 +256,10 @@ class ActionPage : AppCompatActivity() {
             }
             "file" -> {
                 menuItemChooseFile(menuOption)
+            }
+            "page" -> {
+                currentPageConfig.pageConfigPath = menuOption.page
+                loadPageConfig()
             }
             else -> {
                 menuItemExecute(menuOption, HashMap<String, String>().apply{

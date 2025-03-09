@@ -15,13 +15,13 @@ public class PageNode(currentConfigXml: String) : ClickableNode(currentConfigXml
     public var afterRead = ""
 
     // 菜单选项设置
-    public var pageMenuOptions: ArrayList<PageMenuOption>? = null
-    public var pageMenuOptionsSh: String = ""
+    var pageMenuOptions: ArrayList<PageMenuOption>? = null
+    var pageMenuOptionsSh: String = ""
     // 处理菜单和悬浮按钮点击事件的脚本
     public var pageHandlerSh:  String = ""
 
     // 页面加载失败
-    public var loadSuccess = ""
+    var loadSuccess = ""
     // 页面加载成功
-    public var loadFail = ""
+    var loadFail = ""
 }

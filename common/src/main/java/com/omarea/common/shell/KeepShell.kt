@@ -149,7 +149,12 @@ public class KeepShell(private var rootMode: Boolean = true) {
                     write(startTagBytes)
                     write(cmd.toByteArray(Charset.defaultCharset()))
                     write(endTagBytes)
+                    try{
                     flush()
+                    }
+                    catch (ex: Exception){
+                        Log.e("w", ex.message.toString())
+                    }
                 }
             }
 

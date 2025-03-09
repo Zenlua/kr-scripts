@@ -58,6 +58,7 @@
             <option type="refresh">刷新界面</option>
             <option type="finish">关闭页面</option>
             <option type="file">选择文件</option>
+            <option type="page" page='empty.xml'>打开页面</option>
             <handler>
                 echo '此脚本的作用是处理菜单点击事件'
                 echo '执行时PIO会告诉你哪个菜单项被点击，就像Picker的 set 一样'

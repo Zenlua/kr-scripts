@@ -351,6 +351,9 @@ class PageConfigReader {
                             "mime" -> {
                                 option.mime = parser.getAttributeValue(i).toLowerCase()
                             }
+                            "page" -> {
+                                option.page = parser.getAttributeValue(i)
+                            }
                         }
                     }
                     option.title = parser.nextText()
