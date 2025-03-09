@@ -50,7 +50,6 @@ public abstract class ShellHandlerBase extends Handler {
     /**
      * 输出格式化内容
      *
-     * @param msg
      */
     protected abstract void updateLog(final SpannableString msg);
 
@@ -81,7 +80,7 @@ public abstract class ShellHandlerBase extends Handler {
     protected void onReaderMsg(Object msg) {
         if (msg != null) {
             String log = msg.toString().trim();
-            if (Pattern.matches("^progress:\\[[\\-0-9\\\\]{1,}/[0-9\\\\]{1,}]$", log)) {
+            if (Pattern.matches("^progress:\\[[\\-0-9\\\\]+/[0-9\\\\]+]$", log)) {
                 String[] values = log.substring("progress:[".length(), log.indexOf("]")).split("/");
                 int start = Integer.parseInt(values[0]);
                 int total = Integer.parseInt(values[1]);
@@ -107,8 +106,6 @@ public abstract class ShellHandlerBase extends Handler {
     /**
      * 输出指定颜色的内容
      *
-     * @param msg
-     * @param color
      */
     protected void updateLog(final Object msg, final String color) {
         if (msg != null) {
