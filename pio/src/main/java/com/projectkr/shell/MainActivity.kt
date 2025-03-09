@@ -169,12 +169,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun addToFavorites(clickableNode: ClickableNode, addToFavoritesHandler: KrScriptActionHandler.AddToFavoritesHandler) {
-                val page = if (clickableNode is PageNode) {
-                    clickableNode
-                } else if (clickableNode is RunnableNode) {
-                    pageNode
-                } else {
-                    return
+                val page = when (clickableNode) {
+                    is PageNode -> { clickableNode }
+                    is RunnableNode -> { pageNode }
+                    else -> { return }
                 }
 
                 val intent = Intent()
