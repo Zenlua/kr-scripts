@@ -53,7 +53,6 @@ public class KeepShell(private var rootMode: Boolean = true) {
     private var enterLockTime = 0L
 
     private var checkRootState =
-            // "if [[ \$(id -u 2>&1) == '0' ]] || [[ \$(\$UID) == '0' ]] || [[ \$(whoami 2>&1) == 'root' ]] || [[ \$(\$USER_ID) == '0' ]]; then\n" +
             "if [[ \$(id -u 2>&1) == '0' ]] || [[ \$(\$UID) == '0' ]] || [[ \$(whoami 2>&1) == 'root' ]] || [[ \$(set | grep 'USER_ID=0') == 'USER_ID=0' ]]; then\n" +
                     "  echo 'success'\n" +
                     "else\n" +
@@ -71,7 +70,7 @@ public class KeepShell(private var rootMode: Boolean = true) {
 
     fun checkRoot(): Boolean {
         val r = doCmdSync(checkRootState).toLowerCase(Locale.getDefault())
-        return if (r == "error" || r.contains("permission denied") || r.contains("not allowed") || r == "not found") {
+        return if (r == "error" || r.contains("permission denied") || r.contains("not allowed") || r.contains("not found")) {
             if (rootMode) {
                 tryExit()
             }
@@ -93,7 +92,7 @@ public class KeepShell(private var rootMode: Boolean = true) {
                 mLock.lockInterruptibly()
                 enterLockTime = System.currentTimeMillis()
                 p = if (rootMode) ShellExecutor.getSuperUserRuntime() else ShellExecutor.getRuntime()
-                if (p != null ){
+                if (p == null ){
                     return@Runnable
                 }
                 out = p!!.outputStream
