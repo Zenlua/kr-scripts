@@ -93,6 +93,7 @@ class ParamsColorPicker(private val actionParamInfo: ActionParamInfo, private va
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                 val color = Color.argb(alphaBar.progress, redBar.progress, greenBar.progress, blueBar.progress)
                 colorPreview.setBackgroundColor(color)
+                colorPreviewText.text = parseHexStr(alphaBar.progress, redBar.progress, greenBar.progress, blueBar.progress)
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar) {}
