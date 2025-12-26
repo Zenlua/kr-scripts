@@ -14,7 +14,7 @@ open class ListItemView(private val context: Context,
     protected var layout = LayoutInflater.from(context).inflate(layoutId, null)
 
     protected var descView = layout.findViewById<TextView?>(R.id.kr_desc)
-    protected var summaryView = layout.findViewById<TextView?>(R.id.kr_summary)
+    protected var summaryView: TextView? = layout.findViewById(R.id.kr_summary)
     protected var titleView = layout.findViewById<TextView?>(R.id.kr_title)
 
 

@@ -1,10 +1,12 @@
 package com.omarea.krscript.ui
 
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.FragmentActivity
 import com.omarea.common.model.SelectItem
 import com.omarea.common.ui.DialogItemChooser
@@ -17,6 +19,7 @@ class ParamsSingleSelect(
 ) {
 
     private val systemUiVisibility = context.window?.decorView?.systemUiVisibility
+    @RequiresApi(Build.VERSION_CODES.M)
     private var darkMode = systemUiVisibility != null && (systemUiVisibility and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR) == 0
 
     val options = actionParamInfo.optionsFromShell!!
