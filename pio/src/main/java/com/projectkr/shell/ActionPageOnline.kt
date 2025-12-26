@@ -29,19 +29,20 @@ import com.omarea.common.ui.ThemeMode
 import com.omarea.krscript.WebViewInjector
 import com.omarea.krscript.downloader.Downloader
 import com.omarea.krscript.ui.ParamsFileChooserRender
-import kotlinx.android.synthetic.main.activity_action_page_online.*
+import com.projectkr.shell.databinding.ActivityActionPageOnlineBinding
 import java.util.*
 
 class ActionPageOnline : AppCompatActivity() {
     private val progressBarDialog = ProgressBarDialog(this)
 
     private lateinit var themeMode: ThemeMode
+    private lateinit var binding : ActivityActionPageOnlineBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         themeMode = ThemeModeState.switchTheme(this)
-
-        setContentView(R.layout.activity_action_page_online)
+        binding = ActivityActionPageOnlineBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
         setTitle(R.string.app_name)
@@ -88,8 +89,7 @@ class ActionPageOnline : AppCompatActivity() {
             }
         }
         getWindow().decorView.systemUiVisibility = flags
-
-        kr_online_root.fitsSystemWindows = true
+        binding.krOnlineRoot.fitsSystemWindows = true
     }
 
     private fun loadIntentData() {
@@ -134,11 +134,11 @@ class ActionPageOnline : AppCompatActivity() {
                         downloader.saveTaskStatus(taskAliasId, 0)
 
                         requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 2);
-                        DialogHelper.helpInfo(this, "", getString(R.string.kr_write_external_storage))
+                        DialogHelper.helpInfo(this, "", getString(com.omarea.krscript.R.string.kr_write_external_storage))
                     } else {
                         val downloadId = downloader.downloadBySystem(url, null, null, taskAliasId)
                         if (downloadId != null) {
-                            kr_download_url.text = url
+                            binding.krDownloadUrl.text = url
                             val autoClose = extras.containsKey("autoClose") && extras.getBoolean("autoClose")
 
                             downloader.saveTaskStatus(taskAliasId, 0)
@@ -153,13 +153,13 @@ class ActionPageOnline : AppCompatActivity() {
     }
 
     private fun initWebview(url: String?) {
-        kr_online_webview.visibility = View.VISIBLE
-        kr_online_webview.webChromeClient = object : WebChromeClient() {
+        binding.krOnlineWebview.visibility = View.VISIBLE
+        binding.krOnlineWebview.webChromeClient = object : WebChromeClient() {
             override fun onJsAlert(view: WebView?, url: String?, message: String?, result: JsResult?): Boolean {
                 DialogHelper.animDialog(
                         AlertDialog.Builder(this@ActionPageOnline)
                                 .setMessage(message)
-                                .setPositiveButton(R.string.btn_confirm, { _, _ -> })
+                                .setPositiveButton(com.omarea.krscript.R.string.btn_confirm, { _, _ -> })
                                 .setOnDismissListener {
                                     result?.confirm()
                                 }
@@ -172,10 +172,10 @@ class ActionPageOnline : AppCompatActivity() {
                 DialogHelper.animDialog(
                         AlertDialog.Builder(this@ActionPageOnline)
                                 .setMessage(message)
-                                .setPositiveButton(R.string.btn_confirm) { _, _ ->
+                                .setPositiveButton(com.omarea.krscript.R.string.btn_confirm) { _, _ ->
                                     result?.confirm()
                                 }
-                                .setNeutralButton(R.string.btn_cancel) { _, _ ->
+                                .setNeutralButton(com.omarea.krscript.R.string.btn_cancel) { _, _ ->
                                     result?.cancel()
                                 }
                                 .create()
@@ -184,7 +184,7 @@ class ActionPageOnline : AppCompatActivity() {
             }
         }
 
-        kr_online_webview.webViewClient = object : WebViewClient() {
+        binding.krOnlineWebview.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 progressBarDialog.hideDialog()
@@ -214,9 +214,9 @@ class ActionPageOnline : AppCompatActivity() {
             }
         }
 
-        kr_online_webview.loadUrl(url)
+        binding.krOnlineWebview.loadUrl(url)
 
-        WebViewInjector(kr_online_webview,
+        WebViewInjector(binding.krOnlineWebview,
                 object : ParamsFileChooserRender.FileChooserInterface {
                     override fun openFileChooser(fileSelectedInterface: ParamsFileChooserRender.FileSelectedInterface): Boolean {
                         return chooseFilePath(fileSelectedInterface)
@@ -229,7 +229,7 @@ class ActionPageOnline : AppCompatActivity() {
     private fun chooseFilePath(fileSelectedInterface: ParamsFileChooserRender.FileSelectedInterface): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 2);
-            Toast.makeText(this, getString(R.string.kr_write_external_storage), Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(com.omarea.krscript.R.string.kr_write_external_storage), Toast.LENGTH_LONG).show()
             return false
         } else {
             try {
@@ -270,8 +270,8 @@ class ActionPageOnline : AppCompatActivity() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK && kr_online_webview.canGoBack()) {
-            kr_online_webview.goBack()
+        if (keyCode == KeyEvent.KEYCODE_BACK && binding.krOnlineWebview.canGoBack()) {
+            binding.krOnlineWebview.goBack()
             return true
         } else {
             return super.onKeyDown(keyCode, event)
@@ -295,20 +295,20 @@ class ActionPageOnline : AppCompatActivity() {
      * 监视下载进度
      */
     private fun watchDownloadProgress(downloadId: Long, autoClose: Boolean, taskAliasId: String) {
-        kr_download_state.visibility = View.VISIBLE
+        binding.krDownloadState.visibility = View.VISIBLE
 
         val downloadManager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         val query = DownloadManager.Query().setFilterById(downloadId)
 
-        kr_download_name_copy.setOnClickListener {
+        binding.krDownloadNameCopy.setOnClickListener {
             val myClipboard: ClipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val myClip = ClipData.newPlainText("text", kr_download_name.text.toString())
+            val myClip = ClipData.newPlainText("text", binding.krDownloadName.text.toString())
             myClipboard.setPrimaryClip(myClip)
             Toast.makeText(this@ActionPageOnline, getString(R.string.copy_success), Toast.LENGTH_SHORT).show()
         }
-        kr_download_url_copy.setOnClickListener {
+        binding.krDownloadUrlCopy.setOnClickListener {
             val myClipboard: ClipboardManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val myClip = ClipData.newPlainText("text", kr_download_url.text.toString())
+            val myClip = ClipData.newPlainText("text", binding.krDownloadUrl.text.toString())
             myClipboard.setPrimaryClip(myClip)
             Toast.makeText(this@ActionPageOnline, getString(R.string.copy_success), Toast.LENGTH_SHORT).show()
         }
@@ -340,10 +340,10 @@ class ActionPageOnline : AppCompatActivity() {
                     }
 
                     handler.post {
-                        kr_download_name.text = fileName
-                        kr_download_progress.progress = ratio
-                        kr_download_progress.isIndeterminate = false
-                        setTitle(R.string.kr_download_downloading)
+                        binding.krDownloadName.text = fileName
+                        binding.krDownloadProgress.progress = ratio
+                        binding.krDownloadProgress.isIndeterminate = false
+                        setTitle(com.omarea.krscript.R.string.kr_download_downloading)
                         downloader.saveTaskStatus(taskAliasId, ratio)
                     }
 
@@ -352,8 +352,8 @@ class ActionPageOnline : AppCompatActivity() {
                         downloader.saveTaskCompleted(downloadId, absPath)
 
                         handler.post {
-                            setTitle(R.string.kr_download_completed)
-                            kr_download_progress.visibility = View.GONE
+                            setTitle(com.omarea.krscript.R.string.kr_download_completed)
+                            binding.krDownloadProgress.visibility = View.GONE
                             stopWatchDownloadProgress()
 
                             val result = Intent()
