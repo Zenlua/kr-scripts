@@ -4,8 +4,8 @@ apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 28
-    buildToolsVersion '28.0.3'
-
+    buildToolsVersion '34.0.0'
+    namespace "com.projectkr.shell"
     defaultConfig {
         resConfigs "zh"
         minSdkVersion 21
