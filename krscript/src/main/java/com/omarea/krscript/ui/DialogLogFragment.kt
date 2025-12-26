@@ -13,23 +13,24 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
+import android.widget.RelativeLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import com.omarea.common.ui.DialogHelper
 import com.omarea.krscript.R
+import com.omarea.krscript.databinding.KrDialogLogBinding
 import com.omarea.krscript.executor.ShellExecutor
 import com.omarea.krscript.model.RunnableNode
 import com.omarea.krscript.model.ShellHandlerBase
-import kotlinx.android.synthetic.main.kr_dialog_log.*
 
 
 class DialogLogFragment : androidx.fragment.app.DialogFragment() {
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    private var binding: KrDialogLogBinding? = null
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): RelativeLayout? {
         // val view = inflater.inflate(R.layout.kr_dialog_log, container, false)
-
-        currentView = inflater.inflate(R.layout.kr_dialog_log, container)
-        return currentView
+        binding = KrDialogLogBinding.inflate(inflater, container, true)
+        return binding?.root
     }
 
     private var running = false
@@ -38,7 +39,6 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
     private lateinit var script: String
     private var params: HashMap<String, String>? = null
     private var themeResId: Int = 0
-    private lateinit var currentView: View
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return Dialog(activity!!, if (themeResId != 0) themeResId else R.style.kr_full_screen_dialog_light)
@@ -61,7 +61,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
             nodeInfo?.run {
                 // 如果执行完以后需要刷新界面，那么就不允许隐藏日志窗口到后台执行
                 if (reloadPage) {
-                    btn_hide.visibility = View.GONE
+                    binding?.btnHide?.visibility = View.GONE
                 }
 
                 val shellHandler = openExecutor(this)
@@ -78,20 +78,20 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
     private fun openExecutor(nodeInfo: RunnableNode): ShellHandlerBase? {
         var forceStopRunnable: Runnable? = null
 
-        btn_hide.setOnClickListener {
+        binding?.btnHide?.setOnClickListener {
             closeView()
         }
-        btn_exit.setOnClickListener {
+        binding?.btnExit?.setOnClickListener {
             if (running) {
                 forceStopRunnable?.run()
             }
             closeView()
         }
 
-        btn_copy.setOnClickListener {
+        binding?.btnCopy?.setOnClickListener {
             try {
                 val myClipboard: ClipboardManager = this.context!!.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                val myClip: ClipData = ClipData.newPlainText("text", shell_output.text.toString())
+                val myClip: ClipData = ClipData.newPlainText("text", binding?.shellOutput?.text.toString())
                 myClipboard.primaryClip = myClip
                 Toast.makeText(context, getString(R.string.copy_success), Toast.LENGTH_SHORT).show()
             } catch (ex: Exception) {
@@ -99,35 +99,35 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
             }
         }
         if (nodeInfo.interruptable) {
-            btn_hide?.visibility = View.VISIBLE
-            btn_exit?.visibility = View.VISIBLE
+            binding?.btnHide?.visibility = View.VISIBLE
+            binding?.btnExit?.visibility = View.VISIBLE
         } else {
-            btn_hide?.visibility = View.GONE
-            btn_exit?.visibility = View.GONE
+            binding?.btnHide?.visibility = View.GONE
+            binding?.btnExit?.visibility = View.GONE
         }
 
         if (!nodeInfo.title.isEmpty()) {
-            title.text = nodeInfo.title
+            binding?.title?.text = nodeInfo.title
         } else {
-            title.visibility = View.GONE
+            binding?.title?.visibility = View.GONE
         }
 
         if (!nodeInfo.desc.isEmpty()) {
-            desc.text = nodeInfo.desc
+            binding?.desc?.text = nodeInfo.desc
         } else {
-            desc.visibility = View.GONE
+            binding?.desc?.visibility = View.GONE
         }
 
-        action_progress.isIndeterminate = true
+        binding?.actionProgress?.isIndeterminate = true
         return MyShellHandler(object : IActionEventHandler {
             override fun onCompleted() {
                 running = false
 
                 onExit.run()
-                if (btn_hide != null) {
-                    btn_hide.visibility = View.GONE
-                    btn_exit.visibility = View.VISIBLE
-                    action_progress.visibility = View.GONE
+                if (binding?.btnHide != null) {
+                    binding?.btnHide?.visibility = View.GONE
+                    binding?.btnExit?.visibility = View.VISIBLE
+                    binding?.actionProgress?.visibility = View.GONE
                 }
 
                 isCancelable = true
@@ -143,14 +143,14 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
                 running = true
 
                 if (nodeInfo.interruptable && forceStop != null) {
-                    btn_exit.visibility = View.VISIBLE
+                    binding?.btnExit?.visibility = View.VISIBLE
                 } else {
-                    btn_exit.visibility = View.GONE
+                    binding?.btnExit?.visibility = View.GONE
                 }
                 forceStopRunnable = forceStop
             }
 
-        }, shell_output, action_progress)
+        }, binding?.shellOutput, binding?.actionProgress)
     }
 
     @FunctionalInterface
@@ -162,8 +162,8 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
 
     class MyShellHandler(
             private var actionEventHandler: IActionEventHandler,
-            private var logView: TextView,
-            private var shellProgress: ProgressBar) : ShellHandlerBase() {
+            private var logView: TextView?,
+            private var shellProgress: ProgressBar?) : ShellHandlerBase() {
 
         private fun getColor(resId: Int): Int {
             return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -173,7 +173,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
             }
         }
 
-        private val context = logView.context
+        private val context = logView?.context
         private val errorColor = getColor(R.color.kr_shell_log_error)
         private val basicColor = getColor(R.color.kr_shell_log_basic)
         private val scriptColor = getColor(R.color.kr_shell_log_script)
@@ -215,26 +215,26 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
         override fun onProgress(current: Int, total: Int) {
             when (current) {
                 -1 -> {
-                    this.shellProgress.visibility = View.VISIBLE
-                    this.shellProgress.isIndeterminate = true
+                    this.shellProgress?.visibility = View.VISIBLE
+                    this.shellProgress?.isIndeterminate = true
                 }
-                total -> this.shellProgress.visibility = View.GONE
+                total -> this.shellProgress?.visibility = View.GONE
                 else -> {
-                    this.shellProgress.visibility = View.VISIBLE
-                    this.shellProgress.isIndeterminate = false
-                    this.shellProgress.max = total
-                    this.shellProgress.progress = current
+                    this.shellProgress?.visibility = View.VISIBLE
+                    this.shellProgress?.isIndeterminate = false
+                    this.shellProgress?.max = total
+                    this.shellProgress?.progress = current
                 }
             }
         }
 
         override fun onStart(msg: Any?) {
-            this.logView.text = ""
+            this.logView?.text = ""
             // updateLog(msg, scriptColor)
         }
 
         override fun onExit(msg: Any?) {
-            updateLog(context.getString(R.string.kr_shell_completed), endColor)
+            updateLog(context?.getString(R.string.kr_shell_completed), endColor)
             actionEventHandler.onCompleted()
             if (!hasError) {
                 actionEventHandler.onSuccess()
@@ -243,9 +243,9 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
 
         override fun updateLog(msg: SpannableString?) {
             if (msg != null) {
-                this.logView.post {
-                    logView.append(msg)
-                    (logView.parent as ScrollView).fullScroll(ScrollView.FOCUS_DOWN)
+                this.logView?.post {
+                    logView?.append(msg)
+                    (logView?.parent as ScrollView).fullScroll(ScrollView.FOCUS_DOWN)
                 }
             }
         }
