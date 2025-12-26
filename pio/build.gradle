@@ -8,7 +8,7 @@ android {
         enabled = true
     }
     defaultConfig {
-        resConfigs "zh"
+        resourceConfigurations += ['zh']
         minSdkVersion 21
         targetSdkVersion 28
         versionCode 202111141
