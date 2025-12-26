@@ -76,7 +76,6 @@ class FloatMonitor(context: Context) {
             display.getRealSize(p)
             params.y = -navHeight
             params.x = 0
-        } else {
         }
         mWindowManager!!.addView(mView, params)
 

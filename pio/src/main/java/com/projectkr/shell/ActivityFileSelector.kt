@@ -1,7 +1,6 @@
 package com.projectkr.shell
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -20,8 +19,8 @@ import java.io.File
 
 class ActivityFileSelector : AppCompatActivity() {
     companion object {
-        val MODE_FILE = 0
-        val MODE_FOLDER = 1
+        const val MODE_FILE = 0
+        const val MODE_FOLDER = 1
     }
 
     private var adapterFileSelector: AdapterFileSelector? = null
@@ -46,16 +45,16 @@ class ActivityFileSelector : AppCompatActivity() {
         }
 
         intent.extras?.run {
-            if (containsKey("extension") == true) {
+            if (containsKey("extension")) {
                 extension = "" + intent.extras.getString("extension")
                 if (!extension.startsWith(".")) {
                     extension = ".$extension"
                 }
                 if (extension.isNotEmpty()) {
-                    title = title.toString() + "($extension)"
+                    title = "$title($extension)"
                 }
             }
-            if (containsKey("mode") == true) {
+            if (containsKey("mode")) {
                 mode = getInt("mode")
                 if (mode == MODE_FOLDER) {
                     title = getString(R.string.title_activity_folder_selector)
@@ -68,7 +67,7 @@ class ActivityFileSelector : AppCompatActivity() {
         if (keyCode == KeyEvent.KEYCODE_BACK && adapterFileSelector != null && adapterFileSelector!!.goParent()) {
             return true
         } else {
-            setResult(Activity.RESULT_CANCELED, Intent())
+            setResult(RESULT_CANCELED, Intent())
         }
         return super.onKeyDown(keyCode, event)
     }
@@ -79,12 +78,12 @@ class ActivityFileSelector : AppCompatActivity() {
         var grant = true
         for (result in grantResults) {
             if (result == PackageManager.PERMISSION_DENIED) {
-                grant = false;
+                grant = false
             }
         }
 
         if (requestCode == 111) {
-            if (grant == false) {
+            if (!grant) {
                 Toast.makeText(applicationContext, "没有读取文件的权限！", Toast.LENGTH_LONG).show()
             } else {
                 loadData()
@@ -94,7 +93,7 @@ class ActivityFileSelector : AppCompatActivity() {
 
     private fun checkPermission(permission: String): Boolean = PermissionChecker.checkSelfPermission(this, permission) == PermissionChecker.PERMISSION_GRANTED
     private fun requestPermissions() {
-        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 111);
+        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 111)
     }
 
     override fun onResume() {
@@ -114,7 +113,7 @@ class ActivityFileSelector : AppCompatActivity() {
                 val onSelected =  Runnable {
                     val file: File? = adapterFileSelector!!.selectedFile
                     if (file != null) {
-                        this.setResult(Activity.RESULT_OK, Intent().putExtra("file", file.absolutePath))
+                        this.setResult(RESULT_OK, Intent().putExtra("file", file.absolutePath))
                         this.finish()
                     }
                 }

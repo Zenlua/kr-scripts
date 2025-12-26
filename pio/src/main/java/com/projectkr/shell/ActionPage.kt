@@ -1,7 +1,6 @@
 package com.projectkr.shell
 
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
-import android.app.Activity
 import android.app.ActivityManager
 import android.content.ComponentName
 import android.content.Context
@@ -130,13 +129,12 @@ class ActionPage : AppCompatActivity() {
         }
 
         override fun addToFavorites(clickableNode: ClickableNode, addToFavoritesHandler: KrScriptActionHandler.AddToFavoritesHandler) {
-            val page = if (clickableNode is PageNode) {
-                clickableNode
-            } else if (clickableNode is RunnableNode) {
-                currentPageConfig
-            } else {
-                return
-            }
+            val page = clickableNode as? PageNode
+                ?: if (clickableNode is RunnableNode) {
+                    currentPageConfig
+                } else {
+                    return
+                }
 
             val intent = Intent()
 
@@ -275,7 +273,7 @@ class ActionPage : AppCompatActivity() {
         val darkMode = ThemeModeState.getThemeMode().isDarkMode
         val dialog = DialogLogFragment.create(
                 menuOption,
-                Runnable {  },
+            {  },
                 onDismiss,
                 currentPageConfig.pageHandlerSh,
                 params,
@@ -301,11 +299,11 @@ class ActionPage : AppCompatActivity() {
 
             // TODO:文件类型过滤
             override fun mimeType(): String? {
-                return if (menuOption.mime.isEmpty()) null else menuOption.mime
+                return menuOption.mime.ifEmpty { null }
             }
 
             override fun suffix(): String? {
-                return if (menuOption.suffix.isEmpty()) null else menuOption.suffix
+                return menuOption.suffix.ifEmpty { null }
             }
 
             override fun type(): Int {
@@ -320,7 +318,7 @@ class ActionPage : AppCompatActivity() {
 
     private fun chooseFilePath(fileSelectedInterface: ParamsFileChooserRender.FileSelectedInterface): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(READ_EXTERNAL_STORAGE), 2);
+            requestPermissions(arrayOf(READ_EXTERNAL_STORAGE), 2)
             Toast.makeText(this, getString(com.omarea.krscript.R.string.kr_write_external_storage), Toast.LENGTH_LONG).show()
             return false
         } else {
@@ -332,19 +330,19 @@ class ActionPage : AppCompatActivity() {
                     if (!suffix.isNullOrEmpty()) {
                         chooseFilePath(suffix)
                     } else {
-                        val intent = Intent(Intent.ACTION_GET_CONTENT);
+                        val intent = Intent(Intent.ACTION_GET_CONTENT)
                         val mimeType = fileSelectedInterface.mimeType()
                         if (mimeType != null) {
                             intent.type = mimeType
                         } else {
                             intent.type = "*/*"
                         }
-                        intent.addCategory(Intent.CATEGORY_OPENABLE);
-                        startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER);
+                        intent.addCategory(Intent.CATEGORY_OPENABLE)
+                        startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER)
                     }
                 }
                 this.fileSelectedInterface = fileSelectedInterface
-                true;
+                true
             } catch (ex: java.lang.Exception) {
                 false
             }
@@ -353,7 +351,7 @@ class ActionPage : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == ACTION_FILE_PATH_CHOOSER) {
-            val result = if (data == null || resultCode != Activity.RESULT_OK) null else data.data
+            val result = if (data == null || resultCode != RESULT_OK) null else data.data
             if (fileSelectedInterface != null) {
                 if (result != null) {
                     val absPath = getPath(result)
@@ -364,7 +362,7 @@ class ActionPage : AppCompatActivity() {
             }
             this.fileSelectedInterface = null
         } else if (requestCode == ACTION_FILE_PATH_CHOOSER_INNER) {
-            val absPath = if (data == null || resultCode != Activity.RESULT_OK) null else data.getStringExtra("file")
+            val absPath = if (data == null || resultCode != RESULT_OK) null else data.getStringExtra("file")
             fileSelectedInterface?.onFileSelected(absPath)
             this.fileSelectedInterface = null
         }
@@ -402,7 +400,7 @@ class ActionPage : AppCompatActivity() {
     private fun loadPageConfig() {
         val activity = this
 
-        Thread(Runnable {
+        Thread {
             currentPageConfig.run {
                 if (beforeRead.isNotEmpty()) {
                     showDialog(getString(com.omarea.krscript.R.string.kr_page_before_load))
@@ -417,7 +415,11 @@ class ActionPage : AppCompatActivity() {
                 }
 
                 if (items == null && pageConfigPath.isNotEmpty()) {
-                    items = PageConfigReader(applicationContext, pageConfigPath, pageConfigDir).readConfigXml()
+                    items = PageConfigReader(
+                        applicationContext,
+                        pageConfigPath,
+                        pageConfigDir
+                    ).readConfigXml()
                 }
 
                 if (afterRead.isNotEmpty()) {
@@ -425,7 +427,7 @@ class ActionPage : AppCompatActivity() {
                     ScriptEnvironmen.executeResultRoot(activity, afterRead, this)
                 }
 
-                if (items != null && items.size != 0) {
+                if (items != null && items.isNotEmpty()) {
                     if (loadSuccess.isNotEmpty()) {
                         showDialog(getString(com.omarea.krscript.R.string.kr_page_load_success))
                         ScriptEnvironmen.executeResultRoot(activity, loadSuccess, this)
@@ -436,13 +438,23 @@ class ActionPage : AppCompatActivity() {
                             override val key = autoRunItemId
                             override fun onCompleted(result: Boolean?) {
                                 if (result != true) {
-                                    Toast.makeText(this@ActionPage, getString(com.omarea.krscript.R.string.kr_auto_run_item_losted), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        this@ActionPage,
+                                        getString(com.omarea.krscript.R.string.kr_auto_run_item_losted),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
                             }
                         }
 
-                        val fragment = ActionListFragment.create(items, actionShortClickHandler, autoRunTask, ThemeModeState.getThemeMode())
-                        supportFragmentManager.beginTransaction().replace(R.id.main_list, fragment).commitAllowingStateLoss()
+                        val fragment = ActionListFragment.create(
+                            items,
+                            actionShortClickHandler,
+                            autoRunTask,
+                            ThemeModeState.getThemeMode()
+                        )
+                        supportFragmentManager.beginTransaction().replace(R.id.main_list, fragment)
+                            .commitAllowingStateLoss()
                         hideDialog()
                         actionsLoaded = true
                     }
@@ -454,13 +466,17 @@ class ActionPage : AppCompatActivity() {
                     }
 
                     handler.post {
-                        Toast.makeText(this@ActionPage, getString(com.omarea.krscript.R.string.kr_page_load_fail), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@ActionPage,
+                            getString(com.omarea.krscript.R.string.kr_page_load_fail),
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                     hideDialog()
                     finish()
                 }
             }
-        }).start()
+        }.start()
     }
 
     fun _openPage(pageNode: PageNode) {

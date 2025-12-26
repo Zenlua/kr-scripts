@@ -1,7 +1,6 @@
 package com.projectkr.shell
 
 import android.Manifest
-import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -69,7 +68,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         progressBarDialog.showDialog(getString(R.string.please_wait))
-        Thread(Runnable {
+        Thread {
             val page2Config = krScriptConfig.pageListConfig
             val favoritesConfig = krScriptConfig.favoriteConfig
 
@@ -78,21 +77,29 @@ class MainActivity : AppCompatActivity() {
             handler.post {
                 progressBarDialog.hideDialog()
 
-                if (favorites != null && favorites.size > 0) {
+                if (favorites != null && favorites.isNotEmpty()) {
                     updateFavoritesTab(favorites, favoritesConfig)
-                    tabIconHelper.newTabSpec(getString(R.string.tab_favorites), ContextCompat.getDrawable(this, R.drawable.tab_favorites)!!, R.id.main_tabhost_2)
+                    tabIconHelper.newTabSpec(
+                        getString(R.string.tab_favorites),
+                        ContextCompat.getDrawable(this, R.drawable.tab_favorites)!!,
+                        R.id.main_tabhost_2
+                    )
                 } else {
                     binding.mainTabhost2.visibility = View.GONE
                 }
 
-                if (pages != null && pages.size > 0) {
+                if (pages != null && pages.isNotEmpty()) {
                     updateMoreTab(pages, page2Config)
-                    tabIconHelper.newTabSpec(getString(R.string.tab_pages), ContextCompat.getDrawable(this, R.drawable.tab_pages)!!, R.id.main_tabhost_3)
+                    tabIconHelper.newTabSpec(
+                        getString(R.string.tab_pages),
+                        ContextCompat.getDrawable(this, R.drawable.tab_pages)!!,
+                        R.id.main_tabhost_3
+                    )
                 } else {
                     binding.mainTabhost3.visibility = View.GONE
                 }
             }
-        }).start()
+        }.start()
 
         if (CheckRootStatus.lastCheckResult && krScriptConfig.allowHomePage) {
             val home = FragmentHome()
@@ -103,7 +110,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (!(checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE) && checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 111);
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 111)
         }
     }
 
@@ -131,7 +138,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun reloadFavoritesTab() {
-        Thread(Runnable {
+        Thread {
             val favoritesConfig = krScriptConfig.favoriteConfig
             val favorites = getItems(favoritesConfig)
             favorites?.run {
@@ -139,11 +146,11 @@ class MainActivity : AppCompatActivity() {
                     updateFavoritesTab(this, favoritesConfig)
                 }
             }
-        }).start()
+        }.start()
     }
 
     private fun reloadMoreTab() {
-        Thread(Runnable {
+        Thread {
             val page2Config = krScriptConfig.pageListConfig
             val pages = getItems(page2Config)
 
@@ -152,7 +159,7 @@ class MainActivity : AppCompatActivity() {
                     updateMoreTab(this, page2Config)
                 }
             }
-        }).start()
+        }.start()
     }
 
     private fun getKrScriptActionHandler(pageNode: PageNode, isFavoritesTab: Boolean): KrScriptActionHandler {
@@ -171,13 +178,12 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun addToFavorites(clickableNode: ClickableNode, addToFavoritesHandler: KrScriptActionHandler.AddToFavoritesHandler) {
-                val page = if (clickableNode is PageNode) {
-                    clickableNode
-                } else if (clickableNode is RunnableNode) {
-                    pageNode
-                } else {
-                    return
-                }
+                val page = clickableNode as? PageNode
+                    ?: if (clickableNode is RunnableNode) {
+                        pageNode
+                    } else {
+                        return
+                    }
 
                 val intent = Intent()
 
@@ -220,7 +226,7 @@ class MainActivity : AppCompatActivity() {
     private fun chooseFilePath(fileSelectedInterface: ParamsFileChooserRender.FileSelectedInterface): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, getString(com.omarea.krscript.R.string.kr_write_external_storage), Toast.LENGTH_LONG).show()
-            requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 2);
+            requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 2)
             return false
         } else {
             return try {
@@ -228,18 +234,18 @@ class MainActivity : AppCompatActivity() {
                 if (suffix != null && suffix.isNotEmpty()) {
                     chooseFilePath(suffix)
                 } else {
-                    val intent = Intent(Intent.ACTION_GET_CONTENT);
+                    val intent = Intent(Intent.ACTION_GET_CONTENT)
                     val mimeType = fileSelectedInterface.mimeType()
                     if (mimeType != null) {
                         intent.type = mimeType
                     } else {
                         intent.type = "*/*"
                     }
-                    intent.addCategory(Intent.CATEGORY_OPENABLE);
-                    startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE)
+                    startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER)
                 }
                 this.fileSelectedInterface = fileSelectedInterface
-                true;
+                true
             } catch (ex: java.lang.Exception) {
                 false
             }
@@ -248,7 +254,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == ACTION_FILE_PATH_CHOOSER) {
-            val result = if (data == null || resultCode != Activity.RESULT_OK) null else data.data
+            val result = if (data == null || resultCode != RESULT_OK) null else data.data
             if (fileSelectedInterface != null) {
                 if (result != null) {
                     val absPath = getPath(result)
@@ -259,7 +265,7 @@ class MainActivity : AppCompatActivity() {
             }
             this.fileSelectedInterface = null
         } else if (requestCode == ACTION_FILE_PATH_CHOOSER_INNER) {
-            val absPath = if (data == null || resultCode != Activity.RESULT_OK) null else data.getStringExtra("file")
+            val absPath = if (data == null || resultCode != RESULT_OK) null else data.getStringExtra("file")
             fileSelectedInterface?.onFileSelected(absPath)
             this.fileSelectedInterface = null
         }
@@ -267,10 +273,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getPath(uri: Uri): String? {
-        try {
-            return FilePathResolver().getPath(this, uri)
+        return try {
+            FilePathResolver().getPath(this, uri)
         } catch (ex: Exception) {
-            return null
+            null
         }
     }
 
@@ -297,7 +303,7 @@ class MainActivity : AppCompatActivity() {
             R.id.option_menu_info -> {
                 val layoutInflater = LayoutInflater.from(this)
                 val layout = layoutInflater.inflate(R.layout.dialog_about, null)
-                val transparentUi = layout.findViewById<CompoundButton>(R.id.transparent_ui);
+                val transparentUi = layout.findViewById<CompoundButton>(R.id.transparent_ui)
                 val themeConfig = ThemeConfig(this)
                 transparentUi.setOnClickListener {
                     val isChecked = (it as CompoundButton).isChecked
