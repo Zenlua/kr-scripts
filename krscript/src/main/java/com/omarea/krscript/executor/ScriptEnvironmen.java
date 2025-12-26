@@ -18,6 +18,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -108,7 +109,7 @@ public class ScriptEnvironmen {
             return "";
         }
 
-        MessageDigest md5 = null;
+        MessageDigest md5;
         try {
             md5 = MessageDigest.getInstance("MD5");
             byte[] bytes = md5.digest(string.getBytes());
@@ -177,7 +178,7 @@ public class ScriptEnvironmen {
         }
 
         String script2 = script.trim();
-        String path = "";
+        String path;
         if (script2.startsWith(ASSETS_FILE)) {
             path = extractScript(context, script2);
         } else {
@@ -400,15 +401,15 @@ public class ScriptEnvironmen {
 
         ArrayList<String> envp = getVariables(params);
         StringBuilder envpCmds = new StringBuilder();
-        if (envp.size() > 0) {
+        if (!envp.isEmpty()) {
             for (String param : envp) {
                 envpCmds.append("export ").append(param).append("\n");
             }
         }
         try {
-            dataOutputStream.write(envpCmds.toString().getBytes("UTF-8"));
+            dataOutputStream.write(envpCmds.toString().getBytes(StandardCharsets.UTF_8));
 
-            dataOutputStream.write(getExecuteScript(context, cmds, tag).getBytes("UTF-8"));
+            dataOutputStream.write(getExecuteScript(context, cmds, tag).getBytes(StandardCharsets.UTF_8));
 
             dataOutputStream.writeBytes("\n\n");
             dataOutputStream.writeBytes("sleep 0.2;\n");

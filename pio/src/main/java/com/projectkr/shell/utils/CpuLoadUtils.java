@@ -16,7 +16,7 @@ public class CpuLoadUtils {
     }
 
     private int getCpuIndex(String[] cols) {
-        int cpuIndex = -1;
+        int cpuIndex;
         if (cols[0].equals("cpu")) {
             cpuIndex = -1;
         } else {
@@ -109,7 +109,7 @@ public class CpuLoadUtils {
                     for (String cpuCurrentTime : curTick) {
                         String[] cols1 = cpuCurrentTime.replaceAll(" {2}", " ").split(" ");
                         if (cols1[0].trim().equals("cpu")) {
-                            String[] cols0 = null;
+                            String[] cols0;
                             // 根据前缀匹配上一个时段的cpu时间数据
                             for (String cpu : prevTick) {
                                 // startsWith条件必须加个空格，因为搜索cpu的时候 "cpu0 ..."、"cpu1 ..."等都会匹配

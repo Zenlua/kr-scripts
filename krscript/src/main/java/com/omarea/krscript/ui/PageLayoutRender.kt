@@ -26,7 +26,7 @@ class PageLayoutRender(private val mContext: Context,
         for (item in actionInfos) {
             if (item.index == key) {
                 return item
-            } else if (item is GroupNode && item.children.size > 0) {
+            } else if (item is GroupNode && item.children.isNotEmpty()) {
                 val result = findItemByDynamicIndex(key, item.children)
                 if (result != null) {
                     return result
@@ -64,7 +64,7 @@ class PageLayoutRender(private val mContext: Context,
             try {
                 val item = findItemByDynamicIndex(key, itemConfigList)
                 if (item == null) {
-                    Log.e("onItemClick", "找不到指定ID的项 index: " + key)
+                    Log.e("onItemClick", "找不到指定ID的项 index: $key")
                     return
                 } else {
                     onItemClick(item, listItemView)
@@ -100,7 +100,7 @@ class PageLayoutRender(private val mContext: Context,
                     uiRender = if (parent.isRootGroup) createTextItem(it) else createTextItemWhite(it)
                 } else if (it is GroupNode) {
                     val subGroup = createItemGroup(it)
-                    if (it.children.size > 0) {
+                    if (it.children.isNotEmpty()) {
                         parent.addView(subGroup)
                         mapConfigList(subGroup, it.children)
                     }

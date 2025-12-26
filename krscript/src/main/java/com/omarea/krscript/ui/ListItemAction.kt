@@ -11,7 +11,7 @@ class ListItemAction(context: Context, config: ActionNode) : ListItemClickable(c
 
     init {
         widgetView?.visibility = View.VISIBLE
-        if (config.params != null && config.params!!.size > 0) {
+        if (config.params != null && config.params!!.isNotEmpty()) {
             widgetView?.setImageDrawable(context.getDrawable(R.drawable.kr_list))
         } else {
             widgetView?.setImageDrawable(context.getDrawable(R.drawable.kr_run))

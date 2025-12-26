@@ -17,11 +17,11 @@ import kotlin.system.exitProcess
  * Created by helloklf on 2017/6/3.
  */
 
-public class CheckRootStatus(var context: Context, private var next: Runnable? = null) {
+class CheckRootStatus(var context: Context, private var next: Runnable? = null) {
     var myHandler: Handler = Handler(Looper.getMainLooper())
 
     var therad: Thread? = null
-    public fun forceGetRoot() {
+    fun forceGetRoot() {
         if (lastCheckResult) {
             if (next != null) {
                 myHandler.post(next)
@@ -57,7 +57,7 @@ public class CheckRootStatus(var context: Context, private var next: Runnable? =
                                     exitProcess(0)
                                     //android.os.Process.killProcess(android.os.Process.myPid())
                                 }
-                        if (context.resources.getBoolean(R.bool.force_root) != true) {
+                        if (!context.resources.getBoolean(R.bool.force_root)) {
                             builder.setNeutralButton(com.omarea.krscript.R.string.btn_skip) { _, _ ->
                                 if (next != null) {
                                     myHandler.post(next)
@@ -69,29 +69,31 @@ public class CheckRootStatus(var context: Context, private var next: Runnable? =
                 }
             }
             therad!!.start()
-            Thread(Runnable {
+            Thread {
                 Thread.sleep(1000 * 15)
 
                 if (!completed) {
                     KeepShellPublic.tryExit()
                     myHandler.post {
-                        DialogHelper.confirm(context,
-                        context.getString(R.string.error_root),
-                        context.getString(R.string.error_su_timeout),
-                        null,
-                        DialogHelper.DialogButton(context.getString(R.string.btn_retry), {
-                            if (therad != null && therad!!.isAlive && !therad!!.isInterrupted) {
-                                therad!!.interrupt()
-                                therad = null
-                            }
-                            forceGetRoot()
-                        }),
-                        DialogHelper.DialogButton(context.getString(R.string.btn_exit), {
-                            exitProcess(0)
-                        }))
+                        DialogHelper.confirm(
+                            context,
+                            context.getString(R.string.error_root),
+                            context.getString(R.string.error_su_timeout),
+                            null,
+                            DialogHelper.DialogButton(context.getString(R.string.btn_retry), {
+                                if (therad != null && therad!!.isAlive && !therad!!.isInterrupted) {
+                                    therad!!.interrupt()
+                                    therad = null
+                                }
+                                forceGetRoot()
+                            }),
+                            DialogHelper.DialogButton(context.getString(R.string.btn_exit), {
+                                exitProcess(0)
+                            })
+                        )
                     }
                 }
-            }).start()
+            }.start()
         }
     }
 

@@ -27,7 +27,7 @@ class ListItemText(private val context: Context,
     private val rowsView = layout.findViewById<TextView?>(R.id.kr_rows)
 
     init {
-        if (config.rows.size > 0 && rowsView != null) {
+        if (config.rows.isNotEmpty() && rowsView != null) {
             rowsView.movementMethod = LinkMovementMethod.getInstance() // 不设置 ClickableSpan 点击没反应
             // rowsView.setOnClickListener {}
 

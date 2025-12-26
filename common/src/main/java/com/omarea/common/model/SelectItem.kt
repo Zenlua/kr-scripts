@@ -15,12 +15,12 @@ class SelectItem {
     var selected: Boolean = false
 
     override fun toString(): String {
-        if (!title.isNullOrEmpty()) {
-            return title!!
+        return if (!title.isNullOrEmpty()) {
+            title!!
         } else if (!value.isNullOrEmpty()) {
-            return value!!
+            value!!
         } else {
-            return "" // super.toString()
+            "" // super.toString()
         }
     }
 }

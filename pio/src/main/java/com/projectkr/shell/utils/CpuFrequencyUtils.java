@@ -186,7 +186,7 @@ public class CpuFrequencyUtils {
     }
 
     private static int getCpuIndex(String[] cols) {
-        int cpuIndex = -1;
+        int cpuIndex;
         if (cols[0].equals("cpu")) {
             cpuIndex = -1;
         } else {

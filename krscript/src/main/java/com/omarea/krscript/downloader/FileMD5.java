@@ -17,8 +17,8 @@ public class FileMD5 {
         if (!file.isFile()) {
             return null;
         }
-        MessageDigest digest = null;
-        FileInputStream in = null;
+        MessageDigest digest;
+        FileInputStream in;
         byte[] buffer = new byte[1024];
         int len;
         try {
@@ -36,7 +36,7 @@ public class FileMD5 {
     }
 
     public String bytesToHexString(byte[] src) {
-        StringBuilder stringBuilder = new StringBuilder("");
+        StringBuilder stringBuilder = new StringBuilder();
         if (src == null || src.length <= 0) {
             return null;
         }

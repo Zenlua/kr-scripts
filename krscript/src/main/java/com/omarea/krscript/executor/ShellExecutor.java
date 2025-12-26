@@ -17,7 +17,7 @@ import java.util.HashMap;
  */
 public class ShellExecutor {
     private boolean started = false;
-    private String sessionTag = "pio_" + System.currentTimeMillis();
+    private final String sessionTag = "pio_" + System.currentTimeMillis();
     private void killProcess(Context context) {
         ScriptEnvironmen.executeResultRoot(
                 context,
@@ -41,46 +41,43 @@ public class ShellExecutor {
                 onExit.run();
             }
         } else {
-            final Runnable forceStopRunnable = (nodeInfo.getInterruptable() || nodeInfo.getShell().equals(RunnableNode.Companion.getShellModeBgTask()))? (new Runnable() {
-                @Override
-                public void run() {
-                    /*
-                    // 没啥用，这个pid和在shell创建的子进程不是父子关系，杀死此进程对shell里创建的进程毫无影响
-                    int pid = -1;
-                    if (process.getClass().getName().equals("java.lang.UNIXProcess")) {
-                        try {
-                            Class cl = process.getClass();
-                            Field field = cl.getDeclaredField("pid");
-                            field.setAccessible(true);
-                            Object pidObject = field.get(process);
-                            pid = (Integer) pidObject;
-                        } catch (Exception ignored) {}
+            final Runnable forceStopRunnable = (nodeInfo.getInterruptable() || nodeInfo.getShell().equals(RunnableNode.Companion.getShellModeBgTask()))? (() -> {
+                /*
+                // 没啥用，这个pid和在shell创建的子进程不是父子关系，杀死此进程对shell里创建的进程毫无影响
+                int pid = -1;
+                if (process.getClass().getName().equals("java.lang.UNIXProcess")) {
+                    try {
+                        Class cl = process.getClass();
+                        Field field = cl.getDeclaredField("pid");
+                        field.setAccessible(true);
+                        Object pidObject = field.get(process);
+                        pid = (Integer) pidObject;
+                    } catch (Exception ignored) {}
+                }
+                */
+                killProcess(context);
+
+                try {
+                    process.getInputStream().close();
+                } catch (Exception ignored) {}
+                try {
+                    process.getOutputStream().close();
+                } catch (Exception ignored) {}
+                try {
+                    process.getErrorStream().close();
+                } catch (Exception ignored) {}
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    try {
+                        process.destroyForcibly();
+                    } catch (Exception ex) {
+                        Log.e("KrScriptError", ex.getMessage());
                     }
-                    */
-                    killProcess(context);
-
+                } else {
                     try {
-                        process.getInputStream().close();
-                    } catch (Exception ignored) {}
-                    try {
-                        process.getOutputStream().close();
-                    } catch (Exception ignored) {}
-                    try {
-                        process.getErrorStream().close();
-                    } catch (Exception ignored) {}
-
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        try {
-                            process.destroyForcibly();
-                        } catch (Exception ex) {
-                            Log.e("KrScriptError", "" + ex.getMessage());
-                        }
-                    } else {
-                        try {
-                            process.destroy();
-                        } catch (Exception ex) {
-                            Log.e("KrScriptError", "" + ex.getMessage());
-                        }
+                        process.destroy();
+                    } catch (Exception ex) {
+                        Log.e("KrScriptError", ex.getMessage());
                     }
                 }
             }) : null;

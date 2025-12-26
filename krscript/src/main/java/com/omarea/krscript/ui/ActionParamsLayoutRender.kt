@@ -27,7 +27,7 @@ class ActionParamsLayoutRender(private var linearLayout: LinearLayout, activity:
             if (actionParamInfo.value != null) {
                 valList.add(actionParamInfo.value!!)
             }
-            if (valList.size > 0) {
+            if (valList.isNotEmpty()) {
                 for (j in valList.indices) {
                     var index = 0
                     for (option in options) {
@@ -241,10 +241,10 @@ class ActionParamsLayoutRender(private var linearLayout: LinearLayout, activity:
                 if (actionParamInfo.required) {
                     throw Exception(getFieldTips(actionParamInfo) + context.getString(R.string.do_not_empty))
                 } else {
-                    params.set(actionParamInfo.name!!, "")
+                    params[actionParamInfo.name!!] = ""
                 }
             } else {
-                params.set(actionParamInfo.name!!, actionParamInfo.value!!)
+                params[actionParamInfo.name!!] = actionParamInfo.value!!
             }
         }
         return params

@@ -36,11 +36,11 @@ class PathAnalysis(private var context: Context, private var parentDir: String =
         val isAssets = parent.startsWith(ASSETS_FILE)
         val parentDir = if (isAssets) parent.substring(ASSETS_FILE.length) else parent
         val parentSlices = ArrayList(parentDir.split("/"))
-        if (target.startsWith("../") && parentSlices.size > 0) {
+        if (target.startsWith("../") && parentSlices.isNotEmpty()) {
             val targetSlices = ArrayList(target.split("/"))
             while (true) {
                 val step = targetSlices.firstOrNull()
-                if (step != null && step == ".." && parentSlices.size > 0) {
+                if (step != null && step == ".." && parentSlices.isNotEmpty()) {
                     parentSlices.removeAt(parentSlices.size - 1)
                     targetSlices.removeAt(0)
                 } else {
@@ -51,7 +51,7 @@ class PathAnalysis(private var context: Context, private var parentDir: String =
         }
 
         return (if (isAssets) ASSETS_FILE  else "" )+ ( when {
-            !(parentDir.isEmpty() || parentDir.endsWith("/")) -> parentDir + "/"
+            !(parentDir.isEmpty() || parentDir.endsWith("/")) -> "$parentDir/"
             else -> parentDir
         } + (if (target.startsWith("./")) target.substring(2) else target))
     }
@@ -139,17 +139,17 @@ class PathAnalysis(private var context: Context, private var parentDir: String =
             if (filePath.startsWith("/")) {
                 currentAbsPath = filePath
                 val javaFileInfo = File(filePath)
-                if (javaFileInfo.exists() && javaFileInfo.canRead()) {
-                    return javaFileInfo.inputStream()
+                return if (javaFileInfo.exists() && javaFileInfo.canRead()) {
+                    javaFileInfo.inputStream()
                 } else {
-                    return useRootOpenFile(filePath)
+                    useRootOpenFile(filePath)
                 }
             } else {
                 // 如果当前配置文件来源于 assets，则查找依赖资源时也只去assets查找
-                if (parentDir.isNotEmpty() && parentDir.startsWith(ASSETS_FILE)) {
-                    return findAssetsResource(filePath)
+                return if (parentDir.isNotEmpty() && parentDir.startsWith(ASSETS_FILE)) {
+                    findAssetsResource(filePath)
                 } else {
-                    return findDiskResource(filePath)
+                    findDiskResource(filePath)
                 }
             }
         } catch (ex: java.lang.Exception) {

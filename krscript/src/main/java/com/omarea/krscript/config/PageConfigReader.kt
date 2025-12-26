@@ -15,6 +15,7 @@ import com.omarea.krscript.executor.ScriptEnvironmen
 import com.omarea.krscript.model.*
 import org.xmlpull.v1.XmlPullParser
 import java.io.InputStream
+import java.util.Locale.getDefault
 
 /**
  * Created by Hello on 2018/04/01.
@@ -29,14 +30,14 @@ class PageConfigReader {
     private var parentDir: String = ""
 
     constructor(context: Context, pageConfig: String, parentDir: String?) {
-        this.context = context;
-        this.pageConfig = pageConfig;
-        this.parentDir = parentDir ?: "";
+        this.context = context
+        this.pageConfig = pageConfig
+        this.parentDir = parentDir ?: ""
     }
 
     constructor(context: Context, pageConfigStream: InputStream) {
-        this.context = context;
-        this.pageConfigStream = pageConfigStream;
+        this.context = context
+        this.pageConfigStream = pageConfigStream
     }
 
     fun readConfigXml(): ArrayList<NodeInfoBase>? {
@@ -126,68 +127,80 @@ class PageConfigReader {
                             }
                             group = null
                         } else if (group != null) {
-                            if ("page" == parser.name) {
-                                tagEndInPage(page, parser)
-                                if (page != null) {
-                                    group.children.add(page)
+                            when (parser.name) {
+                                "page" -> {
+                                    tagEndInPage(page, parser)
+                                    if (page != null) {
+                                        group.children.add(page)
+                                    }
+                                    page = null
                                 }
-                                page = null
-                            } else if ("action" == parser.name) {
-                                tagEndInAction(action, parser)
-                                if (action != null) {
-                                    group.children.add(action)
+                                "action" -> {
+                                    tagEndInAction(action, parser)
+                                    if (action != null) {
+                                        group.children.add(action)
+                                    }
+                                    action = null
                                 }
-                                action = null
-                            } else if ("switch" == parser.name) {
-                                tagEndInSwitch(switch, parser)
-                                if (switch != null) {
-                                    group.children.add(switch)
+                                "switch" -> {
+                                    tagEndInSwitch(switch, parser)
+                                    if (switch != null) {
+                                        group.children.add(switch)
+                                    }
+                                    switch = null
                                 }
-                                switch = null
-                            } else if ("picker" == parser.name) {
-                                tagEndInPicker(picker, parser)
-                                if (picker != null) {
-                                    group.children.add(picker)
+                                "picker" -> {
+                                    tagEndInPicker(picker, parser)
+                                    if (picker != null) {
+                                        group.children.add(picker)
+                                    }
+                                    picker = null
                                 }
-                                picker = null
-                            } else if ("text" == parser.name) {
-                                tagEndInText(text, parser)
-                                if (text != null) {
-                                    group.children.add(text)
+                                "text" -> {
+                                    tagEndInText(text, parser)
+                                    if (text != null) {
+                                        group.children.add(text)
+                                    }
+                                    text = null
                                 }
-                                text = null
                             }
                         } else {
-                            if ("page" == parser.name) {
-                                tagEndInPage(page, parser)
-                                if (page != null) {
-                                    mainList.add(page)
+                            when (parser.name) {
+                                "page" -> {
+                                    tagEndInPage(page, parser)
+                                    if (page != null) {
+                                        mainList.add(page)
+                                    }
+                                    page = null
                                 }
-                                page = null
-                            } else if ("action" == parser.name) {
-                                tagEndInAction(action, parser)
-                                if (action != null) {
-                                    mainList.add(action)
+                                "action" -> {
+                                    tagEndInAction(action, parser)
+                                    if (action != null) {
+                                        mainList.add(action)
+                                    }
+                                    action = null
                                 }
-                                action = null
-                            } else if ("switch" == parser.name) {
-                                tagEndInSwitch(switch, parser)
-                                if (switch != null) {
-                                    mainList.add(switch)
+                                "switch" -> {
+                                    tagEndInSwitch(switch, parser)
+                                    if (switch != null) {
+                                        mainList.add(switch)
+                                    }
+                                    switch = null
                                 }
-                                switch = null
-                            } else if ("picker" == parser.name) {
-                                tagEndInPicker(picker, parser)
-                                if (picker != null) {
-                                    mainList.add(picker)
+                                "picker" -> {
+                                    tagEndInPicker(picker, parser)
+                                    if (picker != null) {
+                                        mainList.add(picker)
+                                    }
+                                    picker = null
                                 }
-                                picker = null
-                            } else if ("text" == parser.name) {
-                                tagEndInText(text, parser)
-                                if (text != null) {
-                                    mainList.add(text)
+                                "text" -> {
+                                    tagEndInText(text, parser)
+                                    if (text != null) {
+                                        mainList.add(text)
+                                    }
+                                    text = null
                                 }
-                                text = null
                             }
                         }
                 }
@@ -227,15 +240,15 @@ class PageConfigReader {
             for (i in 0 until parser.attributeCount) {
                 val attrName = parser.getAttributeName(i)
                 val attrValue = parser.getAttributeValue(i)
-                when {
-                    attrName == "name" -> actionParamInfo.name = attrValue
-                    attrName == "label" -> actionParamInfo.label = attrValue
-                    attrName == "placeholder" -> actionParamInfo.placeholder = attrValue
-                    attrName == "title" -> actionParamInfo.title = attrValue
-                    attrName == "desc" -> actionParamInfo.desc = attrValue
-                    attrName == "value" -> actionParamInfo.value = attrValue
-                    attrName == "type" -> actionParamInfo.type = attrValue.toLowerCase().trim { it <= ' ' }
-                    attrName == "suffix" -> {
+                when (attrName) {
+                    "name" -> actionParamInfo.name = attrValue
+                    "label" -> actionParamInfo.label = attrValue
+                    "placeholder" -> actionParamInfo.placeholder = attrValue
+                    "title" -> actionParamInfo.title = attrValue
+                    "desc" -> actionParamInfo.desc = attrValue
+                    "value" -> actionParamInfo.value = attrValue
+                    "type" -> actionParamInfo.type = attrValue.lowercase(getDefault()).trim { it <= ' ' }
+                    "suffix" -> {
                         val suffix = attrValue.toLowerCase().trim { it <= ' ' }
 
                         if (actionParamInfo.mime.isEmpty()) {
@@ -244,39 +257,37 @@ class PageConfigReader {
 
                         actionParamInfo.suffix = suffix
                     }
-                    attrName == "mime" -> {
+                    "mime" -> {
                         actionParamInfo.mime = attrValue.toLowerCase()
                     }
-                    attrName == "readonly" -> {
+                    "readonly" -> {
                         val value = attrValue.toLowerCase().trim { it <= ' ' }
                         actionParamInfo.readonly = (value == "readonly" || value == "true" || value == "1")
                     }
-                    attrName == "maxlength" -> actionParamInfo.maxLength = Integer.parseInt(attrValue)
-                    attrName == "min" -> actionParamInfo.min = Integer.parseInt(attrValue)
-                    attrName == "max" -> actionParamInfo.max = Integer.parseInt(attrValue)
-                    attrName == "required" -> actionParamInfo.required = attrValue == "true" || attrValue == "1" || attrValue == "required"
-                    attrName == "value-sh" || attrName == "value-su" -> {
-                        val script = attrValue
-                        actionParamInfo.valueShell = script
+                    "maxlength" -> actionParamInfo.maxLength = Integer.parseInt(attrValue)
+                    "min" -> actionParamInfo.min = Integer.parseInt(attrValue)
+                    "max" -> actionParamInfo.max = Integer.parseInt(attrValue)
+                    "required" -> actionParamInfo.required = attrValue == "true" || attrValue == "1" || attrValue == "required"
+                    "value-sh", "value-su" -> {
+                        actionParamInfo.valueShell = attrValue
                     }
-                    attrName == "options-sh" || attrName == "option-sh" || attrName == "options-su" -> {
+                    "options-sh", "option-sh", "options-su" -> {
                         if (actionParamInfo.options == null)
-                            actionParamInfo.options = ArrayList<SelectItem>()
-                        val script = attrValue
-                        actionParamInfo.optionsSh = script
+                            actionParamInfo.options = ArrayList()
+                        actionParamInfo.optionsSh = attrValue
                     }
-                    attrName == "support" || attrName == "visible" -> {
+                    "support", "visible" -> {
                         if (executeResultRoot(context, attrValue) != "1") {
                             actionParamInfo.supported = false
                         }
                     }
-                    attrName == "multiple" -> {
+                    "multiple" -> {
                         actionParamInfo.multiple = attrValue == "multiple" || attrValue == "true" || attrValue == "1"
                     }
-                    attrName == "editable" -> {
+                    "editable" -> {
                         actionParamInfo.editable = attrValue == "editable" || attrValue == "true" || attrValue == "1"
                     }
-                    attrName == "separator" -> {
+                    "separator" -> {
                         actionParamInfo.separator = attrValue
                     }
                 }
@@ -340,7 +351,7 @@ class PageConfigReader {
                                 option.isFab = parser.getAttributeValue(i) == "fab"
                             }
                             "suffix" -> {
-                                val suffix = parser.getAttributeValue(i).toLowerCase().trim { it <= ' ' }
+                                val suffix = parser.getAttributeValue(i).lowercase(getDefault()).trim { it <= ' ' }
 
                                 if (option.mime.isEmpty()) {
                                     option.mime = Suffix2Mime().toMime(suffix)
@@ -566,7 +577,9 @@ class PageConfigReader {
     private fun tagEndInSwitch(switchNode: SwitchNode?, parser: XmlPullParser) {
         if (switchNode != null) {
             val shellResult = executeResultRoot(context, switchNode.getState)
-            switchNode.checked = shellResult != "error" && (shellResult == "1" || shellResult.toLowerCase() == "true")
+            switchNode.checked = shellResult != "error" && (shellResult == "1" || shellResult.lowercase(
+                getDefault()
+            ) == "true")
             if (switchNode.setState == null) {
                 switchNode.setState = ""
             }
@@ -574,16 +587,22 @@ class PageConfigReader {
     }
 
     private fun tagStartInText(textNode: TextNode, parser: XmlPullParser) {
-        if ("title" == parser.name) {
-            textNode.title = parser.nextText()
-        } else if ("desc" == parser.name) {
-            descNode(textNode, parser)
-        } else if ("summary" == parser.name) {
-            summaryNode(textNode, parser)
-        } else if ("slice" == parser.name) {
-            rowNode(textNode, parser)
-        } else if ("resource" == parser.name) {
-            resourceNode(parser)
+        when (parser.name) {
+            "title" -> {
+                textNode.title = parser.nextText()
+            }
+            "desc" -> {
+                descNode(textNode, parser)
+            }
+            "summary" -> {
+                summaryNode(textNode, parser)
+            }
+            "slice" -> {
+                rowNode(textNode, parser)
+            }
+            "resource" -> {
+                resourceNode(parser)
+            }
         }
     }
 
@@ -630,35 +649,44 @@ class PageConfigReader {
     }
 
     private fun tagStartInPicker(pickerNode: PickerNode, parser: XmlPullParser) {
-        if ("title" == parser.name) {
-            pickerNode.title = parser.nextText()
-        } else if ("desc" == parser.name) {
-            descNode(pickerNode, parser)
-        } else if ("summary" == parser.name) {
-            summaryNode(pickerNode, parser)
-        } else if ("option" == parser.name) {
-            if (pickerNode.options == null) {
-                pickerNode.options = ArrayList()
+        when (parser.name) {
+            "title" -> {
+                pickerNode.title = parser.nextText()
             }
-            val option = SelectItem()
-            for (i in 0 until parser.attributeCount) {
-                val attrName = parser.getAttributeName(i)
-                if (attrName == "val" || attrName == "value") {
-                    option.value = parser.getAttributeValue(i)
+            "desc" -> {
+                descNode(pickerNode, parser)
+            }
+            "summary" -> {
+                summaryNode(pickerNode, parser)
+            }
+            "option" -> {
+                if (pickerNode.options == null) {
+                    pickerNode.options = ArrayList()
                 }
+                val option = SelectItem()
+                for (i in 0 until parser.attributeCount) {
+                    val attrName = parser.getAttributeName(i)
+                    if (attrName == "val" || attrName == "value") {
+                        option.value = parser.getAttributeValue(i)
+                    }
+                }
+                option.title = parser.nextText()
+                if (option.value == null)
+                    option.value = option.title
+                pickerNode.options!!.add(option)
             }
-            option.title = parser.nextText()
-            if (option.value == null)
-                option.value = option.title
-            pickerNode.options!!.add(option)
-        } else if ("getstate" == parser.name || "get" == parser.name) {
-            pickerNode.getState = parser.nextText()
-        } else if ("setstate" == parser.name || "set" == parser.name) {
-            pickerNode.setState = parser.nextText()
-        } else if ("resource" == parser.name) {
-            resourceNode(parser)
-        } else if ("lock" == parser.name || "lock-state" == parser.name) {
-            pickerNode.lockShell = parser.nextText()
+            "getstate", "get" -> {
+                pickerNode.getState = parser.nextText()
+            }
+            "setstate", "set" -> {
+                pickerNode.setState = parser.nextText()
+            }
+            "resource" -> {
+                resourceNode(parser)
+            }
+            "lock", "lock-state" -> {
+                pickerNode.lockShell = parser.nextText()
+            }
         }
     }
 
@@ -685,6 +713,6 @@ class PageConfigReader {
             vitualRootNode = NodeInfoBase(pageConfigAbsPath)
         }
 
-        return ScriptEnvironmen.executeResultRoot(context, scriptIn, vitualRootNode);
+        return ScriptEnvironmen.executeResultRoot(context, scriptIn, vitualRootNode)
     }
 }

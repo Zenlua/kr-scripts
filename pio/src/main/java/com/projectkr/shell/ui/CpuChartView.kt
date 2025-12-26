@@ -139,7 +139,7 @@ class CpuChartView : View {
         }
         */
         cyclePaint!!.color = resources.getColor(R.color.colorAccent)
-        cyclePaint!!.alpha = (ratio * 255 / 100);
+        cyclePaint!!.alpha = (ratio * 255 / 100)
 
         if (ratio < 1 && (ratioState <= 2)) {
             return

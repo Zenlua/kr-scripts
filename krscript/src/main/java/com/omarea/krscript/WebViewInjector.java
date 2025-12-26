@@ -35,14 +35,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.UUID;
 
 public class WebViewInjector {
-    private WebView webView;
-    private Context context;
-    private ParamsFileChooserRender.FileChooserInterface fileChooser;
+    private final WebView webView;
+    private final Context context;
+    private final ParamsFileChooserRender.FileChooserInterface fileChooser;
 
     @SuppressLint("SetJavaScriptEnabled")
     public WebViewInjector(WebView webView, ParamsFileChooserRender.FileChooserInterface fileChooser) {
@@ -78,7 +79,7 @@ public class WebViewInjector {
                     } else {
                         DialogHelper.Companion.animDialog(new AlertDialog.Builder(context)
                                 .setTitle(R.string.kr_download_confirm)
-                                .setMessage("" + url + "\n\n" + mimetype + "\n" + contentLength + "Bytes")
+                                .setMessage(url + "\n\n" + mimetype + "\n" + contentLength + "Bytes")
                                 .setPositiveButton(R.string.btn_confirm, new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
@@ -207,16 +208,11 @@ public class WebViewInjector {
                             } else {
                                 message.put("absPath", path);
                             }
-                            webView.post(new Runnable() {
+                            webView.post(() -> webView.evaluateJavascript(callbackFunction + "(" + message + ")", new ValueCallback<String>() {
                                 @Override
-                                public void run() {
-                                    webView.evaluateJavascript(callbackFunction + "(" + message.toString() + ")", new ValueCallback<String>() {
-                                        @Override
-                                        public void onReceiveValue(String value) {
-                                        }
-                                    });
+                                public void onReceiveValue(String value) {
                                 }
-                            });
+                            }));
                         } catch (Exception ex) {
                         }
                     }
@@ -228,64 +224,48 @@ public class WebViewInjector {
         private void setHandler(Process process, final String callbackFunction, final Runnable onExit) {
             final InputStream inputStream = process.getInputStream();
             final InputStream errorStream = process.getErrorStream();
-            final Thread reader = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    String line;
-                    try {
-                        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-                        while ((line = bufferedReader.readLine()) != null) {
-                            try {
-                                final JSONObject message = new JSONObject();
-                                message.put("type", ShellHandlerBase.EVENT_REDE);
-                                message.put("message", line + "\n");
-                                webView.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        webView.evaluateJavascript(callbackFunction + "(" + message.toString() + ")", new ValueCallback<String>() {
-                                            @Override
-                                            public void onReceiveValue(String value) {
+            final Thread reader = new Thread(() -> {
+                String line;
+                try {
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+                    while ((line = bufferedReader.readLine()) != null) {
+                        try {
+                            final JSONObject message = new JSONObject();
+                            message.put("type", ShellHandlerBase.EVENT_REDE);
+                            message.put("message", line + "\n");
+                            webView.post(() -> webView.evaluateJavascript(callbackFunction + "(" + message + ")", new ValueCallback<String>() {
+                                @Override
+                                public void onReceiveValue(String value) {
 
-                                            }
-                                        });
-                                    }
-                                });
-                            } catch (Exception ex) {
-                            }
+                                }
+                            }));
+                        } catch (Exception ex) {
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             });
-            final Thread readerError = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    String line;
-                    try {
-                        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(errorStream, "UTF-8"));
-                        while ((line = bufferedReader.readLine()) != null) {
-                            try {
-                                final JSONObject message = new JSONObject();
-                                message.put("type", ShellHandlerBase.EVENT_READ_ERROR);
-                                message.put("message", line + "\n");
-                                webView.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        webView.evaluateJavascript(callbackFunction + "(" + message.toString() + ")", new ValueCallback<String>() {
-                                            @Override
-                                            public void onReceiveValue(String value) {
+            final Thread readerError = new Thread(() -> {
+                String line;
+                try {
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(errorStream, StandardCharsets.UTF_8));
+                    while ((line = bufferedReader.readLine()) != null) {
+                        try {
+                            final JSONObject message = new JSONObject();
+                            message.put("type", ShellHandlerBase.EVENT_READ_ERROR);
+                            message.put("message", line + "\n");
+                            webView.post(() -> webView.evaluateJavascript(callbackFunction + "(" + message + ")", new ValueCallback<String>() {
+                                @Override
+                                public void onReceiveValue(String value) {
 
-                                            }
-                                        });
-                                    }
-                                });
-                            } catch (Exception ex) {
-                            }
+                                }
+                            }));
+                        } catch (Exception ex) {
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             });
             final Process processFinal = process;
@@ -305,11 +285,8 @@ public class WebViewInjector {
                             webView.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    webView.evaluateJavascript(callbackFunction + "(" + message.toString() + ")", new ValueCallback<String>() {
-                                        @Override
-                                        public void onReceiveValue(String value) {
+                                    webView.evaluateJavascript(callbackFunction + "(" + message + ")", value -> {
 
-                                        }
                                     });
                                 }
                             });

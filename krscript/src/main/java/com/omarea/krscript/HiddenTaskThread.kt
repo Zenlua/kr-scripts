@@ -42,7 +42,7 @@ class HiddenTaskThread(private var process: Process) : Thread() {
 
         override fun onExit(msg: Any?) {
             isFinished = true
-            if (errorRows.size > 0) {
+            if (errorRows.isNotEmpty()) {
                 Toast.makeText(
                         context,
                         context.getString(R.string.kr_script_task_has_error) + "\n\n" +

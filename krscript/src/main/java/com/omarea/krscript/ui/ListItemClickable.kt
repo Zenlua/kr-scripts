@@ -9,7 +9,7 @@ import com.omarea.krscript.model.ClickableNode
 
 open class ListItemClickable(context: Context,
                              layoutId: Int,
-                             private val config: ClickableNode) : ListItemView(context, layoutId, config) {
+                             config: ClickableNode) : ListItemView(context, layoutId, config) {
     protected var mOnClickListener: OnClickListener? = null
     protected var mOnLongClickListener: OnLongClickListener? = null
     protected var shortcutIconView = layout.findViewById<View?>(R.id.kr_shortcut_icon)
