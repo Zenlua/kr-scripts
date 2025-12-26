@@ -25,7 +25,7 @@ class ShellTranslation(val context: Context) {
         if (separator != null) {
             val row = originRow.trim()
             val resources = context.resources
-            val type = row.substring(1, row.indexOf(separator)).toLowerCase(Locale.ENGLISH)
+            val type = row.substring(1, row.indexOf(separator)).lowercase(Locale.ENGLISH)
             val name = row.substring(row.indexOf(separator) + 1)
 
             try {
@@ -38,7 +38,7 @@ class ShellTranslation(val context: Context) {
                         return resources.getDimension(id).toString()
                     }
                 }
-            } catch (ex: Exception) {
+            } catch (_: Exception) {
                 if (row.contains("[(") && row.contains(")]")) {
                     return row.substring(row.indexOf("[(") + 2, row.indexOf(")]"))
                 }
@@ -64,10 +64,10 @@ class ShellTranslation(val context: Context) {
     fun getTranslatedResult(shellCommand: String, executor: KeepShell?): String {
         val shell = executor?: KeepShellPublic.getDefaultInstance()
         val rows = shell.doCmdSync(shellCommand).split("\n")
-        if (rows.isNotEmpty()) {
-            return resolveRows(rows)
+        return if (rows.isNotEmpty()) {
+            resolveRows(rows)
         } else {
-            return ""
+            ""
         }
     }
 }
