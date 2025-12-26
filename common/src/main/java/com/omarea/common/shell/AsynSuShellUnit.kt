@@ -15,7 +15,7 @@ class AsynSuShellUnit(var handler: Handler) {
             if (process == null)
                 process = ShellExecutor.getSuperUserRuntime()
 
-            Thread(Runnable {
+            Thread {
                 try {
                     var line: String
                     val reader = process!!.inputStream.bufferedReader()
@@ -33,8 +33,8 @@ class AsynSuShellUnit(var handler: Handler) {
                 } catch (ex: Exception) {
                     print(ex.message)
                 }
-            }).start()
-            Thread(Runnable {
+            }.start()
+            Thread {
                 try {
                     var line: String
                     val reader = process!!.errorStream.bufferedReader()
@@ -46,7 +46,7 @@ class AsynSuShellUnit(var handler: Handler) {
                 } catch (ex: Exception) {
                     print(ex.message)
                 }
-            }).start()
+            }.start()
             handler.sendMessage(handler.obtainMessage(0, true))
         } catch (ex: Exception) {
             handler.sendMessage(handler.obtainMessage(0, false))
@@ -90,14 +90,14 @@ class AsynSuShellUnit(var handler: Handler) {
         writer.write("exit\nexit\nexit\n")
         writer.write("\n\n")
         writer.flush()
-        Thread(Runnable {
+        Thread {
             if (process!!.waitFor() == 0) {
                 handler.sendMessage(handler.obtainMessage(10, true))
             } else {
                 handler.sendMessage(handler.obtainMessage(10, false))
             }
             destroy()
-        }).start()
+        }.start()
     }
 
     fun waitFor(next: Runnable) {
@@ -109,11 +109,11 @@ class AsynSuShellUnit(var handler: Handler) {
         writer.write("exit\nexit\nexit\n")
         writer.write("\n\n")
         writer.flush()
-        Thread(Runnable {
+        Thread {
             process!!.waitFor()
             destroy()
             handler.sendMessage(handler.obtainMessage(10, true))
             next.run()
-        }).start()
+        }.start()
     }
 }

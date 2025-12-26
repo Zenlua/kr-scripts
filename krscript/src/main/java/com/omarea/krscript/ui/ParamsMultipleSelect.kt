@@ -55,7 +55,7 @@ class ParamsMultipleSelect(private val actionParamInfo: ActionParamInfo, private
             }
         }
         val resultValueStr = "" + resultValues.joinToString(actionParamInfo.separator)
-        val resultLabelStr = if (resultLables.size > 0) "" + resultLables.joinToString("，") else ""
+        val resultLabelStr = if (resultLables.isNotEmpty()) "" + resultLables.joinToString("，") else ""
 
         textView.text = resultLabelStr
         valueView.text = resultValueStr

@@ -30,7 +30,7 @@ public class ShellExecutor {
                     process.destroy();
 
                     String path = new String(cache, 0, length).trim();
-                    if (path.length() > 0) {
+                    if (!path.isEmpty()) {
                         defaultEnvPath = path;
                     } else {
                         throw new RuntimeException("未能获取到$PATH参数");

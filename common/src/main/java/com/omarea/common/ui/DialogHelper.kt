@@ -9,19 +9,21 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
-import android.util.Log
-import android.view.*
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.Window
+import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatDelegate
 import com.omarea.common.R
 
 class DialogHelper {
-    class DialogButton(public val text: String, public val onClick: Runnable? = null, public val dismiss: Boolean = true) {
-    }
+    class DialogButton(public val text: String, public val onClick: Runnable? = null, public val dismiss: Boolean = true)
 
     class DialogWrap(private val d: AlertDialog) {
-        public val context = dialog.context
+        public val context: Context = dialog.context
         private var mCancelable = true
         public val isCancelable: Boolean
             get () {
@@ -62,7 +64,7 @@ class DialogHelper {
 
         public val isShowing: Boolean
             get() {
-                return d.isShowing()
+                return d.isShowing
             }
     }
 
@@ -94,7 +96,7 @@ class DialogHelper {
             val layoutInflater = LayoutInflater.from(context)
             val dialog = layoutInflater.inflate(R.layout.dialog_help_info, null)
 
-            (dialog.findViewById(R.id.confirm_title) as TextView).run {
+            (dialog.findViewById<TextView>(R.id.confirm_title)!!).run {
                 if (title.isNotEmpty()) {
                     text = title
                     visibility = View.VISIBLE
@@ -103,7 +105,7 @@ class DialogHelper {
                 }
             }
 
-            (dialog.findViewById(R.id.confirm_message) as TextView).run {
+            (dialog.findViewById<TextView>(R.id.confirm_message)!!).run {
                 if (message.isNotEmpty()) {
                     text = message
                     visibility = View.VISIBLE
@@ -113,7 +115,7 @@ class DialogHelper {
             }
 
             val d = customDialog(context, dialog, onDismiss == null)
-            (dialog.findViewById(R.id.btn_confirm) as View).run {
+            (dialog.findViewById<View>(R.id.btn_confirm)!!).run {
                 if (onDismiss != null) {
                     d.setOnDismissListener {
                         onDismiss.run()
@@ -170,7 +172,7 @@ class DialogHelper {
                 if (title.isEmpty()) {
                     visibility = View.GONE
                 } else {
-                    setText(title)
+                    text = title
                 }
             }
 
@@ -178,7 +180,7 @@ class DialogHelper {
                 if (message.isEmpty()) {
                     visibility = View.GONE
                 } else {
-                    setText(message)
+                    text = message
                 }
             }
 
@@ -415,17 +417,20 @@ class DialogHelper {
         }
 
         private fun isNightMode(context: Context): Boolean {
-            val nightMode = AppCompatDelegate.getDefaultNightMode()
-            if (nightMode == AppCompatDelegate.MODE_NIGHT_YES) {
-                return true
-            } else if (
-                    nightMode == AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM ||
-                    nightMode == AppCompatDelegate.MODE_NIGHT_UNSPECIFIED
-            ) {
-                val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
-                return uiModeManager.nightMode == UiModeManager.MODE_NIGHT_YES
-            } else {
-                return false
+            when (AppCompatDelegate.getDefaultNightMode()) {
+                AppCompatDelegate.MODE_NIGHT_YES -> {
+                    return true
+                }
+
+                AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, AppCompatDelegate.MODE_NIGHT_UNSPECIFIED
+                    -> {
+                    val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+                    return uiModeManager.nightMode == UiModeManager.MODE_NIGHT_YES
+                }
+
+                else -> {
+                    return false
+                }
             }
         }
 

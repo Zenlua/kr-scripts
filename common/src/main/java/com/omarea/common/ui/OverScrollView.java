@@ -20,7 +20,6 @@ public class OverScrollView extends OverScrollScrollView {
         super(context, attrs, defStyle);
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public OverScrollView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
     }

@@ -1,9 +1,6 @@
 package com.omarea.common.ui
 
-import android.app.Dialog
 import android.content.Context
-import android.content.DialogInterface
-import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
@@ -22,7 +19,7 @@ class DialogItemChooserMini(
         private val multiple: Boolean = false) {
 
     companion object {
-        public fun singleChooser(context: Context, items: Array<String>, checkedItem: Int): DialogItemChooserMini {
+        fun singleChooser(context: Context, items: Array<String>, checkedItem: Int): DialogItemChooserMini {
             val options = ArrayList(items.map {
                 SelectItem().apply {
                     title = it
@@ -92,7 +89,7 @@ class DialogItemChooserMini(
                     }
 
                     override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                        (absListView.adapter as Filterable).getFilter().filter(if (s == null) "" else s.toString())
+                        (absListView.adapter as Filterable).filter.filter(s?.toString() ?: "")
                     }
                 })
             }
@@ -147,18 +144,18 @@ class DialogItemChooserMini(
         return this
     }
 
-    public fun setMessage(message: String): DialogItemChooserMini {
+    fun setMessage(message: String): DialogItemChooserMini {
         this.message = message
         updateMessage()
 
         return this
     }
 
-    public fun setMessage(resId: Int): DialogItemChooserMini {
+    fun setMessage(resId: Int): DialogItemChooserMini {
         return setMessage(context.getString(resId))
     }
 
-    public fun setCallback(callback: Callback?): DialogItemChooserMini {
+    fun setCallback(callback: Callback?): DialogItemChooserMini {
         this.callback = callback
 
         return this

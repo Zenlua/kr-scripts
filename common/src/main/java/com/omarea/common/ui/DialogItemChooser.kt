@@ -11,7 +11,7 @@ import com.omarea.common.model.SelectItem
 
 class DialogItemChooser(
         // 是否深色模式
-        private val darkMode: Boolean,
+        darkMode: Boolean,
         // 选择项以及选中状态
         private var items: ArrayList<SelectItem>,
         // 是否可多选
@@ -19,7 +19,7 @@ class DialogItemChooser(
         // 回调
         private var callback: Callback? = null,
         // 是否永远显示为小窗口（而不是全屏）
-        private val alwaysSmallDialog: Boolean? = null
+        alwaysSmallDialog: Boolean? = null
 ) : DialogFullScreen(
         (if (items.size > 7 && alwaysSmallDialog != true) {
             R.layout.dialog_item_chooser
@@ -71,12 +71,12 @@ class DialogItemChooser(
                     override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
                     override fun afterTextChanged(s: Editable?) {
                         if (s != null) {
-                            clearBtn.visibility = if (s.length > 0) View.VISIBLE else View.GONE
+                            clearBtn.visibility = if (s.isNotEmpty()) View.VISIBLE else View.GONE
                         }
                     }
 
                     override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                        (absListView.adapter as Filterable).getFilter().filter(if (s == null) "" else s.toString())
+                        (absListView.adapter as Filterable).filter.filter(s?.toString() ?: "")
                     }
                 })
             }
@@ -119,14 +119,14 @@ class DialogItemChooser(
         }
     }
 
-    public fun setTitle(title: String): DialogItemChooser {
+    fun setTitle(title: String): DialogItemChooser {
         this.title = title
         updateTitle()
 
         return this
     }
 
-    public fun setMessage(message: String): DialogItemChooser {
+    fun setMessage(message: String): DialogItemChooser {
         this.message = message
         updateMessage()
 

@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import com.omarea.common.R
 
 
@@ -40,10 +39,10 @@ open class DialogFullScreen(private val layout: Int, private val darkMode: Boole
     private lateinit var currentView: View
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return Dialog(activity!!, if (themeResId != 0) themeResId else R.style.dialog_full_screen_light)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Dialog(activity!!, if (themeResId != 0) themeResId else R.style.dialog_full_screen_light)
         } else {
-            return Dialog(activity!!, -1)
+            Dialog(activity!!, -1)
         }
     }
 
@@ -66,7 +65,7 @@ open class DialogFullScreen(private val layout: Int, private val darkMode: Boole
         super.onActivityCreated(savedInstanceState)
     }
 
-    public fun closeView() {
+    fun closeView() {
         try {
             dismiss()
         } catch (ex: java.lang.Exception) {

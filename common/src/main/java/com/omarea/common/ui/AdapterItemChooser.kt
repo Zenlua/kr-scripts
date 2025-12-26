@@ -1,14 +1,16 @@
 package com.omarea.common.ui
 
 import android.content.Context
-import android.graphics.drawable.Drawable
-import android.util.LruCache
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.BaseAdapter
+import android.widget.CompoundButton
+import android.widget.Filter
+import android.widget.Filterable
+import android.widget.ImageView
+import android.widget.TextView
 import com.omarea.common.R
 import com.omarea.common.model.SelectItem
-import java.util.*
 
 class AdapterItemChooser(private val context: Context, private var items: ArrayList<SelectItem>, private val multiple: Boolean) : BaseAdapter(), Filterable {
     interface SelectStateListener {
@@ -31,13 +33,13 @@ class AdapterItemChooser(private val context: Context, private var items: ArrayL
         }
 
         override fun performFiltering(constraint: CharSequence?): FilterResults {
-            val results = Filter.FilterResults()
+            val results = FilterResults()
             val prefix: String = constraint?.toString() ?: ""
 
             if (prefix.isEmpty()) {
                 val list: ArrayList<SelectItem>
                 synchronized(adapter.mLock) {
-                    list = ArrayList<SelectItem>(adapter.items)
+                    list = ArrayList(adapter.items)
                 }
                 results.values = list
                 results.count = list.size
@@ -46,7 +48,7 @@ class AdapterItemChooser(private val context: Context, private var items: ArrayL
 
                 val values: ArrayList<SelectItem>
                 synchronized(adapter.mLock) {
-                    values = ArrayList<SelectItem>(adapter.items)
+                    values = ArrayList(adapter.items)
                 }
                 val selected = adapter.getSelectedItems()
 
@@ -64,7 +66,8 @@ class AdapterItemChooser(private val context: Context, private var items: ArrayL
                         if (valueText.contains(prefixString)) {
                             newValues.add(value)
                         } else {
-                            val words = valueText.split(" ".toRegex()).dropLastWhile({ it.isEmpty() }).toTypedArray()
+                            val words = valueText.split(" ".toRegex()).dropLastWhile { it.isEmpty() }
+                                .toTypedArray()
                             val wordCount = words.size
 
                             // Start at index 0, in case valueText starts with space(s)
@@ -123,7 +126,7 @@ class AdapterItemChooser(private val context: Context, private var items: ArrayL
             val visibleFirstPosi = listView.firstVisiblePosition
             val visibleLastPosi = listView.lastVisiblePosition
 
-            if (position >= visibleFirstPosi && position <= visibleLastPosi) {
+            if (position in visibleFirstPosi..visibleLastPosi) {
                 filterItems[position] = SelectItem
                 val view = listView.getChildAt(position - visibleFirstPosi)
                 updateRow(position, view)
@@ -187,7 +190,7 @@ class AdapterItemChooser(private val context: Context, private var items: ArrayL
         return items.map { it.selected }.toBooleanArray()
     }
 
-    inner class ViewHolder {
+    class ViewHolder {
         internal var itemTitle: TextView? = null
         internal var itemDesc: TextView? = null
         internal var imgView: ImageView? = null

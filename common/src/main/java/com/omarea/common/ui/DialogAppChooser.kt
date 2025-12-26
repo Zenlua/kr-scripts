@@ -69,7 +69,7 @@ class DialogAppChooser(
                     }
                 }
                 override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                    (absListView.adapter as Filterable).getFilter().filter(if (s == null) "" else s.toString())
+                    (absListView.adapter as Filterable).getFilter().filter(s?.toString() ?: "")
                 }
             })
         }
@@ -97,7 +97,7 @@ class DialogAppChooser(
         return this
     }
 
-    public fun setAllowAllSelect(allow: Boolean): DialogAppChooser {
+    fun setAllowAllSelect(allow: Boolean): DialogAppChooser {
         this.allowAllSelect = allow
         view?.findViewById<CompoundButton?>(R.id.select_all)?.visibility = if (allow) View.VISIBLE else View.GONE
 

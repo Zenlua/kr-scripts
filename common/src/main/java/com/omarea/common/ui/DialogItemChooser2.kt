@@ -47,12 +47,12 @@ class DialogItemChooser2(
                     override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
                     override fun afterTextChanged(s: Editable?) {
                         if (s != null) {
-                            clearBtn.visibility = if (s.length > 0) View.VISIBLE else View.GONE
+                            clearBtn.visibility = if (s.isNotEmpty()) View.VISIBLE else View.GONE
                         }
                     }
 
                     override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                        (absListView.adapter as Filterable).getFilter().filter(if (s == null) "" else s.toString())
+                        (absListView.adapter as Filterable).filter.filter(s?.toString() ?: "")
                     }
                 })
             }
@@ -95,14 +95,14 @@ class DialogItemChooser2(
         }
     }
 
-    public fun setTitle(title: String): DialogItemChooser2 {
+    fun setTitle(title: String): DialogItemChooser2 {
         this.title = title
         updateTitle()
 
         return this
     }
 
-    public fun setMessage(message: String): DialogItemChooser2 {
+    fun setMessage(message: String): DialogItemChooser2 {
         this.message = message
         updateMessage()
 

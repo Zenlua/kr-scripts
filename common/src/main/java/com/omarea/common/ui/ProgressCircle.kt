@@ -200,7 +200,7 @@ class ProgressCircle : View {
         cyclePaint!!.setPathEffect(dashPathEffect);
         */
 
-        cyclePaint!!.setStrokeCap(Paint.Cap.ROUND)
+        cyclePaint!!.strokeCap = Paint.Cap.ROUND
         if (ratio < 1 && (ratioState <= 2)) {
             return
         } else if (ratioState >= 98) {

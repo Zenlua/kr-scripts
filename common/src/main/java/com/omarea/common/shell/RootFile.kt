@@ -9,19 +9,19 @@ import com.omarea.common.shared.RootFileInfo
 
 object RootFile {
     fun itemExists(path: String): Boolean {
-        return KeepShellPublic.doCmdSync("if [[ -e \"$path\" ]]; then echo 1; fi;").equals("1")
+        return KeepShellPublic.doCmdSync("if [[ -e \"$path\" ]]; then echo 1; fi;") == "1"
     }
 
     fun fileExists(path: String): Boolean {
-        return KeepShellPublic.doCmdSync("if [[ -f \"$path\" ]]; then echo 1; fi;").equals("1")
+        return KeepShellPublic.doCmdSync("if [[ -f \"$path\" ]]; then echo 1; fi;") == "1"
     }
 
     fun fileNotEmpty(path: String): Boolean {
-        return KeepShellPublic.doCmdSync("if [[ -f \"$path\" ]] && [[ -s \"$path\" ]]; then echo 1; fi;").equals("1")
+        return KeepShellPublic.doCmdSync("if [[ -f \"$path\" ]] && [[ -s \"$path\" ]]; then echo 1; fi;") == "1"
     }
 
     fun dirExists(path: String): Boolean {
-        return KeepShellPublic.doCmdSync("if [[ -d \"$path\" ]]; then echo 1; fi;").equals("1")
+        return KeepShellPublic.doCmdSync("if [[ -d \"$path\" ]]; then echo 1; fi;") == "1"
     }
 
     fun deleteDirOrFile(path: String) {
@@ -30,10 +30,10 @@ object RootFile {
 
     // 通过MD5比对两个文件是否相同
     fun fileEquals(path1: String, path2: String): Boolean {
-        if (path1.equals(path2)) {
+        if (path1 == path2) {
             return true
         }
-        return KeepShellPublic.doCmdSync("if [[ -f \"$path1\" ]] && [[ -f \"$path2\" ]]; then\nif [[ `md5sum -b \"$path1\"` = `md5sum -b \"$path2\"` ]]; then\n echo 1\nfi\nfi").equals("1")
+        return KeepShellPublic.doCmdSync("if [[ -f \"$path1\" ]] && [[ -f \"$path2\" ]]; then\nif [[ `md5sum -b \"$path1\"` = `md5sum -b \"$path2\"` ]]; then\n echo 1\nfi\nfi") == "1"
     }
 
     // 处理像 "drwxrwx--x   3 root     root         4096 1970-07-14 17:13 vendor_de/" 这样的数据行
@@ -45,12 +45,12 @@ object RootFile {
         try {
             val file = RootFileInfo()
 
-            val columns = row.trim().split(" ");
+            val columns = row.trim().split(" ")
             val size = columns[0]
-            file.fileSize = size.toLong() * 1024;
+            file.fileSize = size.toLong() * 1024
 
             //  8 /data/adb/modules/scene_systemless/ => /data/adb/modules/scene_systemless/
-            val fileName = row.substring(row.indexOf(size) + size.length + 1);
+            val fileName = row.substring(row.indexOf(size) + size.length + 1)
 
             if (fileName == "./" || fileName == "../") {
                 return null
@@ -59,14 +59,14 @@ object RootFile {
             // -F  append /dir *exe @sym |FIFO
 
             if (fileName.endsWith("/")) {
-                file.filePath = fileName.substring(0, fileName.length - 1)
+                file.filePath = fileName.dropLast(1)
                 file.isDirectory = true
             } else if (fileName.endsWith("@")) {
-                file.filePath = fileName.substring(0, fileName.length - 1)
+                file.filePath = fileName.dropLast(1)
             } else if (fileName.endsWith("|")) {
-                file.filePath = fileName.substring(0, fileName.length - 1)
+                file.filePath = fileName.dropLast(1)
             } else if (fileName.endsWith("*")) {
-                file.filePath = fileName.substring(0, fileName.length - 1)
+                file.filePath = fileName.dropLast(1)
             } else {
                 file.filePath = fileName
             }
@@ -92,7 +92,7 @@ object RootFile {
                     if (file != null) {
                         files.add(file)
                     } else {
-                        Log.e(">>>> Scene", "MapDirError Row -> " + row)
+                        Log.e(">>>> Scene", "MapDirError Row -> $row")
                     }
                 }
             }
@@ -113,10 +113,10 @@ object RootFile {
                 val file = shellFileInfoRow(row, absPath)
                 if (file != null) {
                     file.filePath = absPath.substring(absPath.lastIndexOf("/") + 1)
-                    file.parentDir = absPath.substring(0, absPath.lastIndexOf("/"))
+                    file.parentDir = absPath.take(absPath.lastIndexOf("/"))
                     return file
                 } else {
-                    Log.e(">>>> Scene", "MapDirError Row -> " + row)
+                    Log.e(">>>> Scene", "MapDirError Row -> $row")
                 }
             }
         }
