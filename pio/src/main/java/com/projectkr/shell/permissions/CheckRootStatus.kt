@@ -58,7 +58,7 @@ public class CheckRootStatus(var context: Context, private var next: Runnable? =
                                     //android.os.Process.killProcess(android.os.Process.myPid())
                                 }
                         if (context.resources.getBoolean(R.bool.force_root) != true) {
-                            builder.setNeutralButton(R.string.btn_skip) { _, _ ->
+                            builder.setNeutralButton(com.omarea.krscript.R.string.btn_skip) { _, _ ->
                                 if (next != null) {
                                     myHandler.post(next)
                                 }
