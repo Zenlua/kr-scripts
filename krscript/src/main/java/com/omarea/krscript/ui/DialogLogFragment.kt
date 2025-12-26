@@ -29,7 +29,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
     private var binding: KrDialogLogBinding? = null
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): RelativeLayout? {
         // val view = inflater.inflate(R.layout.kr_dialog_log, container, false)
-        binding = KrDialogLogBinding.inflate(inflater, container, true)
+        binding = KrDialogLogBinding.inflate(layoutInflater, container, true)
         return binding?.root
     }
 
