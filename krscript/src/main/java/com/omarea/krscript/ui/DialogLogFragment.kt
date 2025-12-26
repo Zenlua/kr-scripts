@@ -33,7 +33,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
         savedInstanceState: Bundle?
     ): View? {
         // val view = inflater.inflate(R.layout.kr_dialog_log, container, false)
-        binding = KrDialogLogBinding.inflate(layoutInflater, container, true)
+        binding = KrDialogLogBinding.inflate(layoutInflater, container, false)
         return binding?.root
     }
 
