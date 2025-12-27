@@ -1,6 +1,5 @@
 package com.omarea.common.ui
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.os.Handler
 import android.os.Looper
@@ -51,10 +50,8 @@ open class ProgressBarDialog(private var context: Activity, private var uniqueId
         }
     }
 
-    @SuppressLint("InflateParams")
     fun execShell(cmd: String, handler: Handler? = null) {
         hideDialog()
-
         val layoutInflater = LayoutInflater.from(context)
         val dialog = layoutInflater.inflate(R.layout.dialog_loading, null)
         val textView: TextView = (dialog.findViewById(R.id.dialog_text))
@@ -93,7 +90,6 @@ open class ProgressBarDialog(private var context: Activity, private var uniqueId
         }
     }
 
-    @SuppressLint("InflateParams")
     fun showDialog(text: String = "正在加载，请稍等..."): ProgressBarDialog {
         if (textView != null && alert != null) {
             textView!!.text = text
