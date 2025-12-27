@@ -1,7 +1,6 @@
 package com.omarea.common.ui
 
 import android.animation.ValueAnimator
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -11,6 +10,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import com.omarea.common.R
+import androidx.core.content.withStyledAttributes
 
 class ProgressCircle : View {
     //-------------必须给的数据相关-------------
@@ -50,26 +50,24 @@ class ProgressCircle : View {
     private var mHeight: Int = 0
     private var mWidth: Int = 0
 
-    constructor(context: Context) : super(context) {}
+    constructor(context: Context) : super(context)
 
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
-        @SuppressLint("CustomViewStyleable")
-        val array = context.obtainStyledAttributes(attrs, R.styleable.ProgressState)
-        val total = array.getInteger(R.styleable.ProgressState_total, 1)
-        val current = array.getInteger(R.styleable.ProgressState_current, 1)
-        ratio = (current * 100.0 / total).toInt()
-        //strPercent = new int[]{100 - feeRatio, feeRatio};
-        array.recycle()
+        context.withStyledAttributes(attrs, R.styleable.ProgressState) {
+            val total = getInteger(R.styleable.ProgressState_total, 1)
+            val current = getInteger(R.styleable.ProgressState_current, 1)
+            ratio = (current * 100.0 / total).toInt()
+            //strPercent = new int[]{100 - feeRatio, feeRatio};
+        }
     }
 
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
-        @SuppressLint("CustomViewStyleable")
-        val array = context.obtainStyledAttributes(attrs, R.styleable.ProgressState)
-        val total = array.getInteger(R.styleable.ProgressState_total, 1)
-        val current = array.getInteger(R.styleable.ProgressState_current, 1)
-        ratio = (current * 100.0 / total).toInt()
-        //strPercent = new int[]{100 - feeRatio, feeRatio};
-        array.recycle()
+        context.withStyledAttributes(attrs, R.styleable.ProgressState) {
+            val total = getInteger(R.styleable.ProgressState_total, 1)
+            val current = getInteger(R.styleable.ProgressState_current, 1)
+            ratio = (current * 100.0 / total).toInt()
+            //strPercent = new int[]{100 - feeRatio, feeRatio};
+        }
     }
 
     /**

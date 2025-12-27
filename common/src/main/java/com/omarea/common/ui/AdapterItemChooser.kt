@@ -11,6 +11,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.omarea.common.R
 import com.omarea.common.model.SelectItem
+import java.util.Locale
+import java.util.Locale.getDefault
 
 class AdapterItemChooser(private val context: Context, private var items: ArrayList<SelectItem>, private val multiple: Boolean) : BaseAdapter(), Filterable {
     interface SelectStateListener {
@@ -44,7 +46,7 @@ class AdapterItemChooser(private val context: Context, private var items: ArrayL
                 results.values = list
                 results.count = list.size
             } else {
-                val prefixString = prefix.toLowerCase()
+                val prefixString = prefix.lowercase(getDefault())
 
                 val values: ArrayList<SelectItem>
                 synchronized(adapter.mLock) {
@@ -60,7 +62,9 @@ class AdapterItemChooser(private val context: Context, private var items: ArrayL
                     if (selected.contains(value)) {
                         newValues.add(value)
                     } else {
-                        val valueText = if (value.title == null) "" else value.title!!.toLowerCase()
+                        val valueText = if (value.title == null) "" else value.title!!.lowercase(
+                            getDefault()
+                        )
 
                         // First match against the whole, non-splitted value
                         if (valueText.contains(prefixString)) {

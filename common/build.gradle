@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 36
     namespace "com.omarea.common"
     viewBinding {
         enabled = true
@@ -29,9 +29,9 @@ android {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
     // implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.appcompat:appcompat:1.7.1'
     // testImplementation 'junit:junit:4.13-beta-3'
     // androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     // androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
