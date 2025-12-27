@@ -8,7 +8,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Build
 import android.os.Bundle
 import android.text.SpannableString
 import android.view.View
@@ -78,30 +77,19 @@ class BgTaskThread(private var process: Process) : Thread() {
                 notificationBuilder.setProgress(progressTotal, progressCurrent, progressTotal < 0)
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                notificationBuilder.setCustomBigContentView(expandView)
-            }
+            notificationBuilder.setCustomBigContentView(expandView)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                if (!channelCreated) {
-                    val channel = NotificationChannel(channelId, context.getString(R.string.kr_script_task_notification), NotificationManager.IMPORTANCE_DEFAULT)
-                    channel.enableLights(false)
-                    channel.enableVibration(false)
-                    channel.setSound(null, null)
-                    notificationManager.createNotificationChannel(channel)
-                }
-                channelCreated = true
-                notificationBuilder.setChannelId(channelId)
-            } else {
-                notificationBuilder.setSound(null)
-                notificationBuilder.setVibrate(null)
+            if (!channelCreated) {
+                val channel = NotificationChannel(channelId, context.getString(R.string.kr_script_task_notification), NotificationManager.IMPORTANCE_DEFAULT)
+                channel.enableLights(false)
+                channel.enableVibration(false)
+                channel.setSound(null, null)
+                notificationManager.createNotificationChannel(channel)
             }
+            channelCreated = true
+            notificationBuilder.setChannelId(channelId)
 
             val notification = notificationBuilder.build()
-
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                notification.bigContentView = expandView
-            }
 
             if (!isFinished) {
                 notification.flags = Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT
