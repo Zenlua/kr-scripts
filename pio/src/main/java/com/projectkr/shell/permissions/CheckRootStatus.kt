@@ -113,10 +113,8 @@ class CheckRootStatus(var context: Context, private var next: Runnable? = null) 
             }
             */
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (!checkPermission(context, Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)) {
-                    cmds.append("dumpsys deviceidle whitelist +${context.packageName};\n")
-                }
+            if (!checkPermission(context, Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)) {
+                cmds.append("dumpsys deviceidle whitelist +${context.packageName};\n")
             }
             KeepShellPublic.doCmdSync(cmds.toString())
         }
