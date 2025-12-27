@@ -7,7 +7,6 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Handler
 import com.google.android.material.snackbar.Snackbar
-import androidx.fragment.app.Fragment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -26,7 +25,7 @@ import kotlin.collections.HashMap
 
 class FragmentHome : androidx.fragment.app.Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
+                              savedInstanceState: Bundle?): View {
         binding = FragmentHomeBinding.inflate(
             layoutInflater, container, false
         )
@@ -48,29 +47,37 @@ class FragmentHome : androidx.fragment.app.Fragment() {
 
         binding.homeClearRam.setOnClickListener {
             binding.homeRaminfoText.text = getString(R.string.please_wait)
-            Thread(Runnable {
+            Thread {
                 KeepShellPublic.doCmdSync("sync\n" + "echo 3 > /proc/sys/vm/drop_caches\n" + "echo 1 > /proc/sys/vm/compact_memory")
                 myHandler.postDelayed({
                     try {
                         updateRamInfo()
-                        Toast.makeText(context, getString(R.string.monitor_cache_cleared), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            getString(R.string.monitor_cache_cleared),
+                            Toast.LENGTH_SHORT
+                        ).show()
                     } catch (ex: java.lang.Exception) {
                     }
                 }, 600)
-            }).start()
+            }.start()
         }
         binding.homeClearSwap.setOnClickListener {
             binding.homeZramsizeText.text = getString(R.string.please_wait)
-            Thread(Runnable {
+            Thread {
                 KeepShellPublic.doCmdSync("sync\n" + "echo 1 > /proc/sys/vm/compact_memory")
                 myHandler.postDelayed({
                     try {
                         updateRamInfo()
-                        Toast.makeText(context, getString(R.string.monitor_ram_cleared), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            getString(R.string.monitor_ram_cleared),
+                            Toast.LENGTH_SHORT
+                        ).show()
                     } catch (ex: java.lang.Exception) {
                     }
                 }, 600)
-            }).start()
+            }.start()
         }
     }
 
@@ -109,7 +116,7 @@ class FragmentHome : androidx.fragment.app.Fragment() {
         try {
             val info = ActivityManager.MemoryInfo()
             if (activityManager == null) {
-                activityManager = context!!.getSystemService(ACTIVITY_SERVICE) as ActivityManager
+                activityManager = requireContext().getSystemService(ACTIVITY_SERVICE) as ActivityManager
             }
             activityManager!!.getMemoryInfo(info)
             val totalMem = (info.totalMem / 1024 / 1024f).toInt()
@@ -121,8 +128,8 @@ class FragmentHome : androidx.fragment.app.Fragment() {
                 try {
                     val swapInfos = swapInfo.substring(swapInfo.indexOf(" "), swapInfo.lastIndexOf(" ")).trim()
                     if (Regex("[\\d]{1,}[\\s]{1,}[\\d]{1,}").matches(swapInfos)) {
-                        val total = swapInfos.substring(0, swapInfos.indexOf(" ")).trim().toInt()
-                        val use = swapInfos.substring(swapInfos.indexOf(" ")).trim().toInt()
+                        val total = swapInfos.substringBefore(" ").trim().toInt()
+                        val use = swapInfos.substringAfter(" ").trim().toInt()
                         val free = total - use
                         binding.homeSwapstateChat.setData(total.toFloat(), free.toFloat())
                         if (total > 99) {
@@ -154,12 +161,12 @@ class FragmentHome : androidx.fragment.app.Fragment() {
 
             core.currentFreq = CpuFrequencyUtils.getCurrentFrequency("cpu$coreIndex")
             if (!maxFreqs.containsKey(coreIndex) || (core.currentFreq != "" && maxFreqs.get(coreIndex).isNullOrEmpty())) {
-                maxFreqs.put(coreIndex, CpuFrequencyUtils.getCurrentMaxFrequency("cpu" + coreIndex))
+                maxFreqs[coreIndex] = CpuFrequencyUtils.getCurrentMaxFrequency("cpu$coreIndex")
             }
             core.maxFreq = maxFreqs.get(coreIndex)
 
             if (!minFreqs.containsKey(coreIndex) || (core.currentFreq != "" && minFreqs.get(coreIndex).isNullOrEmpty())) {
-                minFreqs.put(coreIndex, CpuFrequencyUtils.getCurrentMinFrequency("cpu" + coreIndex))
+                minFreqs[coreIndex] = CpuFrequencyUtils.getCurrentMinFrequency("cpu$coreIndex")
             }
             core.minFreq = minFreqs.get(coreIndex)
 
@@ -187,7 +194,7 @@ class FragmentHome : androidx.fragment.app.Fragment() {
                     if (cores.size < 6) {
                         binding.cpuCoreList.numColumns = 2
                     }
-                    binding.cpuCoreList.adapter = AdapterCpuCores(context!!, cores)
+                    binding.cpuCoreList.adapter = AdapterCpuCores(requireContext(), cores)
                 } else {
                     (binding.cpuCoreList.adapter as AdapterCpuCores).setData(cores)
                 }

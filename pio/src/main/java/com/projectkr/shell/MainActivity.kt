@@ -33,6 +33,7 @@ import com.omarea.vtools.FloatMonitor
 import com.projectkr.shell.databinding.ActivityMainBinding
 import com.projectkr.shell.permissions.CheckRootStatus
 import com.projectkr.shell.ui.TabIconHelper
+import androidx.core.view.isVisible
 
 class MainActivity : AppCompatActivity() {
     private val progressBarDialog = ProgressBarDialog(this)
@@ -246,7 +247,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 this.fileSelectedInterface = fileSelectedInterface
                 true
-            } catch (ex: java.lang.Exception) {
+            } catch (_: java.lang.Exception) {
                 false
             }
         }
@@ -293,7 +294,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main, menu)
 
-        menu.findItem(R.id.action_graph).isVisible = (binding.mainTabhostCpu.visibility == View.VISIBLE)
+        menu.findItem(R.id.action_graph).isVisible = (binding.mainTabhostCpu.isVisible)
 
         return true
     }
@@ -326,29 +327,24 @@ class MainActivity : AppCompatActivity() {
                     FloatMonitor(this).hidePopupWindow()
                     return false
                 }
-                if (Build.VERSION.SDK_INT >= 23) {
-                    if (Settings.canDrawOverlays(this)) {
-                        FloatMonitor(this).showPopupWindow()
-                        Toast.makeText(this, getString(R.string.float_monitor_tips), Toast.LENGTH_LONG).show()
-                    } else {
-                        //若没有权限，提示获取
-                        //val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
-                        //startActivity(intent);
-                        val intent = Intent()
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        intent.action = "android.settings.APPLICATION_DETAILS_SETTINGS"
-                        intent.data = Uri.fromParts("package", this.packageName, null)
-
-                        Toast.makeText(applicationContext, getString(R.string.permission_float), Toast.LENGTH_LONG).show()
-
-                        try {
-                            startActivity(intent)
-                        } catch (ex: Exception) {
-                        }
-                    }
-                } else {
+                if (Settings.canDrawOverlays(this)) {
                     FloatMonitor(this).showPopupWindow()
                     Toast.makeText(this, getString(R.string.float_monitor_tips), Toast.LENGTH_LONG).show()
+                } else {
+                    //若没有权限，提示获取
+                    //val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+                    //startActivity(intent);
+                    val intent = Intent()
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    intent.action = "android.settings.APPLICATION_DETAILS_SETTINGS"
+                    intent.data = Uri.fromParts("package", this.packageName, null)
+
+                    Toast.makeText(applicationContext, getString(R.string.permission_float), Toast.LENGTH_LONG).show()
+
+                    try {
+                        startActivity(intent)
+                    } catch (_: Exception) {
+                    }
                 }
             }
         }

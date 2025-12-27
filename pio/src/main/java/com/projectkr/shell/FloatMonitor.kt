@@ -54,11 +54,8 @@ class FloatMonitor(context: Context) {
 
         // 类型
         params.type = LayoutParams.TYPE_SYSTEM_ALERT
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {//6.0+
-            params.type = LayoutParams.TYPE_APPLICATION_OVERLAY
-        } else {
-            params.type = LayoutParams.TYPE_SYSTEM_ALERT
-        }
+        //6.0+
+        params.type = LayoutParams.TYPE_APPLICATION_OVERLAY
         params.format = PixelFormat.TRANSLUCENT
 
         params.width = LayoutParams.WRAP_CONTENT
