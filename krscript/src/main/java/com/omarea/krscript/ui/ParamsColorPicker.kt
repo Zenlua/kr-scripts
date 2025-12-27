@@ -2,7 +2,6 @@ package com.omarea.krscript.ui
 
 import android.content.Context
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
@@ -12,6 +11,8 @@ import androidx.appcompat.app.AlertDialog
 import com.omarea.common.ui.DialogHelper
 import com.omarea.krscript.R
 import com.omarea.krscript.model.ActionParamInfo
+import androidx.core.graphics.toColorInt
+import androidx.core.graphics.drawable.toDrawable
 
 class ParamsColorPicker(private val actionParamInfo: ActionParamInfo, private val context: Context) {
     fun render(): View {
@@ -47,11 +48,11 @@ class ParamsColorPicker(private val actionParamInfo: ActionParamInfo, private va
 
     private fun updateColorPreview(textView: TextView, invalidView: ImageView, preview: View, colorStr: String): Boolean {
         try {
-            val color = Color.parseColor(colorStr)
+            val color = colorStr.toColorInt()
             // textView.setBackgroundColor(Color.TRANSPARENT)
             invalidView.visibility = View.GONE
             preview.visibility = View.VISIBLE
-            preview.background = ColorDrawable(color)
+            preview.background = color.toDrawable()
             return true
         } catch (ex: Exception) {
             // textView.setBackgroundColor(Color.RED)
@@ -64,7 +65,7 @@ class ParamsColorPicker(private val actionParamInfo: ActionParamInfo, private va
     private fun currentColor(colorStr: CharSequence?): Int {
         if (colorStr != null && colorStr.isNotEmpty()) {
             try {
-                return Color.parseColor(colorStr.toString())
+                return colorStr.toString().toColorInt()
             } catch (ex: Exception) {
             }
         }
@@ -114,7 +115,7 @@ class ParamsColorPicker(private val actionParamInfo: ActionParamInfo, private va
                     try {
                         textView.text = parseHexStr(alphaBar.progress, redBar.progress, greenBar.progress, blueBar.progress)
                         invalidView.visibility = View.GONE
-                        preview.background = ColorDrawable(color)
+                        preview.background = color.toDrawable()
                     } catch (ex: Exception) {
                     }
                     // Integer.toHexString(color) // "argb(${alphaBar.progress}, ${redBar.progress}, ${greenBar.progress}, ${blueBar.progress}, )"

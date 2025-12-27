@@ -249,7 +249,7 @@ class DialogHelper {
             if (onCancel != null) {
                 btnCancel?.text = onCancel.text
             }
-            btnCancel.setOnClickListener {
+            btnCancel?.setOnClickListener {
                 if (onCancel != null) {
                     if (onCancel.dismiss) {
                         dialog.dismiss()
@@ -480,7 +480,7 @@ class DialogHelper {
                             val d = bg.toDrawable()
                             setBackgroundDrawable(d)
                         }
-                    } catch (ex: java.lang.Exception) {
+                    } catch (_: java.lang.Exception) {
                         val d = Color.argb(255, 245, 245, 245).toDrawable()
                         setBackgroundDrawable(d)
                     }

@@ -207,7 +207,7 @@ class ActionPageOnline : AppCompatActivity() {
                     } else {
                         return super.shouldOverrideUrlLoading(view, request)
                     }
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     return super.shouldOverrideUrlLoading(view, request)
                 }
             }
@@ -263,7 +263,7 @@ class ActionPageOnline : AppCompatActivity() {
     private fun getPath(uri: Uri): String? {
         return try {
             FilePathResolver().getPath(this, uri)
-        } catch (ex: java.lang.Exception) {
+        } catch (_: java.lang.Exception) {
             null
         }
     }
@@ -335,7 +335,7 @@ class ActionPageOnline : AppCompatActivity() {
                             if (!absPath.isEmpty()) {
                                 fileName = absPath
                             }
-                        } catch (ex: java.lang.Exception) {
+                        } catch (_: java.lang.Exception) {
                         }
                     }
 
