@@ -129,8 +129,8 @@ public class PathScroller {
 
 		// This governs how accurate the approximation of the Path is.
 		private static final float PRECISION = 0.002f;
-		private float[] mX;// x coordinates in the line
-		private float[] mY;// y coordinates in the line
+		private final float[] mX;// x coordinates in the line
+		private final float[] mY;// y coordinates in the line
 
 		/**
 		 * PathPointsHolder x∈[0,1],y∈[-infinite,+infinite]

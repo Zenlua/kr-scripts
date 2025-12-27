@@ -1,9 +1,7 @@
 package com.omarea.overscroll;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.hardware.SensorManager;
-import android.util.FloatMath;
 import android.util.Log;
 import android.view.ViewConfiguration;
 import android.view.animation.AnimationUtils;

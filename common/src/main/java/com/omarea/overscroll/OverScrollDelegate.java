@@ -11,7 +11,6 @@ import android.view.ViewConfiguration;
 import android.view.ViewParent;
 
 import androidx.core.view.MotionEventCompat;
-import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.omarea.overscroll.PathScroller.PathPointsHolder;
@@ -319,7 +318,7 @@ public class OverScrollDelegate {
 	}
 
 	private boolean onInterceptTouchEventInternal(MotionEvent event) {
-		final int action = MotionEventCompat.getActionMasked(event);
+		final int action = event.getActionMasked();
 		switch (action) {
 		case MotionEvent.ACTION_DOWN:
 			log("onInterceptTouchEvent -> ACTION_DOWN");
@@ -346,7 +345,7 @@ public class OverScrollDelegate {
 				Log.e(LOG_TAG, "Got ACTION_MOVE event but don't have an active pointer id.");
 				break;
 			}
-			final int pointerIndex = MotionEventCompat.findPointerIndex(event, mActivePointerId);
+			final int pointerIndex = event.findPointerIndex(mActivePointerId);
 			if (pointerIndex == -1) {
 				Log.e(LOG_TAG, "Invalid pointerId=" + mActivePointerId + " in onInterceptTouchEvent");
 				break;
@@ -412,7 +411,7 @@ public class OverScrollDelegate {
 
 	private boolean onTouchEventInternal(MotionEvent event) {
 		// log("onTouchEvent->" + ev.toString());
-		final int action = MotionEventCompat.getActionMasked(event);
+		final int action = event.getActionMasked();
 		switch (action) {
 		case MotionEvent.ACTION_DOWN:
 			log("onTouchEvent -> ACTION_DOWN");
@@ -432,7 +431,7 @@ public class OverScrollDelegate {
 				Log.e(LOG_TAG, "Got ACTION_MOVE event but have an invalid active pointer id.");
 				break;
 			}
-			final float y = MotionEventCompat.getY(event, pointerIndex);
+			final float y = event.getY(pointerIndex);
 			// final float x = ev.getX(pointerIndex);
 			final float yDiff = y - mLastMotionY;
 			// final float xDiff = x - mLastMotionX;
@@ -507,10 +506,10 @@ public class OverScrollDelegate {
 			break;
 		}
 		case MotionEventCompat.ACTION_POINTER_DOWN: {
-			final int index = MotionEventCompat.getActionIndex(event);
-			mLastMotionY = MotionEventCompat.getY(event, index);
+			final int index = event.getActionIndex();
+			mLastMotionY = event.getY(index);
 			// mLastMotionX = MotionEventCompat.getX(ev, index);
-			mActivePointerId = MotionEventCompat.getPointerId(event, index);
+			mActivePointerId = event.getPointerId(index);
 			break;
 		}
 
