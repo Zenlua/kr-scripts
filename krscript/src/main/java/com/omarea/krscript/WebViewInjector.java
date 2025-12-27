@@ -5,12 +5,9 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.webkit.DownloadListener;
 import android.webkit.JavascriptInterface;
-import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Toast;
@@ -68,30 +65,19 @@ public class WebViewInjector {
                     new KrScriptEngine(context),
                     "KrScriptCore" // 由于类名会被混淆，写死吧... KrScriptEngine.class.getSimpleName()
             );
-            webView.setDownloadListener(new DownloadListener() {
-                @Override
-                public void onDownloadStart(final String url, String userAgent, final String contentDisposition, final String mimetype, long contentLength) {
-                    if (
-                            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                                    context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                        activity.requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 2);
-                        Toast.makeText(context, R.string.kr_write_external_storage, Toast.LENGTH_LONG).show();
-                    } else {
-                        DialogHelper.Companion.animDialog(new AlertDialog.Builder(context)
-                                .setTitle(R.string.kr_download_confirm)
-                                .setMessage(url + "\n\n" + mimetype + "\n" + contentLength + "Bytes")
-                                .setPositiveButton(R.string.btn_confirm, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                    new Downloader(context, null).downloadBySystem(url, contentDisposition, mimetype, UUID.randomUUID().toString(), null);
-                                    }
-                                })
-                                .setNegativeButton(R.string.btn_cancel, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                    }
-                                })).setCancelable(false);
-                    }
+            webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
+                if (
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                                context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    activity.requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 2);
+                    Toast.makeText(context, R.string.kr_write_external_storage, Toast.LENGTH_LONG).show();
+                } else {
+                    DialogHelper.Companion.animDialog(new AlertDialog.Builder(context)
+                            .setTitle(R.string.kr_download_confirm)
+                            .setMessage(url + "\n\n" + mimetype + "\n" + contentLength + "Bytes")
+                            .setPositiveButton(R.string.btn_confirm, (dialog, which) -> new Downloader(context, null).downloadBySystem(url, contentDisposition, mimetype, UUID.randomUUID().toString(), null))
+                            .setNegativeButton(R.string.btn_cancel, (dialog, which) -> {
+                            })).setCancelable(false);
                 }
             });
         }
@@ -208,10 +194,7 @@ public class WebViewInjector {
                             } else {
                                 message.put("absPath", path);
                             }
-                            webView.post(() -> webView.evaluateJavascript(callbackFunction + "(" + message + ")", new ValueCallback<String>() {
-                                @Override
-                                public void onReceiveValue(String value) {
-                                }
+                            webView.post(() -> webView.evaluateJavascript(callbackFunction + "(" + message + ")", value -> {
                             }));
                         } catch (Exception ex) {
                         }
@@ -233,11 +216,8 @@ public class WebViewInjector {
                             final JSONObject message = new JSONObject();
                             message.put("type", ShellHandlerBase.EVENT_REDE);
                             message.put("message", line + "\n");
-                            webView.post(() -> webView.evaluateJavascript(callbackFunction + "(" + message + ")", new ValueCallback<String>() {
-                                @Override
-                                public void onReceiveValue(String value) {
+                            webView.post(() -> webView.evaluateJavascript(callbackFunction + "(" + message + ")", value -> {
 
-                                }
                             }));
                         } catch (Exception ex) {
                         }
@@ -255,11 +235,8 @@ public class WebViewInjector {
                             final JSONObject message = new JSONObject();
                             message.put("type", ShellHandlerBase.EVENT_READ_ERROR);
                             message.put("message", line + "\n");
-                            webView.post(() -> webView.evaluateJavascript(callbackFunction + "(" + message + ")", new ValueCallback<String>() {
-                                @Override
-                                public void onReceiveValue(String value) {
+                            webView.post(() -> webView.evaluateJavascript(callbackFunction + "(" + message + ")", value -> {
 
-                                }
                             }));
                         } catch (Exception ex) {
                         }
@@ -269,39 +246,31 @@ public class WebViewInjector {
                 }
             });
             final Process processFinal = process;
-            Thread waitExit = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    int status = -1;
+            Thread waitExit = new Thread(() -> {
+                int status = -1;
+                try {
+                    status = processFinal.waitFor();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
                     try {
-                        status = processFinal.waitFor();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    } finally {
-                        try {
-                            final JSONObject message = new JSONObject();
-                            message.put("type", ShellHandlerBase.EVENT_EXIT);
-                            message.put("message", "" + status);
-                            webView.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    webView.evaluateJavascript(callbackFunction + "(" + message + ")", value -> {
+                        final JSONObject message = new JSONObject();
+                        message.put("type", ShellHandlerBase.EVENT_EXIT);
+                        message.put("message", "" + status);
+                        webView.post(() -> webView.evaluateJavascript(callbackFunction + "(" + message + ")", value -> {
 
-                                    });
-                                }
-                            });
-                        } catch (Exception ex) {
-                        }
+                        }));
+                    } catch (Exception ex) {
+                    }
 
-                        if (reader.isAlive()) {
-                            reader.interrupt();
-                        }
-                        if (readerError.isAlive()) {
-                            readerError.interrupt();
-                        }
-                        if (onExit != null) {
-                            onExit.run();
-                        }
+                    if (reader.isAlive()) {
+                        reader.interrupt();
+                    }
+                    if (readerError.isAlive()) {
+                        readerError.interrupt();
+                    }
+                    if (onExit != null) {
+                        onExit.run();
                     }
                 }
             });
