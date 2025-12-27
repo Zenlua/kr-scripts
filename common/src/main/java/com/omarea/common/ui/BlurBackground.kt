@@ -81,7 +81,7 @@ class BlurBackground(private val activity: Activity) {
 
     private fun blur(bitmap: Bitmap?): Bitmap? {
         //使用RenderScript对图片进行高斯模糊处理
-        val output = Bitmap.createBitmap(bitmap) // 创建输出图片
+        val output = bitmap?.let { Bitmap.createBitmap(it) } // 创建输出图片
         val rs: RenderScript = RenderScript.create(activity) // 构建一个RenderScript对象
         val gaussianBlue: ScriptIntrinsicBlur = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs)) //
         // 创建高斯模糊脚本
@@ -103,7 +103,7 @@ class BlurBackground(private val activity: Activity) {
 
             bp = blur(bp) //对屏幕截图模糊处理
             //将模糊处理后的图恢复到原图尺寸并显示出来
-            bp = Bitmap.createScaledBitmap(bp, originalW, originalH, false)
+            bp = bp?.let { Bitmap.createScaledBitmap(it, originalW, originalH, false) }
             setImageBitmap(bp)
             visibility = View.VISIBLE
             //防止UI线程阻塞，在子线程中让背景实现淡入效果

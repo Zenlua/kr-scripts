@@ -44,7 +44,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
     private var themeResId: Int = 0
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return Dialog(activity!!, if (themeResId != 0) themeResId else R.style.kr_full_screen_dialog_light)
+        return Dialog(requireActivity(), if (themeResId != 0) themeResId else R.style.kr_full_screen_dialog_light)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -93,9 +93,9 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
 
         binding?.btnCopy?.setOnClickListener {
             try {
-                val myClipboard: ClipboardManager = this.context!!.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val myClipboard: ClipboardManager = this.requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val myClip: ClipData = ClipData.newPlainText("text", binding?.shellOutput?.text.toString())
-                myClipboard.primaryClip = myClip
+                myClipboard.setPrimaryClip(myClip)
                 Toast.makeText(context, getString(R.string.copy_success), Toast.LENGTH_SHORT).show()
             } catch (ex: Exception) {
                 Toast.makeText(context, getString(R.string.copy_fail), Toast.LENGTH_SHORT).show()

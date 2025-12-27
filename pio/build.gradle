@@ -7,6 +7,9 @@ android {
     viewBinding {
         enabled = true
     }
+    kotlin {
+        jvmToolchain(21)
+    }
     lint {
         baseline = file("lint-baseline.xml")
     }

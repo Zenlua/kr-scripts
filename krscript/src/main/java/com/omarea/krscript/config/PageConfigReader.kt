@@ -15,6 +15,7 @@ import com.omarea.krscript.executor.ScriptEnvironmen
 import com.omarea.krscript.model.*
 import org.xmlpull.v1.XmlPullParser
 import java.io.InputStream
+import java.util.Locale
 import java.util.Locale.getDefault
 
 /**
@@ -249,7 +250,7 @@ class PageConfigReader {
                     "value" -> actionParamInfo.value = attrValue
                     "type" -> actionParamInfo.type = attrValue.lowercase(getDefault()).trim { it <= ' ' }
                     "suffix" -> {
-                        val suffix = attrValue.toLowerCase().trim { it <= ' ' }
+                        val suffix = attrValue.lowercase(getDefault()).trim { it <= ' ' }
 
                         if (actionParamInfo.mime.isEmpty()) {
                             actionParamInfo.mime = Suffix2Mime().toMime(suffix)
@@ -258,10 +259,10 @@ class PageConfigReader {
                         actionParamInfo.suffix = suffix
                     }
                     "mime" -> {
-                        actionParamInfo.mime = attrValue.toLowerCase()
+                        actionParamInfo.mime = attrValue.lowercase(getDefault())
                     }
                     "readonly" -> {
-                        val value = attrValue.toLowerCase().trim { it <= ' ' }
+                        val value = attrValue.lowercase(getDefault()).trim { it <= ' ' }
                         actionParamInfo.readonly = (value == "readonly" || value == "true" || value == "1")
                     }
                     "maxlength" -> actionParamInfo.maxLength = Integer.parseInt(attrValue)
@@ -360,7 +361,7 @@ class PageConfigReader {
                                 option.suffix = suffix
                             }
                             "mime" -> {
-                                option.mime = parser.getAttributeValue(i).toLowerCase()
+                                option.mime = parser.getAttributeValue(i).lowercase(getDefault())
                             }
                         }
                     }
@@ -609,7 +610,7 @@ class PageConfigReader {
     private fun rowNode(textNode: TextNode, parser: XmlPullParser) {
         val textRow = TextNode.TextRow()
         for (i in 0 until parser.attributeCount) {
-            val attrName = parser.getAttributeName(i).toLowerCase()
+            val attrName = parser.getAttributeName(i).lowercase(getDefault())
             val attrValue = parser.getAttributeValue(i)
             try {
                 when (attrName) {

@@ -143,7 +143,7 @@ class AdapterAppChooser(
                     val installInfo = context.packageManager.getPackageInfo(packageName, 0)
                     iconCaches.put(
                             packageName,
-                            installInfo.applicationInfo.loadIcon(context.packageManager)
+                        installInfo.applicationInfo?.loadIcon(context.packageManager)
                     )
                 } catch (ex: Exception) {
                     app.notFound = true
