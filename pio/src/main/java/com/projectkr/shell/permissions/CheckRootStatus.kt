@@ -1,11 +1,11 @@
 package com.projectkr.shell.permissions
 
 import android.Manifest
-import android.app.AlertDialog
 import android.content.Context
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.PermissionChecker
 import com.omarea.common.shell.KeepShellPublic
 import com.omarea.common.ui.DialogHelper

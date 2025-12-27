@@ -3,14 +3,14 @@ package com.omarea.krscript;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 
 import com.omarea.common.shell.KeepShellPublic;
 import com.omarea.common.shell.ShellExecutor;
