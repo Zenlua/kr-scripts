@@ -1,7 +1,6 @@
 package com.omarea.krscript.executor;
 
 import android.content.Context;
-import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -11,6 +10,7 @@ import com.omarea.krscript.model.ShellHandlerBase;
 import java.io.DataOutputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.Objects;
 
 /**
  * Created by Hello on 2018/04/01.
@@ -67,18 +67,10 @@ public class ShellExecutor {
                     process.getErrorStream().close();
                 } catch (Exception ignored) {}
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    try {
-                        process.destroyForcibly();
-                    } catch (Exception ex) {
-                        Log.e("KrScriptError", ex.getMessage());
-                    }
-                } else {
-                    try {
-                        process.destroy();
-                    } catch (Exception ex) {
-                        Log.e("KrScriptError", ex.getMessage());
-                    }
+                try {
+                    process.destroyForcibly();
+                } catch (Exception ex) {
+                    Log.e("KrScriptError", Objects.requireNonNull(ex.getMessage()));
                 }
             }) : null;
             new SimpleShellWatcher().setHandler(context, process, shellHandlerBase, onExit);

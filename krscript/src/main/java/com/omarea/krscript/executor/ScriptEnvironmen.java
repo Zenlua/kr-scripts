@@ -331,7 +331,7 @@ public class ScriptEnvironmen {
         }
 
         String script2 = script.trim();
-        String cachePath = "";
+        String cachePath;
         if (script2.startsWith(ASSETS_FILE)) {
             cachePath = extractScript(context, script2);
             if (cachePath == null) {

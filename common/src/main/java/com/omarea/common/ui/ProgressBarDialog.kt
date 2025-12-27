@@ -45,7 +45,7 @@ open class ProgressBarDialog(private var context: Activity, private var uniqueId
                     alertDialog!!.hide()
                     Toast.makeText(alertDialog!!.context, R.string.execute_fail, Toast.LENGTH_LONG).show()
                 }
-            } catch (ex: Exception) {
+            } catch (_: Exception) {
             }
         }
     }
@@ -80,7 +80,7 @@ open class ProgressBarDialog(private var context: Activity, private var uniqueId
                 alert!!.hide()
                 alert = null
             }
-        } catch (ex: Exception) {
+        } catch (_: Exception) {
         }
 
         uniqueId?.run {
