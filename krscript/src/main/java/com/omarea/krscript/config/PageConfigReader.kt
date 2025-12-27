@@ -1,7 +1,6 @@
 package com.omarea.krscript.config
 
 import android.content.Context
-import android.graphics.Color
 import android.os.Build
 import android.os.Handler
 import android.os.Looper

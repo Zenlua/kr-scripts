@@ -6,7 +6,6 @@ import android.view.View
 import android.widget.CompoundButton
 import com.omarea.krscript.R
 import com.omarea.krscript.model.ActionParamInfo
-import java.util.Locale
 import java.util.Locale.getDefault
 
 class ParamsSwitch(private var actionParamInfo: ActionParamInfo, private var context: Context) {

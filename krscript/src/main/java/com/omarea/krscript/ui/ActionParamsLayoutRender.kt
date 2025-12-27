@@ -202,9 +202,9 @@ class ActionParamsLayoutRender(private var linearLayout: LinearLayout, activity:
                         try {
                             val value = text.toInt()
                             if (value < actionParamInfo.min) {
-                                throw Exception("${getFieldTips(actionParamInfo)} ${value} < ${actionParamInfo.min} !!!")
+                                throw Exception("${getFieldTips(actionParamInfo)} $value < ${actionParamInfo.min} !!!")
                             } else if (value > actionParamInfo.max) {
-                                throw Exception("${getFieldTips(actionParamInfo)} ${value} > ${actionParamInfo.max} !!!")
+                                throw Exception("${getFieldTips(actionParamInfo)} $value > ${actionParamInfo.max} !!!")
                             }
                         } catch (ex: java.lang.NumberFormatException) {
                         }

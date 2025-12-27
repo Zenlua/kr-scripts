@@ -10,7 +10,7 @@ import com.omarea.common.R
 import com.omarea.common.model.SelectItem
 
 class DialogItemChooser2(
-        private val darkMode: Boolean,
+        darkMode: Boolean,
         private var items: ArrayList<SelectItem>,
         private var selectedItems: ArrayList<SelectItem>,
         private val multiple: Boolean = false,

@@ -126,7 +126,7 @@ class RamChatView : View {
         }
 
         cyclePaint!!.color = resources.getColor(R.color.colorAccent)
-        cyclePaint!!.alpha = (ratio * 255 / 100);
+        cyclePaint!!.alpha = (ratio * 255 / 100)
 
         canvas.drawArc(RectF(0f, 0f, mRadius, mRadius), -90f, (ratioState * 3.6f) + 1f, false, cyclePaint!!)
         if (ratioState < ratio) {

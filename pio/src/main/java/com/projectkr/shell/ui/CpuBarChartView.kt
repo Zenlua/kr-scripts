@@ -66,9 +66,9 @@ class CpuChartBarView : View {
         var index = 0
         val barWidth = strokeWidth
         for (ratio in loadHisotry) {
-            mainPaint!!.alpha = (ratio * 255 / 100);
+            mainPaint!!.alpha = (ratio * 255 / 100)
 
-            var top = 0f
+            var top: Float
             if (ratio <= 2) {
                 top = mHeight - 10f
             } else if (ratio >= 98) {

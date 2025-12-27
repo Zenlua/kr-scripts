@@ -11,7 +11,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.omarea.common.R
 import com.omarea.common.model.SelectItem
-import java.util.Locale
 import java.util.Locale.getDefault
 
 class AdapterItemChooser(private val context: Context, private var items: ArrayList<SelectItem>, private val multiple: Boolean) : BaseAdapter(), Filterable {

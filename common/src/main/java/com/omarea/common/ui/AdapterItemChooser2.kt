@@ -7,7 +7,6 @@ import android.widget.*
 import com.omarea.common.R
 import com.omarea.common.model.SelectItem
 import java.util.*
-import java.util.Locale
 import java.util.Locale.getDefault
 
 class AdapterItemChooser2(
@@ -183,7 +182,7 @@ class AdapterItemChooser2(
         }.toBooleanArray()
     }
 
-    inner class ViewHolder {
+    class ViewHolder {
         internal var itemTitle: TextView? = null
         internal var itemDesc: TextView? = null
         internal var imgView: ImageView? = null

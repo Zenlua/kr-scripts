@@ -13,7 +13,7 @@ import android.widget.Filterable
 import com.omarea.common.R
 
 class DialogAppChooser(
-        private val darkMode: Boolean,
+        darkMode: Boolean,
         private var packages: ArrayList<AdapterAppChooser.AppInfo>,
         private val multiple: Boolean = false,
         private var callback: Callback? = null) : DialogFullScreen(R.layout.dialog_app_chooser, darkMode) {
@@ -88,7 +88,7 @@ class DialogAppChooser(
         fun onConfirm(apps: List<AdapterAppChooser.AppInfo>)
     }
 
-    public fun setExcludeApps(apps: Array<String>): DialogAppChooser {
+    fun setExcludeApps(apps: Array<String>): DialogAppChooser {
         this.excludeApps = apps
         if (this.view != null) {
             Log.e("@DialogAppChooser", "Unable to set the exclusion list, The list has been loaded")

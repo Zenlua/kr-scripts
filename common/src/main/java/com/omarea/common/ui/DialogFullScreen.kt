@@ -29,7 +29,7 @@ class DialogAppChooser(private val darkMode: Boolean): DialogFullScreen(R.layout
 }
 */
 
-open class DialogFullScreen(private val layout: Int, private val darkMode: Boolean) : androidx.fragment.app.DialogFragment() {
+open class DialogFullScreen(private val layout: Int, darkMode: Boolean) : androidx.fragment.app.DialogFragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         currentView = inflater.inflate(layout, container)
         return currentView

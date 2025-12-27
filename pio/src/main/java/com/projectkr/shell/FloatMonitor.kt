@@ -6,7 +6,6 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Point
-import android.os.Build
 import android.os.Handler
 import android.provider.Settings
 import android.view.*

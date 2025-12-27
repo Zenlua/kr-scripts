@@ -42,7 +42,7 @@ class DialogItemChooserMini(
     private var view: View? = null
     private var dialog:DialogHelper.DialogWrap? = null
 
-    public fun show(): DialogHelper.DialogWrap {
+    fun show(): DialogHelper.DialogWrap {
         if (dialog?.isShowing != true) {
             onViewCreated(createView())
             this.dialog = DialogHelper.customDialog(context, this.view!!)
@@ -133,11 +133,11 @@ class DialogItemChooserMini(
         }
     }
 
-    public fun setTitle(resId: Int): DialogItemChooserMini {
+    fun setTitle(resId: Int): DialogItemChooserMini {
         return setTitle(context.getString(resId))
     }
 
-    public fun setTitle(title: String): DialogItemChooserMini {
+    fun setTitle(title: String): DialogItemChooserMini {
         this.title = title
         updateTitle()
 

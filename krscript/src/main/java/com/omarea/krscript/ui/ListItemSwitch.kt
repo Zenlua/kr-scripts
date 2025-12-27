@@ -5,7 +5,6 @@ import android.widget.Switch
 import com.omarea.krscript.R
 import com.omarea.krscript.executor.ScriptEnvironmen
 import com.omarea.krscript.model.SwitchNode
-import java.util.Locale
 import java.util.Locale.getDefault
 
 class ListItemSwitch(private val context: Context,

@@ -9,7 +9,7 @@ import com.omarea.krscript.executor.ScriptEnvironmen
 import com.omarea.krscript.model.NodeInfoBase
 
 open class ListItemView(private val context: Context,
-                        private val layoutId: Int,
+                        layoutId: Int,
                         private val config: NodeInfoBase) {
     protected var layout = LayoutInflater.from(context).inflate(layoutId, null)
 

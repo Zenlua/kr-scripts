@@ -1,6 +1,5 @@
 package com.omarea.krscript.shortcut
 
-import android.annotation.TargetApi
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent

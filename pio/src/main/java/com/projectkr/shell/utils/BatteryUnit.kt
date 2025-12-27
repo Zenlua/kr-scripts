@@ -153,7 +153,7 @@ class BatteryUnit {
             POWER_SUPPLY_CC_STEP_SEL=0
             */ val batteryMAH: String
         get() {
-            var path = ""
+            var path: String
             if (RootFile.fileExists("/sys/class/power_supply/bms/uevent")) {
                 val batteryInfos = KernelProrp.getProp("/sys/class/power_supply/bms/uevent")
 
