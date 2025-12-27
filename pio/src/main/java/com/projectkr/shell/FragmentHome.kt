@@ -192,7 +192,7 @@ class FragmentHome : androidx.fragment.app.Fragment() {
                     (binding.cpuCoreList.adapter as AdapterCpuCores).setData(cores)
                 }
             } catch (ex: Exception) {
-                Log.e("Exception", ex.message)
+                ex.message?.let { Log.e("Exception", it) }
             }
         }
         updateTick++

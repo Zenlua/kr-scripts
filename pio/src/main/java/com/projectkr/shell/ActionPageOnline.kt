@@ -212,7 +212,7 @@ class ActionPageOnline : AppCompatActivity() {
             }
         }
 
-        binding.krOnlineWebview.loadUrl(url)
+        url?.let { binding.krOnlineWebview.loadUrl(it) }
 
         WebViewInjector(binding.krOnlineWebview,
                 object : ParamsFileChooserRender.FileChooserInterface {
@@ -292,7 +292,7 @@ class ActionPageOnline : AppCompatActivity() {
     /**
      * 监视下载进度
      */
-    private fun watchDownloadProgress(downloadId: Long, autoClose: Boolean, taskAliasId: String) {
+    private fun watchDownloadProgress(downloadId: Long, autoClose: Boolean, taskAliasId: String?) {
         binding.krDownloadState.visibility = View.VISIBLE
 
         val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
@@ -301,13 +301,13 @@ class ActionPageOnline : AppCompatActivity() {
         binding.krDownloadNameCopy.setOnClickListener {
             val myClipboard: ClipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
             val myClip = ClipData.newPlainText("text", binding.krDownloadName.text.toString())
-            myClipboard.primaryClip = myClip
+            myClipboard.setPrimaryClip(myClip)
             Toast.makeText(this@ActionPageOnline, getString(R.string.copy_success), Toast.LENGTH_SHORT).show()
         }
         binding.krDownloadUrlCopy.setOnClickListener {
             val myClipboard: ClipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
             val myClip = ClipData.newPlainText("text", binding.krDownloadUrl.text.toString())
-            myClipboard.primaryClip = myClip
+            myClipboard.setPrimaryClip(myClip)
             Toast.makeText(this@ActionPageOnline, getString(R.string.copy_success), Toast.LENGTH_SHORT).show()
         }
 

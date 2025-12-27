@@ -46,7 +46,7 @@ class ActivityFileSelector : AppCompatActivity() {
 
         intent.extras?.run {
             if (containsKey("extension")) {
-                extension = "" + intent.extras.getString("extension")
+                extension = "" + intent.extras?.getString("extension")
                 if (!extension.startsWith(".")) {
                     extension = ".$extension"
                 }

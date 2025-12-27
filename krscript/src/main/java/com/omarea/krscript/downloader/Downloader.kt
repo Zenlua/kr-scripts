@@ -30,11 +30,11 @@ class Downloader(private var context: Context, private var activity: Activity? =
     }
 
     fun downloadBySystem(
-            url: String,
-            contentDisposition: String?,
-            mimeType: String?,
-            taskAliasId: String,
-            fileName: String? = null): Long? {
+        url: String,
+        contentDisposition: String?,
+        mimeType: String?,
+        taskAliasId: String?,
+        fileName: String? = null): Long? {
         try {
             // 指定下载地址
             val request = DownloadManager.Request(Uri.parse(url))
@@ -64,7 +64,7 @@ class Downloader(private var context: Context, private var activity: Activity? =
             val downloadManager = context.getSystemService(DOWNLOAD_SERVICE) as DownloadManager
             // 添加一个下载任务
             val downloadId = downloadManager.enqueue(request)
-            if (taskAliasId.isNotEmpty()) {
+            if (taskAliasId?.isNotEmpty() ?: false) {
                 addTaskHisotry(downloadId, taskAliasId, url)
             }
             Toast.makeText(context, context.getString(R.string.kr_download_create_success), Toast.LENGTH_SHORT).show()
@@ -90,7 +90,7 @@ class Downloader(private var context: Context, private var activity: Activity? =
     }
 
     // 保存任务状态、进度
-    fun saveTaskStatus(taskAliasId: String, ratio: Int) {
+    fun saveTaskStatus(taskAliasId: String?, ratio: Int) {
         FileWrite.writePrivateFile(ratio.toString().toByteArray(Charset.defaultCharset()),
             "downloader/status/$taskAliasId", context)
     }

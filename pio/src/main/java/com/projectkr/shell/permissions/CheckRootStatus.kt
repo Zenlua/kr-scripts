@@ -23,9 +23,7 @@ class CheckRootStatus(var context: Context, private var next: Runnable? = null) 
     var therad: Thread? = null
     fun forceGetRoot() {
         if (lastCheckResult) {
-            if (next != null) {
-                myHandler.post(next)
-            }
+            next?.let { myHandler.post(it) }
         } else {
             var completed = false
             therad = Thread {
@@ -37,9 +35,7 @@ class CheckRootStatus(var context: Context, private var next: Runnable? = null) 
                 completed = true
 
                 if (lastCheckResult) {
-                    if (next != null) {
-                        myHandler.post(next)
-                    }
+                    next?.let { myHandler.post(it) }
                 } else {
                     myHandler.post {
                         KeepShellPublic.tryExit()
@@ -59,9 +55,7 @@ class CheckRootStatus(var context: Context, private var next: Runnable? = null) 
                                 }
                         if (!context.resources.getBoolean(R.bool.force_root)) {
                             builder.setNeutralButton(com.omarea.krscript.R.string.btn_skip) { _, _ ->
-                                if (next != null) {
-                                    myHandler.post(next)
-                                }
+                                next?.let { myHandler.post(it) }
                             }
                         }
                         DialogHelper.animDialog(builder).setCancelable(false)
