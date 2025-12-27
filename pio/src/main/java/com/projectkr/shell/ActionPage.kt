@@ -97,7 +97,7 @@ class ActionPage : AppCompatActivity() {
                                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 putExtra("config", page.onlineHtmlPage)
                             })
-                        } catch (ex: Exception) {
+                        } catch (_: Exception) {
                         }
                     }
 
@@ -168,7 +168,7 @@ class ActionPage : AppCompatActivity() {
             intent.putExtra("extension", extension)
             intent.putExtra("mode", ActivityFileSelector.MODE_FILE)
             startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER_INNER)
-        } catch (ex: Exception) {
+        } catch (_: Exception) {
             Toast.makeText(this, "启动内置文件选择器失败！", Toast.LENGTH_SHORT).show()
         }
     }
@@ -178,7 +178,7 @@ class ActionPage : AppCompatActivity() {
             val intent = Intent(this, ActivityFileSelector::class.java)
             intent.putExtra("mode", ActivityFileSelector.MODE_FOLDER)
             startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER_INNER)
-        } catch (ex: Exception) {
+        } catch (_: Exception) {
             Toast.makeText(this, "启动内置文件选择器失败！", Toast.LENGTH_SHORT).show()
         }
     }
@@ -342,7 +342,7 @@ class ActionPage : AppCompatActivity() {
                 }
                 this.fileSelectedInterface = fileSelectedInterface
                 true
-            } catch (ex: java.lang.Exception) {
+            } catch (_: java.lang.Exception) {
                 false
             }
         }
@@ -371,7 +371,7 @@ class ActionPage : AppCompatActivity() {
     private fun getPath(uri: Uri): String? {
         return try {
             FilePathResolver().getPath(this, uri)
-        } catch (ex: java.lang.Exception) {
+        } catch (_: java.lang.Exception) {
             null
         }
     }
@@ -412,7 +412,6 @@ class ActionPage : AppCompatActivity() {
                 if (pageConfigSh.isNotEmpty()) {
                     items = PageConfigSh(this@ActionPage, pageConfigSh, this).execute()
                 }
-
                 if (items == null && pageConfigPath.isNotEmpty()) {
                     items = PageConfigReader(
                         applicationContext,
@@ -496,7 +495,7 @@ class ActionPage : AppCompatActivity() {
                         task.setExcludeFromRecents(true)
                     }
                 }
-            } catch (ex: Exception) {
+            } catch (_: Exception) {
             }
         }
     }
