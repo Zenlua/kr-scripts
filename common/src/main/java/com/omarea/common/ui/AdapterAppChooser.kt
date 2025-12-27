@@ -9,7 +9,6 @@ import android.widget.*
 import com.omarea.common.R
 import kotlinx.coroutines.*
 import java.util.*
-import java.util.Locale
 import java.util.Locale.getDefault
 
 class AdapterAppChooser(
@@ -145,7 +144,7 @@ class AdapterAppChooser(
                             packageName,
                         installInfo.applicationInfo?.loadIcon(context.packageManager)
                     )
-                } catch (ex: Exception) {
+                } catch (_: Exception) {
                     app.notFound = true
                 } finally {
                 }
@@ -179,7 +178,7 @@ class AdapterAppChooser(
                 val view = listView.getChildAt(position - visibleFirstPosi)
                 updateRow(position, view)
             }
-        } catch (ex: Exception) {
+        } catch (_: Exception) {
         }
     }
 
