@@ -1,14 +1,11 @@
 package com.omarea.common.ui
 
 import android.app.Activity
-import android.app.AlertDialog
 import android.app.UiModeManager
 import android.content.Context
 import android.content.DialogInterface
 import android.graphics.Color
 import android.graphics.Rect
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.ColorDrawable
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -16,53 +13,55 @@ import android.view.Window
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import com.omarea.common.R
+import androidx.core.graphics.drawable.toDrawable
 
 class DialogHelper {
-    class DialogButton(public val text: String, public val onClick: Runnable? = null, public val dismiss: Boolean = true)
+    class DialogButton(val text: String, val onClick: Runnable? = null, val dismiss: Boolean = true)
 
     class DialogWrap(private val d: AlertDialog) {
-        public val context: Context = dialog.context
+        val context: Context = dialog.context
         private var mCancelable = true
-        public val isCancelable: Boolean
+        val isCancelable: Boolean
             get () {
                 return mCancelable
             }
 
-        public fun setCancelable(cancelable: Boolean): DialogWrap {
+        fun setCancelable(cancelable: Boolean): DialogWrap {
             mCancelable = cancelable
             d.setCancelable(cancelable)
 
             return this
         }
 
-        public fun setOnDismissListener(onDismissListener: DialogInterface.OnDismissListener): DialogWrap {
+        fun setOnDismissListener(onDismissListener: DialogInterface.OnDismissListener): DialogWrap {
             d.setOnDismissListener(onDismissListener)
 
             return this
         }
 
-        public val dialog: AlertDialog
+        val dialog: AlertDialog
             get() {
                 return d
             }
 
-        public fun dismiss() {
+        fun dismiss() {
             try {
                 d.dismiss()
-            } catch (ex: Exception) {
+            } catch (_: Exception) {
             }
         }
 
-        public fun hide() {
+        fun hide() {
             try {
                 d.hide()
-            } catch (ex: Exception) {
+            } catch (_: Exception) {
             }
         }
 
-        public val isShowing: Boolean
+        val isShowing: Boolean
             get() {
                 return d.isShowing
             }
@@ -70,7 +69,7 @@ class DialogHelper {
 
     companion object {
         // 是否禁用模糊背景
-        public var disableBlurBg = false
+        var disableBlurBg = false
 
         fun animDialog(dialog: AlertDialog?): DialogWrap? {
             if (dialog != null && !dialog.isShowing) {
@@ -455,7 +454,7 @@ class DialogHelper {
 
                 // window.setDimAmount(0f)
                 if (blurBitmap != null) {
-                    setBackgroundDrawable(BitmapDrawable(activity.resources, blurBitmap))
+                    setBackgroundDrawable(blurBitmap.toDrawable(activity.resources))
                 } else {
                     // setBackgroundDrawableResource(android.R.color.transparent)
                     try {
@@ -463,26 +462,26 @@ class DialogHelper {
                         if (bg == Color.TRANSPARENT) {
 
                             if (isFloating) {
-                                val d = ColorDrawable(bg)
+                                val d = bg.toDrawable()
                                 setBackgroundDrawable(d)
                                 setDimAmount(0.9f)
                                 return
                             } else {
                                 if (wallpaperMode || isNightMode(context)) {
-                                    val d = ColorDrawable(Color.argb(255, 18, 18, 18))
+                                    val d = Color.argb(255, 18, 18, 18).toDrawable()
                                     setBackgroundDrawable(d)
                                 } else {
-                                    val d = ColorDrawable(Color.argb(255, 245, 245, 245))
+                                    val d = Color.argb(255, 245, 245, 245).toDrawable()
                                     setBackgroundDrawable(d)
                                 }
                             }
 
                         } else {
-                            val d = ColorDrawable(bg)
+                            val d = bg.toDrawable()
                             setBackgroundDrawable(d)
                         }
                     } catch (ex: java.lang.Exception) {
-                        val d = ColorDrawable(Color.argb(255, 245, 245, 245))
+                        val d = Color.argb(255, 245, 245, 245).toDrawable()
                         setBackgroundDrawable(d)
                     }
                 }
