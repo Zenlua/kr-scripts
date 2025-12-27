@@ -45,7 +45,6 @@ class KeepShell(private var rootMode: Boolean = true) {
     }
 
     //获取ROOT超时时间
-    private val GET_ROOT_TIMEOUT = 20000L
     private val mLock = ReentrantLock()
     private val LOCK_TIMEOUT = 10000L
     private var enterLockTime = 0L
@@ -69,7 +68,7 @@ class KeepShell(private var rootMode: Boolean = true) {
 
     fun checkRoot(): Boolean {
         val r = doCmdSync(checkRootState).lowercase(Locale.getDefault())
-        return if (r == "error" || r.contains("permission denied") || r.contains("not allowed") || r.equals("not found")) {
+        return if (r == "error" || r.contains("permission denied") || r.contains("not allowed") || r == "not found") {
             if (rootMode) {
                 tryExit()
             }
@@ -157,12 +156,12 @@ class KeepShell(private var rootMode: Boolean = true) {
             }
 
             var unstart = true
-            while (true && reader != null) {
+            while (reader != null) {
                 val line = reader!!.readLine()
                 if (line == null) {
                     break
                 } else if (line.contains(endTag)) {
-                    shellOutputCache.append(line.substring(0, line.indexOf(endTag)))
+                    shellOutputCache.append(line.substringBefore(endTag))
                     break
                 } else if (line.contains(startTag)) {
                     shellOutputCache.clear()

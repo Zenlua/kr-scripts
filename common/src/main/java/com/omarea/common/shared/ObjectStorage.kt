@@ -19,7 +19,7 @@ open class ObjectStorage<T : Serializable>(private val context: Context) {
                 fileInputStream = FileInputStream(file)
                 objectInputStream = ObjectInputStream(fileInputStream)
                 return objectInputStream.readObject() as T?
-            } catch (ex: Exception) {
+            } catch (_: Exception) {
             } finally {
                 try {
                     objectInputStream?.close()
@@ -34,8 +34,10 @@ open class ObjectStorage<T : Serializable>(private val context: Context) {
     open fun save(obj: T?, configFile: String): Boolean {
         val file = File(getSaveDir(configFile))
         val parentFile = file.parentFile
-        if (!parentFile.exists()) {
-            parentFile.mkdirs()
+        if (parentFile != null) {
+            if (!parentFile.exists()) {
+                parentFile.mkdirs()
+            }
         }
         if (obj != null) {
             var fileOutputStream: FileOutputStream? = null
