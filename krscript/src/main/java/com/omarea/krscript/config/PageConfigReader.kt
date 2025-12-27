@@ -15,8 +15,8 @@ import com.omarea.krscript.executor.ScriptEnvironmen
 import com.omarea.krscript.model.*
 import org.xmlpull.v1.XmlPullParser
 import java.io.InputStream
-import java.util.Locale
 import java.util.Locale.getDefault
+import androidx.core.graphics.toColorInt
 
 /**
  * Created by Hello on 2018/04/01.
@@ -617,8 +617,8 @@ class PageConfigReader {
                     "bold", "b" -> textRow.bold = (attrValue == "1" || attrValue == "true" || attrValue == "bold")
                     "italic", "i" -> textRow.italic = (attrValue == "1" || attrValue == "true" || attrValue == "italic")
                     "underline", "u" -> textRow.underline = (attrValue == "1" || attrValue == "true" || attrValue == "underline")
-                    "foreground", "color" -> textRow.color = Color.parseColor(attrValue)
-                    "bg", "background", "bgcolor" -> textRow.bgColor = Color.parseColor(attrValue)
+                    "foreground", "color" -> textRow.color = attrValue.toColorInt()
+                    "bg", "background", "bgcolor" -> textRow.bgColor = attrValue.toColorInt()
                     "size" -> textRow.size = attrValue.toInt()
                     "break" -> textRow.breakRow = (attrValue == "1" || attrValue == "true" || attrValue == "break")
                     "link", "href" -> textRow.link = attrValue

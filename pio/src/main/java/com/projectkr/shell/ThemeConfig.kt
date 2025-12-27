@@ -2,6 +2,7 @@ package com.projectkr.shell
 
 import android.app.Activity
 import android.content.Context
+import androidx.core.content.edit
 
 class ThemeConfig (private val activity: Activity) {
     private val config = activity.getSharedPreferences("theme", Context.MODE_PRIVATE)
@@ -11,7 +12,7 @@ class ThemeConfig (private val activity: Activity) {
     }
 
     fun setAllowTransparentUI(allow: Boolean) {
-        config.edit().putBoolean("TransparentUI", allow).apply()
+        config.edit { putBoolean("TransparentUI", allow) }
         activity.recreate()
     }
 }

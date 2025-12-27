@@ -3,7 +3,6 @@ package com.projectkr.shell
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.app.ActivityManager
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -491,7 +490,7 @@ class ActionPage : AppCompatActivity() {
     private fun setExcludeFromRecents() {
         if (isTaskRoot) {
             try {
-                val service = this.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+                val service = this.getSystemService(ACTIVITY_SERVICE) as ActivityManager
                 for (task in service.appTasks) {
                     if (task.taskInfo.id == this.taskId) {
                         task.setExcludeFromRecents(true)

@@ -17,7 +17,6 @@ import com.omarea.krscript.model.PageNode
 import java.util.*
 
 class ActionShortcutManager(private var context: Context) {
-    @TargetApi(Build.VERSION_CODES.O)
     fun addShortcut(intent: Intent, drawable: Drawable, config: NodeInfoBase): Boolean {
         // 因为添加快捷方式时无法处理SerializableExtra，所以不得不通过应用本身存储pageNode信息
         if (intent.hasExtra("page")) {
@@ -73,7 +72,6 @@ class ActionShortcutManager(private var context: Context) {
         return ObjectStorage<PageNode>(context).load(shortcutId)
     }
 
-    @TargetApi(Build.VERSION_CODES.O)
     fun createShortcutOreo(intent: Intent, drawable: Drawable, config: NodeInfoBase): Boolean {
         try {
             val shortcutManager = context.getSystemService(Context.SHORTCUT_SERVICE) as ShortcutManager

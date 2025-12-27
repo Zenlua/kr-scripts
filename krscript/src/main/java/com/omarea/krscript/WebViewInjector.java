@@ -67,8 +67,7 @@ public class WebViewInjector {
             );
             webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
                 if (
-                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                                context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                        context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                     activity.requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 2);
                     Toast.makeText(context, R.string.kr_write_external_storage, Toast.LENGTH_LONG).show();
                 } else {
@@ -140,10 +139,7 @@ public class WebViewInjector {
                 final OutputStream outputStream = process.getOutputStream();
                 final DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
 
-                setHandler(process, callbackFunction, new Runnable() {
-                    @Override
-                    public void run() {
-                    }
+                setHandler(process, callbackFunction, () -> {
                 });
 
                 ScriptEnvironmen.executeShell(context, dataOutputStream, script, params, null, null);

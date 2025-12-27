@@ -29,6 +29,7 @@ import com.omarea.krscript.downloader.Downloader
 import com.omarea.krscript.ui.ParamsFileChooserRender
 import com.projectkr.shell.databinding.ActivityActionPageOnlineBinding
 import java.util.*
+import androidx.core.net.toUri
 
 class ActionPageOnline : AppCompatActivity() {
     private val progressBarDialog = ProgressBarDialog(this)
@@ -200,7 +201,7 @@ class ActionPageOnline : AppCompatActivity() {
                 try {
                     val requestUrl = request?.url
                     if (requestUrl != null && requestUrl.scheme?.startsWith("http") != true) {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(requestUrl.toString()))
+                        val intent = Intent(Intent.ACTION_VIEW, requestUrl.toString().toUri())
                         startActivity(intent)
                         return true
                     } else {
@@ -329,7 +330,8 @@ class ActionPageOnline : AppCompatActivity() {
                         try {
                             val nameColumn = cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI)
                             fileName = cursor.getString(nameColumn)
-                            absPath = FilePathResolver().getPath(this@ActionPageOnline, Uri.parse(fileName))
+                            absPath = FilePathResolver().getPath(this@ActionPageOnline,
+                                fileName.toUri())
                             if (!absPath.isEmpty()) {
                                 fileName = absPath
                             }

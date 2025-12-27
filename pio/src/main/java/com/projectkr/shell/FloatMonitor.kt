@@ -21,6 +21,7 @@ import com.projectkr.shell.utils.CpuFrequencyUtils
 import com.projectkr.shell.utils.CpuLoadUtils
 import com.projectkr.shell.utils.GpuUtils
 import java.util.*
+import kotlin.math.abs
 
 class FloatMonitor(context: Context) {
     private var mContext: Context? = context
@@ -38,7 +39,7 @@ class FloatMonitor(context: Context) {
         }
         startMonitorTime = System.currentTimeMillis()
 
-        if (Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(mContext)) {
+        if (!Settings.canDrawOverlays(mContext)) {
             Toast.makeText(mContext, mContext!!.getString(R.string.permission_float), Toast.LENGTH_LONG).show()
             return
         }
@@ -118,7 +119,7 @@ class FloatMonitor(context: Context) {
                         }
                         MotionEvent.ACTION_UP -> {
                             if (System.currentTimeMillis() - touchStartTime < 300) {
-                                if (Math.abs(event.rawX - touchStartRawX) < 15 && Math.abs(event.rawY - touchStartRawY) < 15) {
+                                if (abs(event.rawX - touchStartRawX) < 15 && abs(event.rawY - touchStartRawY) < 15) {
                                     onClick()
                                 }
                             }
@@ -148,12 +149,10 @@ class FloatMonitor(context: Context) {
         if (freq == null) {
             return ""
         }
-        if (freq.length > 3) {
-            return freq.substring(0, freq.length - 3)
-        } else if (freq.isEmpty()) {
-            return "0"
-        } else {
-            return freq
+        return if (freq.length > 3) {
+            freq.dropLast(3)
+        } else freq.ifEmpty {
+            "0"
         }
     }
 
@@ -299,7 +298,7 @@ class FloatMonitor(context: Context) {
         gpuFreqText = view!!.findViewById(R.id.fw_gpu_freq)
         ramUseText = view!!.findViewById(R.id.fw_ram_use)
         temperatureText = view!!.findViewById(R.id.fw_battery_temp)
-        batteryLevelText = view!!.findViewById<TextView>(R.id.fw_battery_level)
+        batteryLevelText = view!!.findViewById(R.id.fw_battery_level)
 
         activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         return view!!
