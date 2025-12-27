@@ -7,6 +7,9 @@ android {
     viewBinding {
         enabled = true
     }
+    lint {
+        baseline = file("lint-baseline.xml")
+    }
     defaultConfig {
         resourceConfigurations += ['zh']
         minSdkVersion 21
