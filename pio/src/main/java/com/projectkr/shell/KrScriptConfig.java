@@ -117,7 +117,7 @@ public class KrScriptConfig {
             String value = configInfo.get(ALLOW_HOME_PAGE);
             return value != null && value.equals("1");
         }
-        return ALLOW_HOME_PAGE_DEFAULT.equals("1");
+        return true;
     }
 
     public String getBeforeStartSh() {

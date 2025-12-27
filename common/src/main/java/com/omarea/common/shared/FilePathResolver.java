@@ -254,24 +254,18 @@ public class FilePathResolver {
 
 
     private static void saveFileFromUri(Context context, Uri uri, String destinationPath) {
-        InputStream is = null;
-        BufferedOutputStream bos = null;
-        try {
-            is = context.getContentResolver().openInputStream(uri);
-            bos = new BufferedOutputStream(new FileOutputStream(destinationPath, false));
-            byte[] buf = new byte[1024];
-            is.read(buf);
-            do {
-                bos.write(buf);
-            } while (is.read(buf) != -1);
-        } catch (IOException ignored) {
-        } finally {
+        try (InputStream is = context.getContentResolver().openInputStream(uri); BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(destinationPath, false))) {
             try {
-                if (is != null) is.close();
-                if (bos != null) bos.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+                byte[] buf = new byte[1024];
+                assert is != null;
+                is.read(buf);
+                do {
+                    bos.write(buf);
+                } while (is.read(buf) != -1);
+            } catch (IOException ignored) {
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
