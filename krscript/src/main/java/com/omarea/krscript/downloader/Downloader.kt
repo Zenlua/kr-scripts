@@ -118,7 +118,7 @@ class Downloader(private var context: Context, private var activity: Activity? =
                         "downloader/result/$taskAliasId", context)
                 }
             }
-        } catch (ex: java.lang.Exception) {
+        } catch (_: java.lang.Exception) {
 
         }
     }
