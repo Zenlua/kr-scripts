@@ -5,7 +5,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -45,11 +44,7 @@ class SplashActivity : Activity() {
      */
     private fun updateThemeStyle() {
         window.navigationBarColor = getColorAccent()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            window.navigationBarColor = getColor(R.color.splash_bg_color)
-        } else {
-            window.navigationBarColor = resources.getColor(R.color.splash_bg_color)
-        }
+        window.navigationBarColor = getColor(R.color.splash_bg_color)
 
         //  得到当前界面的装饰视图
         val decorView = window.decorView
@@ -96,30 +91,17 @@ class SplashActivity : Activity() {
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
                 ))
             ) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    ActivityCompat.requestPermissions(
-                        this@SplashActivity,
-                        arrayOf(
-                            Manifest.permission.READ_EXTERNAL_STORAGE,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS,
-                            Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                            Manifest.permission.WAKE_LOCK
-                        ),
-                        0x11
-                    )
-                } else {
-                    ActivityCompat.requestPermissions(
-                        this@SplashActivity,
-                        arrayOf(
-                            Manifest.permission.READ_EXTERNAL_STORAGE,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS,
-                            Manifest.permission.WAKE_LOCK
-                        ),
-                        0x11
-                    )
-                }
+                ActivityCompat.requestPermissions(
+                    this@SplashActivity,
+                    arrayOf(
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS,
+                        Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                        Manifest.permission.WAKE_LOCK
+                    ),
+                    0x11
+                )
             }
             myHandler.post {
                 next.run()
