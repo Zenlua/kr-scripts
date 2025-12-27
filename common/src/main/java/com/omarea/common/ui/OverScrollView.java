@@ -5,7 +5,7 @@ import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
 
-import com.mixiaoxiao.overscroll.OverScrollScrollView;
+import com.omarea.overscroll.OverScrollScrollView;
 
 public class OverScrollView extends OverScrollScrollView {
     public OverScrollView(Context context) {

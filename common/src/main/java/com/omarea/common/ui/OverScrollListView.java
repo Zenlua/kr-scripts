@@ -3,7 +3,7 @@ package com.omarea.common.ui;
 import android.content.Context;
 import android.util.AttributeSet;
 
-public class OverScrollListView extends com.mixiaoxiao.overscroll.OverScrollListView {
+public class OverScrollListView extends com.omarea.overscroll.OverScrollListView {
     public OverScrollListView(Context context) {
         super(context);
     }
