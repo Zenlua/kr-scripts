@@ -31,11 +31,11 @@ class KeepShell(private var rootMode: Boolean = true) {
                 out!!.close()
             if (reader != null)
                 reader!!.close()
-        } catch (ex: Exception) {
+        } catch (_: Exception) {
         }
         try {
             p!!.destroy()
-        } catch (ex: Exception) {
+        } catch (_: Exception) {
         }
         enterLockTime = 0L
         out = null
@@ -51,12 +51,12 @@ class KeepShell(private var rootMode: Boolean = true) {
 
     private var checkRootState =
             // "if [[ \$(id -u 2>&1) == '0' ]] || [[ \$(\$UID) == '0' ]] || [[ \$(whoami 2>&1) == 'root' ]] || [[ \$(\$USER_ID) == '0' ]]; then\n" +
-            "if [[ \$(id -u 2>&1) == '0' ]] || [[ \$(\$UID) == '0' ]] || [[ \$(whoami 2>&1) == 'root' ]] || [[ \$(set | grep 'USER_ID=0') == 'USER_ID=0' ]]; then\n" +
+            $$"if [[ $(id -u 2>&1) == '0' ]] || [[ $($UID) == '0' ]] || [[ $(whoami 2>&1) == 'root' ]] || [[ $(set | grep 'USER_ID=0') == 'USER_ID=0' ]]; then\n" +
                     "  echo 'success'\n" +
                     "else\n" +
                     "if [[ -d /cache ]]; then\n" +
                     "  echo 1 > /cache/vtools_root\n" +
-                    "  if [[ -f /cache/vtools_root ]] && [[ \$(cat /cache/vtools_root) == '1' ]]; then\n" +
+                    "  if [[ -f /cache/vtools_root ]] && [[ $(cat /cache/vtools_root) == '1' ]]; then\n" +
                     "    echo 'success'\n" +
                     "    rm -rf /cache/vtools_root\n" +
                     "    return\n" +

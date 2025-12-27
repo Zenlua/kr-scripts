@@ -48,7 +48,7 @@ class AsynSuShellUnit(var handler: Handler) {
                 }
             }.start()
             handler.sendMessage(handler.obtainMessage(0, true))
-        } catch (ex: Exception) {
+        } catch (_: Exception) {
             handler.sendMessage(handler.obtainMessage(0, false))
         }
         return this
@@ -60,7 +60,7 @@ class AsynSuShellUnit(var handler: Handler) {
                 process!!.outputStream.close()
                 process!!.destroy()
             }
-        } catch (ex: Exception) {
+        } catch (_: Exception) {
 
         }
     }
