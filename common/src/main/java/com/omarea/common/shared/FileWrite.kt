@@ -32,7 +32,7 @@ object FileWrite {
             val filePath = baseUrl + if (hasExtName)
                 file
             else
-                file.substring(0, if (file.lastIndexOf(".") > 0) file.lastIndexOf(".") else file.length)
+                file.take(if (file.lastIndexOf(".") > 0) file.lastIndexOf(".") else file.length)
 
             val fileOutputStream = FileOutputStream(filePath)
 
@@ -85,8 +85,10 @@ object FileWrite {
                 dir.mkdirs()
             val filePath = getPrivateFilePath(context, outName)
             val fileDir = File(filePath).parentFile
-            if (!fileDir.exists())
-                fileDir.mkdirs()
+            if (fileDir != null) {
+                if (!fileDir.exists())
+                    fileDir.mkdirs()
+            }
 
             val fileOutputStream = FileOutputStream(filePath)
 
@@ -145,7 +147,7 @@ object FileWrite {
 
     fun writePrivateShellFile(file: String, outName: String, context: Context): String? {
         val data = parseText(context, file)
-        if (data.size > 0 && writePrivateFile(data, outName, context)) {
+        if (data.isNotEmpty() && writePrivateFile(data, outName, context)) {
             return getPrivateFilePath(context, outName)
         }
         return null
