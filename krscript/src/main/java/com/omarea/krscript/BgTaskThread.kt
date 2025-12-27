@@ -68,7 +68,7 @@ class BgTaskThread(private var process: Process) : Thread() {
                 expandView.setOnClickPendingIntent(R.id.kr_task_stop, stopIntent)
             }
 
-            val notificationBuilder = Notification.Builder(context)
+            val notificationBuilder = Notification.Builder(context, channelId)
                     .setContentTitle("$notificationTitle($notificationID)")
                     .setContentText("" + notificationMShortMsg + " >> " + notificationMessageRows.lastOrNull())
                     .setSmallIcon(R.drawable.kr_run)
@@ -104,7 +104,7 @@ class BgTaskThread(private var process: Process) : Thread() {
             }
 
             if (!isFinished) {
-                notification!!.flags = Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT
+                notification.flags = Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT
             }
 
             notificationManager.notify(notificationID, notification) // 发送通知
