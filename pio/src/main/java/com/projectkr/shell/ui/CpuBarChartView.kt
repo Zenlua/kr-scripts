@@ -1,13 +1,14 @@
 package com.projectkr.shell.ui
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
+import androidx.core.content.res.ResourcesCompat.getColor
 import com.projectkr.shell.R
 import java.util.concurrent.LinkedBlockingQueue
+import androidx.core.content.withStyledAttributes
 
 class CpuChartBarView : View {
     private var mainPaint: Paint? = null
@@ -23,19 +24,19 @@ class CpuChartBarView : View {
     }
 
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
-        @SuppressLint("CustomViewStyleable") val array = context.obtainStyledAttributes(attrs, R.styleable.RamInfo)
-        for (i in 0..4) {
-            loadHisotry.put(0)
+        context.withStyledAttributes(attrs, R.styleable.RamInfo) {
+            for (i in 0..4) {
+                loadHisotry.put(0)
+            }
         }
-        array.recycle()
     }
 
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
-        @SuppressLint("CustomViewStyleable") val array = context.obtainStyledAttributes(attrs, R.styleable.RamInfo)
-        for (i in 0..5) {
-            loadHisotry.put(0)
+        context.withStyledAttributes(attrs, R.styleable.RamInfo) {
+            for (i in 0..5) {
+                loadHisotry.put(0)
+            }
         }
-        array.recycle()
     }
 
     /**
@@ -60,21 +61,19 @@ class CpuChartBarView : View {
             mainPaint!!.style = Paint.Style.FILL
             strokeWidth = this.width.toFloat() / 5
             mainPaint!!.strokeWidth = 0f
-            mainPaint!!.color = resources.getColor(R.color.colorAccent)
+            mainPaint!!.color = getColor(resources,R.color.colorAccent, null)
         }
 
         var index = 0
         val barWidth = strokeWidth
         for (ratio in loadHisotry) {
             mainPaint!!.alpha = (ratio * 255 / 100)
-
-            var top: Float
-            if (ratio <= 2) {
-                top = mHeight - 10f
+            val top: Float = if (ratio <= 2) {
+                mHeight - 10f
             } else if (ratio >= 98) {
-                top = 0f
+                0f
             } else {
-                top = (100 - ratio) * mHeight / 100
+                (100 - ratio) * mHeight / 100
             }
 
             canvas.drawRoundRect((barWidth) * index, top, (barWidth) * index + (barWidth * 0.9f), mHeight, 5f, 5f, mainPaint!!)
