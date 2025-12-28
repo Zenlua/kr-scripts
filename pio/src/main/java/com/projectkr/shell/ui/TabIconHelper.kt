@@ -30,7 +30,7 @@ class TabIconHelper(private var tabHost: TabHost, private var activity: Activity
         // imageView.setImageDrawable(tintIcon)
         // imageView.setColorFilter(getColorAccent())
 
-        if (views.size != 0) {
+        if (views.isNotEmpty()) {
             layout.alpha = 0.3f
         }
         imageView.setImageDrawable(drawable)
