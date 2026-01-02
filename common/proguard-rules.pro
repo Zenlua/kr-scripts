@@ -24,3 +24,5 @@
 #-keep class com.omarea.common.shell.**{*;}
 #-keep class com.omarea.common.shared.**{*;}
 #-keep class com.omarea.common.model.**{*;}
+-keep class com.omarea.common.** { *; }
+-keep class com.omarea.krscript.** { *; }
