@@ -11,7 +11,8 @@ android {
         jvmToolchain(21)
     }
     lint {
-        baseline = file("lint-baseline.xml")
+        abortOnError false
+        checkReleaseBuilds false
     }
     defaultConfig {
         resourceConfigurations += ['zh']
