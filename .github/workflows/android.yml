@@ -25,7 +25,7 @@ jobs:
 
     - name: Build Release APK
       run: |
-        ./gradlew assembleRelease \
+        ./gradlew assembleReleaseMini \
           --no-daemon \
           --warning-mode=none \
           -x lint -x test
