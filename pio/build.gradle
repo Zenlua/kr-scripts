@@ -16,8 +16,8 @@ android {
     }
     defaultConfig {
         resourceConfigurations += ['zh']
-        minSdkVersion 26
-        targetSdkVersion 33
+        minSdkVersion 21
+        targetSdkVersion 30
         versionCode 202111141
         versionName "4.0.5"
     }
