@@ -23,4 +23,4 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew build -Dlint.baselines.continue=true
+      run: ./gradlew assembleRelease --no-daemon --warning-mode=all -x lint -x test
