@@ -1,3 +1,2 @@
+-keep class com.omarea.krscript.executor.** { *; }
 -keepclassmembers class * implements java.io.Serializable { *; }
--keep class com.omarea.krscript.** { *; }
--keep class com.omarea.common.** { *; }
