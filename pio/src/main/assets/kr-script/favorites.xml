@@ -24,6 +24,28 @@
         <page config="samples/new.xml" title="新功能测试" />
     </group>
 
+<group>
+<action title="Run shell">
+<param name="shell" value-sh="glog shell" type="text" placeholder="#!/system/bin/sh"/>
+<param name="shell2" value-sh="glog shell2" type="text" placeholder="#!/system/bin/sh"/>
+<param name="shell3" value-sh="glog shell3" type="text" placeholder="#!/system/bin/sh"/>
+<param name="shell4" value-sh="glog shell4" type="text" placeholder="#!/system/bin/sh"/>
+<param name="shell5" value-sh="glog shell5" type="text" placeholder="#!/system/bin/sh"/>
+<set>
+slog shell "$shell"
+slog shell2 "$shell2"
+slog shell3 "$shell3"
+slog shell4 "$shell4"
+slog shell5 "$shell5"
+eval "$shell
+$shell2
+$shell3
+$shell4
+$shell5"
+</set>
+</action>
+</group>
+    
     <group title="Web引擎">
         <page config="samples/web.xml" title="网页引擎测试" />
     </group>
