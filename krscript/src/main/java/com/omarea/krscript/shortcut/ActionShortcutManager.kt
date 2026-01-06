@@ -13,106 +13,110 @@ import android.util.Log
 import com.omarea.common.shared.ObjectStorage
 import com.omarea.krscript.model.NodeInfoBase
 import com.omarea.krscript.model.PageNode
-import java.util.*
 
-class ActionShortcutManager(private var context: Context) {
+class ActionShortcutManager(private val context: Context) {
+
+    /**
+     * Thêm shortcut
+     * @param intent Intent của activity cần shortcut
+     * @param drawable Icon của shortcut
+     * @param config NodeInfoBase dùng để đặt title/index
+     */
     fun addShortcut(intent: Intent, drawable: Drawable, config: NodeInfoBase): Boolean {
-        // 因为添加快捷方式时无法处理SerializableExtra，所以不得不通过应用本身存储pageNode信息
-        if (intent.hasExtra("page")) {
-            val pageNode = intent.getSerializableExtra("page") as PageNode
+        // Lưu pageNode vào storage nếu intent có extra
+        intent.getSerializableExtraCompat<PageNode>("page")?.let { pageNode ->
             intent.putExtra("shortcutId", saveShortcutTarget(pageNode))
-            intent.removeExtra("page")
         }
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createShortcutOreo(intent, drawable, config)
         } else {
-            addShortcutNougat(intent, drawable, config)
+            addShortcutLegacy(intent, drawable, config)
         }
     }
 
-    private fun addShortcutNougat(intent: Intent, drawable: Drawable, config: NodeInfoBase): Boolean {
-        try {
-            val shortcut = Intent("com.android.launcher.action.INSTALL_SHORTCUT")
-            val id = "addin_" + config.index
+    // Legacy (< Oreo) → dùng broadcast
+    private fun addShortcutLegacy(intent: Intent, drawable: Drawable, config: NodeInfoBase): Boolean {
+        return try {
+            val shortcutIntent = Intent(Intent.ACTION_MAIN).apply {
+                component = intent.component
+                putExtras(intent)
+                flags = Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+            }
 
-            //快捷方式的名称
-            shortcut.putExtra(Intent.EXTRA_SHORTCUT_NAME, config.title)//快捷方式的名字
-            shortcut.putExtra("duplicate", false) // 是否允许重复创建
-
-            //快捷方式的图标
-            shortcut.putExtra(Intent.EXTRA_SHORTCUT_ICON, (drawable as BitmapDrawable).bitmap)
-
-            val shortcutIntent = Intent(Intent.ACTION_MAIN)
-            shortcutIntent.setClassName(context.applicationContext, intent.component!!.className)
-            shortcutIntent.putExtras(intent)
-
-            shortcut.putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent)
-            shortcutIntent.flags = Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+            val shortcut = Intent("com.android.launcher.action.INSTALL_SHORTCUT").apply {
+                putExtra("duplicate", false)
+                putExtra(Intent.EXTRA_SHORTCUT_NAME, config.title)
+                putExtra(Intent.EXTRA_SHORTCUT_ICON, (drawable as BitmapDrawable).bitmap)
+                putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent)
+            }
 
             context.sendBroadcast(shortcut)
-
-            return true
+            true
         } catch (ex: Exception) {
-            return false
+            Log.e("ActionShortcutManager", "addShortcutLegacy failed: ${ex.message}")
+            false
         }
-
     }
 
-    // 存储快捷方式的页面信息对象
+    // Lưu pageNode vào ObjectStorage và trả về ID shortcut
     private fun saveShortcutTarget(pageNode: PageNode): String {
         val id = System.currentTimeMillis().toString()
         ObjectStorage<PageNode>(context).save(pageNode, id)
         return id
     }
 
-    // 读取快捷方式的页面信息对象
-    fun getShortcutTarget(shortcutId: String): PageNode? {
-        return ObjectStorage<PageNode>(context).load(shortcutId)
-    }
+    // Lấy pageNode từ shortcutId
+    fun getShortcutTarget(shortcutId: String): PageNode? =
+        ObjectStorage<PageNode>(context).load(shortcutId)
 
-    fun createShortcutOreo(intent: Intent, drawable: Drawable, config: NodeInfoBase): Boolean {
-        try {
-            val shortcutManager = context.getSystemService(Context.SHORTCUT_SERVICE) as ShortcutManager
+    // Oreo+ → dùng ShortcutManager
+    private fun createShortcutOreo(intent: Intent, drawable: Drawable, config: NodeInfoBase): Boolean {
+        return try {
+            val shortcutManager = context.getSystemService(ShortcutManager::class.java)
+                ?: return false
 
-            if (shortcutManager.isRequestPinShortcutSupported) {
-                val id = "addin_" + config.index
-                val shortcutIntent = Intent(Intent.ACTION_MAIN)
-                shortcutIntent.setClassName(context.applicationContext, intent.component!!.className)
-                shortcutIntent.putExtras(intent)
-                shortcutIntent.flags = Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+            if (!shortcutManager.isRequestPinShortcutSupported) return false
 
-                val info = ShortcutInfo.Builder(context, id)
-                        .setIcon(Icon.createWithBitmap((drawable as BitmapDrawable).bitmap))
-                        .setShortLabel(config.title)
-                        .setIntent(shortcutIntent)
-                        .setActivity(intent.component!!) // 只有“主要”活动 - 定义过滤器Intent#ACTION_MAIN 和Intent#CATEGORY_LAUNCHER意图过滤器的活动 - 才能成为目标活动
-                        .build()
+            val id = "addin_${config.index}"
 
-                val shortcutCallbackIntent = PendingIntent.getBroadcast(context, 0, Intent(), PendingIntent.FLAG_UPDATE_CURRENT)
-                if (shortcutManager.isRequestPinShortcutSupported) {
-                    val items = shortcutManager.pinnedShortcuts
-                    for (item in items) {
-                        if (item.id == id) {
-                            shortcutManager.updateShortcuts(object : ArrayList<ShortcutInfo>() {
-                                init {
-                                    add(info)
-                                }
-                            })
-                            return true
-                        }
-                    }
-                    shortcutManager.requestPinShortcut(info, shortcutCallbackIntent.intentSender)
-                    return true
-                } else {
-                    return false
-                }
+            val shortcutIntent = Intent(Intent.ACTION_MAIN).apply {
+                component = intent.component
+                putExtras(intent)
+                flags = Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
             }
-            return true
+
+            val info = ShortcutInfo.Builder(context, id)
+                .setShortLabel(config.title)
+                .setIntent(shortcutIntent)
+                .setIcon(Icon.createWithBitmap((drawable as BitmapDrawable).bitmap))
+                .setActivity(intent.component!!)
+                .build()
+
+            val callbackIntent = PendingIntent.getBroadcast(
+                context,
+                0,
+                Intent(),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            // Kiểm tra nếu shortcut đã có → update, chưa có → request pin
+            shortcutManager.pinnedShortcuts.find { it.id == id }?.let {
+                shortcutManager.updateShortcuts(listOf(info))
+            } ?: shortcutManager.requestPinShortcut(info, callbackIntent.intentSender)
+
+            true
         } catch (ex: Exception) {
-            Log.e("ActionShortcutManager", "" + ex.message)
-            // Toast.makeText(context, "处理快捷方式失败" + ex.getMessage(), Toast.LENGTH_LONG).show();
-            return false
+            Log.e("ActionShortcutManager", "createShortcutOreo failed: ${ex.message}")
+            false
         }
     }
+}
+
+/**
+ * Extension an toàn cho getSerializableExtra với class
+ */
+inline fun <reified T : java.io.Serializable> Intent.getSerializableExtraCompat(name: String): T? {
+    return if (Build.VERSION.SDK_INT >= 33) getSerializableExtra(name, T::class.java)
+    else getSerializableExtra(name) as? T
 }
