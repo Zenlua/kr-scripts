@@ -303,14 +303,17 @@ class DialogHelper {
             return dialogWrap
         }
 
-        private fun getStatusBarColor(context: Context): Int {
-            val defaultColor = Color.WHITE
-            val attrsArray = intArrayOf(android.R.attr.statusBarColor)
-            val typedArray = context.obtainStyledAttributes(attrsArray)
-            val color = typedArray.getColor(0, defaultColor)
-            typedArray.recycle()
-            return color
+private fun getStatusBarColor(context: Context, defaultColor: Int = Color.TRANSPARENT): Int {
+    return try {
+        if (context is Activity) {
+            context.window.statusBarColor
+        } else {
+            defaultColor
         }
+    } catch (_: Exception) {
+        defaultColor
+    }
+}
 
         private fun openContinueAlert(context: Context,
                                       layout: Int,
@@ -364,56 +367,53 @@ class DialogHelper {
             return dialog
         }
 
-        fun customDialog(context: Context, view: View, cancelable: Boolean = true): DialogWrap {
-            val useBlur = (
-                        context is Activity &&
-                        context.window.attributes.flags and WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER == 0
+fun customDialog(context: Context, view: View, cancelable: Boolean = true): DialogWrap {
+    val useBlur = (
+        context is Activity &&
+        context.window.attributes.flags and WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER == 0
+    )
+
+    val dialog = (if (useBlur) {
+        AlertDialog.Builder(context, R.style.custom_alert_dialog)
+    } else {
+        AlertDialog.Builder(context)
+    }).setView(view)
+        .setCancelable(cancelable)
+        .create()
+
+    if (context is Activity) {
+        dialog.show()
+        dialog.window?.run {
+            setWindowBlurBg(this, context)
+
+            // Chỉnh status bar và system bars appearance
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                val controller = insetsController
+                if (controller != null) {
+                    val isLightStatusBar = !isNightMode(context)
+                    controller.setSystemBarsAppearance(
+                        if (isLightStatusBar) WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS else 0,
+                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
                     )
-
-            val dialog = (if (useBlur) {
-                AlertDialog.Builder(context, R.style.custom_alert_dialog)
-            } else {
-                AlertDialog.Builder(context)
-            }).setView(view).setCancelable(cancelable).create()
-
-            if (context is Activity) {
-                dialog.show()
-                dialog.window?.run {
-                    setWindowBlurBg(this, context)
-                    decorView.run {
-                        systemUiVisibility = context.window.decorView.systemUiVisibility // View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-                    }
-
-                    /*
-                    // 隐藏状态栏和导航栏
-                    decorView.run {
-                        systemUiVisibility = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        setOnSystemUiVisibilityChangeListener {
-                            var uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or  //布局位于状态栏下方
-                                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or  //全屏
-                                    View.SYSTEM_UI_FLAG_FULLSCREEN or  //隐藏导航栏
-                                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            uiOptions = uiOptions or 0x00001000
-                            systemUiVisibility = uiOptions
-                        }
-                    }
-                    */
-
-                    // setWindowAnimations(R.style.windowAnim2)
                 }
             } else {
-                dialog.window?.run {
-                    setWindowAnimations(R.style.windowAnim2)
-                }
-                dialog.show()
-                dialog.window?.run {
-                    setBackgroundDrawableResource(android.R.color.transparent)
-                }
+                @Suppress("DEPRECATION")
+                decorView.systemUiVisibility = if (!isNightMode(context))
+                    View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR else 0
             }
-
-            return setOutsideTouchDismiss(view, DialogWrap(dialog).setCancelable(cancelable))
         }
+    } else {
+        dialog.window?.run {
+            setWindowAnimations(R.style.windowAnim2)
+        }
+        dialog.show()
+        dialog.window?.run {
+            setBackgroundDrawableResource(android.R.color.transparent)
+        }
+    }
+
+    return setOutsideTouchDismiss(view, DialogWrap(dialog).setCancelable(cancelable))
+}
 
         private fun isNightMode(context: Context): Boolean {
             when (AppCompatDelegate.getDefaultNightMode()) {
@@ -434,58 +434,64 @@ class DialogHelper {
         }
 
         fun setWindowBlurBg(window: Window, activity: Activity) {
-            // 是否使用了动态壁纸
-            val wallpaperMode = activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER != 0
+    // Kiểm tra có dùng dynamic wallpaper không
+    val wallpaperMode = activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER != 0
 
-            window.run {
-                // TODO:处理模糊背景
-                // BlurBackground(activity).setScreenBgLight(dialog)
+    window.run {
+        // Lấy blur bitmap nếu có
+        val blurBitmap = if (disableBlurBg || wallpaperMode) {
+            null
+        } else {
+            FastBlurUtility.getBlurBackgroundDrawer(activity)
+        }
 
-                // val attrs = attributes
-                // attrs.alpha = 0.1f
-                // attributes =attrs
-                // decorView.setPadding(0, 0, 0, 0)
-
-                val blurBitmap = if (disableBlurBg || wallpaperMode) {
-                    null
-                } else {
-                    FastBlurUtility.getBlurBackgroundDrawer(activity)
-                }
-
-                // window.setDimAmount(0f)
-                if (blurBitmap != null) {
-                    setBackgroundDrawable(blurBitmap.toDrawable(activity.resources))
-                } else {
-                    // setBackgroundDrawableResource(android.R.color.transparent)
-                    try {
-                        val bg = getWindowBackground(activity)
-                        if (bg == Color.TRANSPARENT) {
-
-                            if (isFloating) {
-                                val d = bg.toDrawable()
-                                setBackgroundDrawable(d)
-                                setDimAmount(0.9f)
-                                return
-                            } else {
-                                if (wallpaperMode || isNightMode(context)) {
-                                    val d = Color.argb(255, 18, 18, 18).toDrawable()
-                                    setBackgroundDrawable(d)
-                                } else {
-                                    val d = Color.argb(255, 245, 245, 245).toDrawable()
-                                    setBackgroundDrawable(d)
-                                }
-                            }
-
+        if (blurBitmap != null) {
+            setBackgroundDrawable(blurBitmap.toDrawable(activity.resources))
+        } else {
+            try {
+                // Lấy màu nền status bar / window mới
+                val bg = getStatusBarColor(activity)
+                if (bg == Color.TRANSPARENT) {
+                    if (isFloating) {
+                        val d = bg.toDrawable()
+                        setBackgroundDrawable(d)
+                        setDimAmount(0.9f)
+                        return
+                    } else {
+                        val d = if (wallpaperMode || isNightMode(activity)) {
+                            Color.argb(255, 18, 18, 18).toDrawable()
                         } else {
-                            val d = bg.toDrawable()
-                            setBackgroundDrawable(d)
+                            Color.argb(255, 245, 245, 245).toDrawable()
                         }
-                    } catch (_: java.lang.Exception) {
-                        val d = Color.argb(255, 245, 245, 245).toDrawable()
                         setBackgroundDrawable(d)
                     }
+                } else {
+                    setBackgroundDrawable(bg.toDrawable())
                 }
+            } catch (_: Exception) {
+                val d = Color.argb(255, 245, 245, 245).toDrawable()
+                setBackgroundDrawable(d)
             }
         }
+
+        // Chỉnh status bar sáng/tối theo night mode
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            val controller = insetsController
+            if (controller != null) {
+                val isLightStatusBar = !isNightMode(activity)
+                controller.setSystemBarsAppearance(
+                    if (isLightStatusBar) WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS else 0,
+                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                )
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            decorView.systemUiVisibility = if (!isNightMode(activity))
+                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR else 0
+        }
+    }
+}
+        
+        
     }
 }
