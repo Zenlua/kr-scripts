@@ -1,13 +1,13 @@
 #!/system/bin/sh
 
 function busybox_install() {
-    for applet in `./busybox --list`; do
+    for applet in `busybox --list`; do
         case "$applet" in
         "sh"|"busybox")
             echo 'Skip' > /dev/null
         ;;
         *)
-            ./busybox ln -sf busybox "$applet";
+            busybox ln -sf busybox "$applet";
         ;;
         esac
     done
