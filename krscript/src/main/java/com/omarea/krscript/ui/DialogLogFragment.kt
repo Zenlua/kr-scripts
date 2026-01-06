@@ -126,7 +126,7 @@ class DialogLogFragment : DialogFragment() {
                 canceled = true
                 forceStopRunnable?.run()
 
-                binding?.btnExit?.text = getString(R.string.exit)
+                binding?.btnExit?.text = context?.getString(R.string.exit)
                 binding?.btnHide?.visibility = View.GONE
             } else {
                 dismissAllowingStateLoss()
@@ -179,7 +179,7 @@ class DialogLogFragment : DialogFragment() {
 
                     binding?.btnExit?.apply {
                         visibility = View.VISIBLE
-                        text = getString(R.string.cancel)
+                        text = context?.getString(R.string.cancel)
                     }
                 }
 
@@ -189,9 +189,9 @@ class DialogLogFragment : DialogFragment() {
                     onExit.run()
 
                     binding?.btnExit?.apply {
-                        visibility = View.VISIBLE
-                        text = getString(R.string.exit)
-                    }
+                    visibility = View.VISIBLE
+                    text = context?.getString(R.string.exit)
+                }
                     binding?.btnHide?.visibility = View.GONE
                     binding?.actionProgress?.visibility = View.GONE
 
