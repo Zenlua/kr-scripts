@@ -1,7 +1,6 @@
 package com.omarea.krscript.config
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
@@ -21,17 +20,18 @@ class IconPathAnalysis {
             ?: if (useDefault) context.getDrawable(R.drawable.kr_shortcut_logo) else null
     }
 
-    // Lấy icon
+    // Lấy icon (chỉ từ iconPath)
     fun loadIcon(context: Context, clickableNode: ClickableNode): Drawable? =
         clickableNode.iconPath.takeIf { it.isNotEmpty() }?.let { loadFromPath(context, it, clickableNode.pageConfigDir) }
 
-    // Chuyển bitmap thành drawable
-    private fun bitmap2Drawable(bitmap: Bitmap) = BitmapDrawable(bitmap)
+    // Chuyển bitmap thành drawable (sửa deprecated)
+    private fun bitmap2Drawable(context: Context, bitmap: android.graphics.Bitmap) =
+        BitmapDrawable(context.resources, bitmap)
 
-    // Hàm tiện ích load từ path
+    // Hàm tiện ích load drawable từ path
     private fun loadFromPath(context: Context, path: String, pageConfigDir: String): Drawable? {
         return PathAnalysis(context, pageConfigDir).parsePath(path)?.use { stream ->
-            BitmapFactory.decodeStream(stream)?.let(::bitmap2Drawable)
+            BitmapFactory.decodeStream(stream)?.let { bitmap -> bitmap2Drawable(context, bitmap) }
         }
     }
 }
