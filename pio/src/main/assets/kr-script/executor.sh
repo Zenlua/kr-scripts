@@ -37,11 +37,6 @@ if [[ ! "$TOOLKIT" = "" ]]; then
     PATH="$PATH:$TOOLKIT"
 fi
 
-# 安装busybox完整功能
-if [[ -f "$TOOLKIT/install_busybox.sh" ]]; then
-    sh "$TOOLKIT/install_busybox.sh"
-fi
-
 # 判断是否有指定执行目录，跳转到起始目录
 if [[ "$START_DIR" != "" ]] && [[ -d "$START_DIR" ]]
 then
@@ -50,7 +45,6 @@ fi
 
 # 运行脚本
 if [[ -f "$script_path" ]]; then
-    chmod 755 "$script_path"
     # sh "$script_path"     # 2019.09.02 before
     source "$script_path"   # 2019.09.02 after
 else
