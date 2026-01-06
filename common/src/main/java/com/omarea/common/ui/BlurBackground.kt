@@ -3,6 +3,7 @@ package com.omarea.common.ui
 import android.app.Activity
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Paint
 import android.os.Build
 import android.view.View
 import android.view.ViewGroup
@@ -27,10 +28,10 @@ class BlurBackground(private val activity: Activity) {
         return bitmap.scale(originalW / 4, originalH / 4, false)
     }
 
-    /** Blur bitmap using RenderScript (legacy) */
+    /** Blur bitmap using RenderScript (API < 31) */
     private suspend fun blurRenderScript(bitmap: Bitmap?): Bitmap? = withContext(Dispatchers.Default) {
         bitmap ?: return@withContext null
-        val output = Bitmap.createBitmap(bitmap)
+        val output = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
         val rs = RenderScript.create(activity)
         try {
             val blurScript = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs))
@@ -47,11 +48,11 @@ class BlurBackground(private val activity: Activity) {
     }
 
     /** Blur bitmap using RenderEffect (API 31+) */
-    @androidx.annotation.RequiresApi(31)
     private fun blurRenderEffect(bitmap: Bitmap): Bitmap {
-        val output = Bitmap.createBitmap(bitmap.width, bitmap.height, bitmap.config)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return bitmap
+        val output = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(output)
-        val paint = android.graphics.Paint()
+        val paint = Paint()
         val effect = android.graphics.RenderEffect.createBlurEffect(10f, 10f, android.graphics.Shader.TileMode.CLAMP)
         paint.setRenderEffect(effect)
         canvas.drawBitmap(bitmap, 0f, 0f, paint)
