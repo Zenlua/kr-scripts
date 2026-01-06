@@ -4,116 +4,122 @@ import android.os.Handler
 import java.nio.charset.Charset
 
 /**
- * Created by helloklf on 2017/12/01.
+ * AsyncSuShellUnit: chạy lệnh shell root bất đồng bộ
+ * - Gửi stdout về handler với what=1
+ * - Gửi stderr về handler với what=5
+ * - Thông báo shell khởi tạo: what=0, true/false
+ * - Thông báo shell kết thúc: what=10, true/false
+ * - Thông báo lỗi exec: what=-1
  */
+class AsyncSuShellUnit(private val handler: Handler) {
 
-class AsynSuShellUnit(var handler: Handler) {
-    var process: Process? = null
+    private var process: Process? = null
 
-    private fun start(): AsynSuShellUnit {
+    /**
+     * Khởi tạo shell root và bắt 2 thread đọc stdout/stderr
+     */
+    private fun start(): AsyncSuShellUnit {
         try {
-            if (process == null)
+            if (process == null) {
                 process = ShellExecutor.getSuperUserRuntime()
 
-            Thread {
-                try {
-                    var line: String
-                    val reader = process!!.inputStream.bufferedReader()
-                    while (true) {
-                        line = reader.readLine()
-                        if (line != null) {
-                            line = line.trim()
-                            if (line.isNotEmpty())
-                                handler.sendMessage(handler.obtainMessage(1, line))
-                        } else {
-                            destroy()
-                            break
+                // Thread đọc stdout
+                Thread {
+                    try {
+                        process?.inputStream?.bufferedReader()?.useLines { lines ->
+                            lines.forEach { line ->
+                                val trimmed = line.trim()
+                                if (trimmed.isNotEmpty()) {
+                                    handler.sendMessage(handler.obtainMessage(1, trimmed))
+                                }
+                            }
                         }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    } finally {
+                        destroy()
                     }
-                } catch (ex: Exception) {
-                    print(ex.message)
-                }
-            }.start()
-            Thread {
-                try {
-                    var line: String
-                    val reader = process!!.errorStream.bufferedReader()
-                    while (true) {
-                        line = reader.readLine().trim()
-                        if (line.isNotEmpty())
-                            handler.sendMessage(handler.obtainMessage(5, line))
+                }.start()
+
+                // Thread đọc stderr
+                Thread {
+                    try {
+                        process?.errorStream?.bufferedReader()?.useLines { lines ->
+                            lines.forEach { line ->
+                                val trimmed = line.trim()
+                                if (trimmed.isNotEmpty()) {
+                                    handler.sendMessage(handler.obtainMessage(5, trimmed))
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
-                } catch (ex: Exception) {
-                    print(ex.message)
-                }
-            }.start()
-            handler.sendMessage(handler.obtainMessage(0, true))
-        } catch (_: Exception) {
+                }.start()
+
+                handler.sendMessage(handler.obtainMessage(0, true))
+            }
+        } catch (e: Exception) {
             handler.sendMessage(handler.obtainMessage(0, false))
         }
         return this
     }
 
-    fun destroy() {
-        try {
-            if (process != null) {
-                process!!.outputStream.close()
-                process!!.destroy()
+    /**
+     * Gửi lệnh shell đến process
+     */
+    fun exec(cmd: String): AsyncSuShellUnit {
+        if (process == null) start()
+        process?.outputStream?.bufferedWriter(Charset.forName("UTF-8"))?.apply {
+            try {
+                write(cmd)
+                write("\n")
+                flush()
+            } catch (e: Exception) {
+                handler.handleMessage(handler.obtainMessage(-1))
             }
-        } catch (_: Exception) {
-
-        }
-    }
-
-    fun exec(cmd: String): AsynSuShellUnit {
-        if (process == null) {
-            start()
-        }
-        if (process == null) {
-            handler.handleMessage(handler.obtainMessage(-1))
-            return this
-        }
-        val outputStream = process!!.outputStream
-        outputStream.write("\n\n".toByteArray(Charset.forName("UTF-8")))
-        outputStream.write(cmd.toByteArray(Charset.forName("UTF-8")))
-        outputStream.write("\n\n".toByteArray(Charset.forName("UTF-8")))
-        outputStream.flush()
+        } ?: handler.handleMessage(handler.obtainMessage(-1))
         return this
     }
 
+    /**
+     * Đợi shell kết thúc, không callback
+     */
     fun waitFor() {
-        if (process == null)
-            return
-
-        val outputStream = process!!.outputStream
-        val writer = outputStream.bufferedWriter()
-        writer.write("exit\nexit\nexit\n")
-        writer.write("\n\n")
-        writer.flush()
-        Thread {
-            if (process!!.waitFor() == 0) {
-                handler.sendMessage(handler.obtainMessage(10, true))
-            } else {
-                handler.sendMessage(handler.obtainMessage(10, false))
-            }
-            destroy()
-        }.start()
+        waitFor(null)
     }
 
-    fun waitFor(next: Runnable) {
-        if (process == null)
-            return
+    /**
+     * Đợi shell kết thúc, thực hiện callback next khi xong
+     */
+    fun waitFor(next: (() -> Unit)?) {
+        process?.let { p ->
+            Thread {
+                try {
+                    p.outputStream.bufferedWriter(Charset.forName("UTF-8")).use { w ->
+                        w.write("exit\n")
+                        w.flush()
+                    }
+                    val result = p.waitFor() == 0
+                    handler.sendMessage(handler.obtainMessage(10, result))
+                    next?.invoke()
+                } catch (e: Exception) {
+                    handler.sendMessage(handler.obtainMessage(10, false))
+                } finally {
+                    destroy()
+                }
+            }.start()
+        }
+    }
 
-        val outputStream = process!!.outputStream
-        val writer = outputStream.bufferedWriter()
-        writer.write("exit\nexit\nexit\n")
-        writer.write("\n\n")
-        writer.flush()
-        Thread {
-            process!!.waitFor()
-            destroy()
-            handler.sendMessage(handler.obtainMessage(10, true))
-            next.run()
-        }.start()
+    /**
+     * Dọn dẹp process
+     */
+    fun destroy() {
+        process?.let {
+            try { it.outputStream.close() } catch (_: Exception) {}
+            try { it.destroy() } catch (_: Exception) {}
+        }
+        process = null
     }
 }
