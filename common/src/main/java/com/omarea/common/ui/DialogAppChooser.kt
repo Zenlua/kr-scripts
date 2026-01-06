@@ -36,8 +36,8 @@ class DialogAppChooser(
     }
 
     private fun setup(gridView: AbsListView) {
-        val filterResult = packages.filter { !excludeApps.contains(it.packageName) }
-        gridView.adapter = AdapterAppChooser(gridView.context, ArrayList(filterResult), multiple)
+        val filtered = packages.filter { !excludeApps.contains(it.packageName) }
+        gridView.adapter = AdapterAppChooser(gridView.context, ArrayList(filtered), multiple)
     }
 
     private fun setupSelectAll(view: View, gridView: AbsListView) {
@@ -91,7 +91,7 @@ class DialogAppChooser(
     fun setExcludeApps(apps: Array<String>): DialogAppChooser {
         this.excludeApps = apps
         if (view != null) {
-            Log.w("@DialogAppChooser", "Unable to set the exclusion list, The list has been loaded")
+            Log.w("@DialogAppChooser", "Unable to set the exclusion list, the list has already been loaded")
         }
         return this
     }
@@ -104,10 +104,6 @@ class DialogAppChooser(
 
     interface Callback {
         fun onConfirm(apps: List<AdapterAppChooser.AppInfo>)
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
     }
 
     override fun onDismiss(dialog: DialogInterface) {
