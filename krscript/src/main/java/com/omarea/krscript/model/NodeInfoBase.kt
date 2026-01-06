@@ -5,18 +5,18 @@ import java.io.Serializable
 import java.util.*
 
 open class NodeInfoBase(val currentPageConfigPath: String) : Serializable {
-    val pageConfigDir = (
+    val pageConfigDir: String = run {
         if (currentPageConfigPath.isNotEmpty()) {
-            val dir = File(currentPageConfigPath).parent
+            val dir = File(currentPageConfigPath).parent.orEmpty() // đảm bảo không null
             if (dir.startsWith("file:/android_asset/")) {
-                "file:///android_asset/" + dir.substring("file:/android_asset/".length)
+                "file:///android_asset/" + dir.removePrefix("file:/android_asset/")
             } else {
                 dir
             }
         } else {
             ""
         }
-    )
+    }
 
     // 唯一标识（如果需要将功能添加到桌面作为快捷方式，则需要此标识来区分）
     var key: String = ""
