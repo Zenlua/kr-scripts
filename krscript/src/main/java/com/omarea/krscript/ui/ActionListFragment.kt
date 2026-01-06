@@ -120,12 +120,12 @@ class ActionListFragment : androidx.fragment.app.Fragment(), PageLayoutRender.On
         }
 
         var message = ""
-        val unlocked = (if (clickableNode.lockShell.isNotEmpty()) {
+        val unlocked = if (clickableNode.lockShell.isNotEmpty()) {
             message = ScriptEnvironmen.executeResultRoot(context, clickableNode.lockShell, clickableNode)
             message == "unlock" || message == "unlocked" || message == "false" || message == "0"
         } else {
             !clickableNode.locked
-        })
+        }
         if (!unlocked) {
             Toast.makeText(
                 context,
@@ -136,18 +136,15 @@ class ActionListFragment : androidx.fragment.app.Fragment(), PageLayoutRender.On
         return unlocked
     }
 
-    /**
-     * 当switch项被点击
-     */
     override fun onSwitchClick(item: SwitchNode, onCompleted: Runnable) {
         if (nodeUnlocked(item)) {
             val toValue = !item.checked
             if (item.confirm) {
-                DialogHelper.warning(activity!!, item.title, item.desc) {
+                DialogHelper.warning(activity!!, item.title ?: "", item.desc ?: "") {
                     switchExecute(item, toValue, onCompleted)
                 }
             } else if (item.warning.isNotEmpty()) {
-                DialogHelper.warning(activity!!, item.title, item.warning) {
+                DialogHelper.warning(activity!!, item.title ?: "", item.warning ?: "") {
                     switchExecute(item, toValue, onCompleted)
                 }
             } else {
@@ -163,15 +160,15 @@ class ActionListFragment : androidx.fragment.app.Fragment(), PageLayoutRender.On
 
     override fun onPageClick(item: PageNode, onCompleted: Runnable) {
         if (nodeUnlocked(item)) {
-            if (context != null && item.link.isNotEmpty()) {
+            if (!item.link.isNullOrEmpty()) {
                 try {
                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(item.link))
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     context?.startActivity(intent)
                 } catch (ex: Exception) {
-                    Toast.makeText(context, context?.getString(R.string.kr_slice_activity_fail), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context?.getString(R.string.kr_slice_activity_fail) ?: "", Toast.LENGTH_SHORT).show()
                 }
-            } else if (context != null && item.activity.isNotEmpty()) {
+            } else if (!item.activity.isNullOrEmpty()) {
                 TryOpenActivity(context!!, item.activity).tryOpen()
             } else {
                 krScriptActionHandler?.onSubPageClick(item)
@@ -179,7 +176,6 @@ class ActionListFragment : androidx.fragment.app.Fragment(), PageLayoutRender.On
         }
     }
 
-    // 长按 添加收藏
     override fun onItemLongClick(clickableNode: ClickableNode) {
         if (clickableNode.key.isEmpty()) {
             DialogHelper.alert(
@@ -193,7 +189,7 @@ class ActionListFragment : androidx.fragment.app.Fragment(), PageLayoutRender.On
                     if (intent != null) {
                         DialogHelper.confirm(activity!!,
                             getString(R.string.kr_shortcut_create),
-                            String.format(getString(R.string.kr_shortcut_create_desc), clickableNode.title)
+                            String.format(getString(R.string.kr_shortcut_create_desc), clickableNode.title ?: "")
                         ) {
                             val result = ActionShortcutManager(context!!)
                                 .addShortcut(intent, IconPathAnalysis().loadLogo(context!!, clickableNode), clickableNode)
@@ -209,15 +205,12 @@ class ActionListFragment : androidx.fragment.app.Fragment(), PageLayoutRender.On
         }
     }
 
-    /**
-     * Picker点击
-     */
     override fun onPickerClick(item: PickerNode, onCompleted: Runnable) {
         if (nodeUnlocked(item)) {
             if (item.confirm) {
-                DialogHelper.warning(activity!!, item.title, item.desc) { pickerExecute(item, onCompleted) }
+                DialogHelper.warning(activity!!, item.title ?: "", item.desc ?: "") { pickerExecute(item, onCompleted) }
             } else if (item.warning.isNotEmpty()) {
-                DialogHelper.warning(activity!!, item.title, item.warning) { pickerExecute(item, onCompleted) }
+                DialogHelper.warning(activity!!, item.title ?: "", item.warning ?: "") { pickerExecute(item, onCompleted) }
             } else {
                 pickerExecute(item, onCompleted)
             }
@@ -230,7 +223,7 @@ class ActionListFragment : androidx.fragment.app.Fragment(), PageLayoutRender.On
         paramInfo.optionsSh = item.optionsSh
         paramInfo.separator = item.separator
 
-        val handler = Handler(Looper.getMainLooper()) // ✅ sửa deprecated
+        val handler = Handler(Looper.getMainLooper()) // non-deprecated
 
         progressBarDialog.showDialog(getString(R.string.kr_param_options_load))
         Thread {
@@ -243,13 +236,10 @@ class ActionListFragment : androidx.fragment.app.Fragment(), PageLayoutRender.On
 
             handler.post {
                 progressBarDialog.hideDialog()
-
                 if (optionsSorted != null) {
                     val darkMode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         val controller = activity?.window?.insetsController
-                        controller?.systemBarsAppearance?.let {
-                            it and WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS == 0
-                        } ?: false
+                        controller?.systemBarsAppearance?.let { it and WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS == 0 } ?: false
                     } else {
                         val systemUiVisibility = activity!!.window.decorView.systemUiVisibility
                         (systemUiVisibility and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR) == 0
@@ -267,7 +257,7 @@ class ActionListFragment : androidx.fragment.app.Fragment(), PageLayoutRender.On
                                 }
                             }
                         }
-                    }).show(parentFragmentManager, "picker-item-chooser") // ✅ sửa deprecated
+                    }).show(parentFragmentManager, "picker-item-chooser")
                 } else {
                     Toast.makeText(context, getString(R.string.picker_not_item), Toast.LENGTH_SHORT).show()
                 }
@@ -278,6 +268,22 @@ class ActionListFragment : androidx.fragment.app.Fragment(), PageLayoutRender.On
     private fun pickerExecute(pickerNode: PickerNode, toValue: String, onExit: Runnable) {
         val script = pickerNode.setState ?: return
         actionExecute(pickerNode, script, onExit, hashMapOf("state" to toValue))
+    }
+
+    override fun onActionClick(item: ActionNode, onCompleted: Runnable) {
+        if (nodeUnlocked(item)) {
+            if (item.confirm) {
+                DialogHelper.warning(activity!!, item.title ?: "", item.desc ?: "") {
+                    actionExecute(item, onCompleted)
+                }
+            } else if (item.warning.isNotEmpty() && (item.params == null || item.params.isEmpty())) {
+                DialogHelper.warning(activity!!, item.title ?: "", item.warning ?: "") {
+                    actionExecute(item, onCompleted)
+                }
+            } else {
+                actionExecute(item, onCompleted)
+            }
+        }
     }
 
     private fun getParamOptions(actionParamInfo: ActionParamInfo, nodeInfoBase: NodeInfoBase): ArrayList<SelectItem>? {
@@ -339,7 +345,7 @@ class ActionListFragment : androidx.fragment.app.Fragment(), PageLayoutRender.On
                 krScriptActionHandler?.onActionCompleted(nodeInfo)
             }, script, params, darkMode)
             dialog.isCancelable = false
-            dialog.show(parentFragmentManager, "") // ✅ sửa deprecated
+            dialog.show(parentFragmentManager, "")
         }
     }
 }
