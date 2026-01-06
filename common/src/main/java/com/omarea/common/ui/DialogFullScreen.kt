@@ -39,7 +39,8 @@ open class DialogFullScreen(
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
                 setWindowAnimations(android.R.style.Animation_Translucent)
             }
-            context?.let { DialogHelper.setWindowBlurBg(this, it) }
+            // Dùng requireActivity() để chắc chắn là Activity
+            DialogHelper.setWindowBlurBg(this, requireActivity())
         }
     }
 
