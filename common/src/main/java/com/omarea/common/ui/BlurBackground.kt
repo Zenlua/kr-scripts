@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.drawable.BitmapDrawable
-import android.os.Build
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.graphics.scale
@@ -25,12 +24,13 @@ class BlurBackground(private val activity: Activity) {
         view.draw(canvas)
         originalW = bitmap.width
         originalH = bitmap.height
+        // scale nhỏ để blur nhanh hơn
         return bitmap.scale(originalW / 4, originalH / 4, false)
     }
 
-    /** Fast blur for API <31 (Stack blur) */
+    /** Simple fast blur approximation */
     private fun fastBlur(bitmap: Bitmap, radius: Int = 10): Bitmap {
-        // Simple approximation using Canvas + Paint; can replace bằng stack blur thư viện nếu muốn
+        // Chỉ dùng Canvas + Paint, đủ để làm mờ nền
         val output = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(output)
         val paint = Paint()
@@ -69,27 +69,13 @@ class BlurBackground(private val activity: Activity) {
 
     /** Public: blur the whole parent view */
     fun blurParent(parent: ViewGroup) {
-        if (overlayView != null) return  // Already showing
+        if (overlayView != null) return
 
         overlayView = addOverlay(parent)
 
         scope.launch {
             val bitmap = captureView(parent)
-            val blurred = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                // API 31+: Use RenderEffect on bitmap
-                val scaled = bitmap.scale(parent.width, parent.height, false)
-                val paint = Paint()
-                val canvas = Canvas(scaled)
-                val effect = android.graphics.RenderEffect.createBlurEffect(
-                    10f, 10f, android.graphics.Shader.TileMode.CLAMP
-                )
-                paint.setRenderEffect(effect)
-                canvas.drawBitmap(scaled, 0f, 0f, paint)
-                scaled
-            } else {
-                // API <31: Use fast blur
-                fastBlur(bitmap).scale(parent.width, parent.height, false)
-            }
+            val blurred = fastBlur(bitmap).scale(parent.width, parent.height, false)
 
             overlayView?.background = BitmapDrawable(activity.resources, blurred)
             fadeOverlay(true)
