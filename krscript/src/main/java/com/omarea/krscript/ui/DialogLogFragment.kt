@@ -53,7 +53,10 @@ class DialogLogFragment : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return Dialog(
             requireActivity(),
-            if (themeResId != 0) themeResId else R.style.kr_full_screen_dialog_light
+            if (themeResId != 0)
+                themeResId
+            else
+                R.style.kr_full_screen_dialog_light
         )
     }
 
@@ -94,7 +97,7 @@ class DialogLogFragment : DialogFragment() {
                 (keyCode == KeyEvent.KEYCODE_VOLUME_UP ||
                  keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
             ) {
-                true // CHẶN volume
+                true
             } else {
                 false
             }
@@ -125,8 +128,7 @@ class DialogLogFragment : DialogFragment() {
             if (running && !canceled) {
                 canceled = true
                 forceStopRunnable?.run()
-
-                binding?.btnExit?.text = context?.getString(R.string.exit)
+                binding?.btnExit?.text = context?.getString(R.string.kr_exit)
                 binding?.btnHide?.visibility = View.GONE
             } else {
                 dismissAllowingStateLoss()
@@ -179,19 +181,18 @@ class DialogLogFragment : DialogFragment() {
 
                     binding?.btnExit?.apply {
                         visibility = View.VISIBLE
-                        text = context?.getString(R.string.cancel)
+                        text = context?.getString(R.string.kr_cancel)
                     }
                 }
 
                 override fun onCompleted() {
                     running = false
-
                     onExit.run()
 
                     binding?.btnExit?.apply {
-                    visibility = View.VISIBLE
-                    text = context?.getString(R.string.exit)
-                }
+                        visibility = View.VISIBLE
+                        text = context?.getString(R.string.kr_exit)
+                    }
                     binding?.btnHide?.visibility = View.GONE
                     binding?.actionProgress?.visibility = View.GONE
 
@@ -252,17 +253,29 @@ class DialogLogFragment : DialogFragment() {
             }
         }
 
+        // ====== ABSTRACT METHODS (BẮT BUỘC) ======
+
+        override fun onStart(msg: Any) {
+            // không dùng msg
+        }
+
+        override fun updateLog(msg: SpannableString) {
+            appendBuffered(msg)
+        }
+
+        // =========================================
+
         override fun onReader(msg: Any) {
-            updateLog(msg, basicColor)
+            updateColoredLog(msg, basicColor)
         }
 
         override fun onWrite(msg: Any) {
-            updateLog(msg, scriptColor)
+            updateColoredLog(msg, scriptColor)
         }
 
         override fun onError(msg: Any) {
             hasError = true
-            updateLog(msg, errorColor)
+            updateColoredLog(msg, errorColor)
         }
 
         override fun onStart(forceStop: Runnable?) {
@@ -271,7 +284,10 @@ class DialogLogFragment : DialogFragment() {
         }
 
         override fun onExit(msg: Any?) {
-            updateLog(context?.getString(R.string.kr_shell_completed), endColor)
+            updateColoredLog(
+                context?.getString(R.string.kr_shell_completed),
+                endColor
+            )
             handler.onCompleted()
             if (!hasError) handler.onSuccess()
         }
@@ -292,11 +308,12 @@ class DialogLogFragment : DialogFragment() {
             }
         }
 
-        private fun updateLog(msg: Any?, color: Int) {
-            val text = SpannableString(msg.toString()).apply {
+        private fun updateColoredLog(msg: Any?, color: Int) {
+            val text = SpannableString(msg?.toString() ?: "").apply {
                 setSpan(
                     android.text.style.ForegroundColorSpan(color),
-                    0, length,
+                    0,
+                    length,
                     SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE
                 )
             }
