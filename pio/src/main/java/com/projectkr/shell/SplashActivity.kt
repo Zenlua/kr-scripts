@@ -11,6 +11,7 @@ import android.widget.TextView
 import com.omarea.common.shell.ShellExecutor
 import com.omarea.krscript.executor.ScriptEnvironmen
 import com.projectkr.shell.databinding.ActivitySplashBinding
+import com.projectkr.shell.permissions.CheckRootStatus
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.util.HashMap
@@ -19,64 +20,71 @@ class SplashActivity : Activity() {
 
     private lateinit var binding: ActivitySplashBinding
     private val mainHandler = Handler(Looper.getMainLooper())
+    private var hasRoot = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (ScriptEnvironmen.isInited()) {
+            if (isTaskRoot) {
+                gotoHome()
+            }
+            return
+        }
 
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         updateThemeStyle()
-        requestRootOnceAndStart()
+        checkRootAndStart()
     }
 
     private fun updateThemeStyle() {
         window.navigationBarColor = getColor(R.color.splash_bg_color)
-        window.decorView.systemUiVisibility =
-            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+
+        val decorView = window.decorView
+        decorView.systemUiVisibility =
+            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+
         window.statusBarColor = Color.TRANSPARENT
     }
 
     /**
      * LẦN ĐẦU MỞ APP:
      * - Gọi su (Magisk có thể popup)
-     * - Không root vẫn chạy bình thường
+     * - Không root vẫn chạy
      */
-    private fun requestRootOnceAndStart() {
+    private fun checkRootAndStart() {
         Thread {
-            val hasRoot = requestRootWithPopup()
-            val runtime = if (hasRoot) {
-                ShellExecutor.getSuperUserRuntime()
-            } else {
-                ShellExecutor.getRuntime()
-            }
-
-            ScriptEnvironmen.init(runtime)
+            hasRoot = requestRootOnce()
+            CheckRootStatus.lastCheckResult = hasRoot
 
             mainHandler.post {
-                startToFinish(hasRoot)
+                startToFinish()
             }
         }.start()
     }
 
     /**
-     * Gọi su → Magisk popup nếu có
+     * Gọi su → cho phép Magisk popup
      * Allow = true, Deny / no root = false
      */
-    private fun requestRootWithPopup(): Boolean {
+    private fun requestRootOnce(): Boolean {
         return try {
             val p = Runtime.getRuntime().exec("su")
-            p.outputStream.apply {
-                write("exit\n".toByteArray())
-                flush()
-            }
+            p.outputStream.write("exit\n".toByteArray())
+            p.outputStream.flush()
             p.waitFor() == 0
         } catch (_: Exception) {
             false
         }
     }
 
-    private fun startToFinish(hasRoot: Boolean) {
+    /**
+     * GIỮ NGUYÊN CODE GỐC
+     */
+    private fun startToFinish() {
         binding.startStateText.text = getString(R.string.pop_started)
 
         val config = KrScriptConfig().init(this)
@@ -85,7 +93,6 @@ class SplashActivity : Activity() {
             BeforeStartThread(
                 this,
                 config,
-                hasRoot,
                 UpdateLogViewHandler(binding.startStateText) {
                     gotoHome()
                 }
@@ -144,7 +151,6 @@ class SplashActivity : Activity() {
     private class BeforeStartThread(
         private val context: Context,
         private val config: KrScriptConfig,
-        private val hasRoot: Boolean,
         private val logHandler: UpdateLogViewHandler
     ) : Thread() {
 
@@ -152,11 +158,11 @@ class SplashActivity : Activity() {
 
         override fun run() {
             try {
-                val process = if (hasRoot) {
-                    ShellExecutor.getSuperUserRuntime()
-                } else {
-                    ShellExecutor.getRuntime()
-                }
+                val process =
+                    if (CheckRootStatus.lastCheckResult)
+                        ShellExecutor.getSuperUserRuntime()
+                    else
+                        ShellExecutor.getRuntime()
 
                 if (process != null) {
                     val os = DataOutputStream(process.outputStream)
