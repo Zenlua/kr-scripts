@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Message
 import android.text.SpannableString
+import android.text.SpannableStringBuilder
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
