@@ -4,21 +4,21 @@ import android.os.Handler
 import java.nio.charset.Charset
 
 /**
- * AsyncSuShellUnit: chạy lệnh shell root bất đồng bộ
+ * AsynSuShellUnit: chạy lệnh shell root bất đồng bộ
  * - Gửi stdout về handler với what=1
  * - Gửi stderr về handler với what=5
  * - Thông báo shell khởi tạo: what=0, true/false
  * - Thông báo shell kết thúc: what=10, true/false
  * - Thông báo lỗi exec: what=-1
  */
-class AsyncSuShellUnit(private val handler: Handler) {
+class AsynSuShellUnit(private val handler: Handler) {
 
     private var process: Process? = null
 
     /**
      * Khởi tạo shell root và bắt 2 thread đọc stdout/stderr
      */
-    private fun start(): AsyncSuShellUnit {
+    private fun start(): AsynSuShellUnit {
         try {
             if (process == null) {
                 process = ShellExecutor.getSuperUserRuntime()
