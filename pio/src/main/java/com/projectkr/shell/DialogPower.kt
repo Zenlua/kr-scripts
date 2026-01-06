@@ -19,7 +19,7 @@ class DialogPower(var context: Activity) {
         }
         view.findViewById<View>(R.id.power_hot_reboot).setOnClickListener {
             dialog.dismiss()
-            KeepShellPublic.doCmdSync(context.getString(R.string.power_hot_reboot_cmd))
+            KeepShellPublic.doCmdSync(context.getString(R.string.power_download_cmd))
         }
 
         view.findViewById<View>(R.id.power_recovery).setOnClickListener {
