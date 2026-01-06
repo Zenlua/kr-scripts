@@ -28,8 +28,8 @@ class BlurBackground(private val activity: Activity) {
         return bitmap.scale(originalW / 4, originalH / 4, false)
     }
 
-    /** Blur bitmap using RenderScript (API < 31) */
-    private suspend fun blurRenderScript(bitmap: Bitmap?): Bitmap? = withContext(Dispatchers.Default) {
+    /** Blur bitmap using RenderScript */
+    private suspend fun blurBitmap(bitmap: Bitmap?): Bitmap? = withContext(Dispatchers.Default) {
         bitmap ?: return@withContext null
         val output = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
         val rs = RenderScript.create(activity)
@@ -45,18 +45,6 @@ class BlurBackground(private val activity: Activity) {
             rs.destroy()
         }
         output
-    }
-
-    /** Blur bitmap using RenderEffect (API 31+) */
-    private fun blurRenderEffect(bitmap: Bitmap): Bitmap {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return bitmap
-        val output = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(output)
-        val paint = Paint()
-        val effect = android.graphics.RenderEffect.createBlurEffect(10f, 10f, android.graphics.Shader.TileMode.CLAMP)
-        paint.setRenderEffect(effect)
-        canvas.drawBitmap(bitmap, 0f, 0f, paint)
-        return output
     }
 
     /** Add overlay View for blur */
@@ -89,17 +77,13 @@ class BlurBackground(private val activity: Activity) {
 
     /** Public: blur the whole parent view */
     fun blurParent(parent: ViewGroup) {
-        if (overlayView != null) return  // already showing
+        if (overlayView != null) return
 
         overlayView = addOverlay(parent)
 
         scope.launch {
             val bitmap = captureView(parent)
-            val blurred = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                bitmap?.let { blurRenderEffect(it) }
-            } else {
-                blurRenderScript(bitmap)
-            }?.scale(parent.width, parent.height, false)
+            val blurred = blurBitmap(bitmap)?.scale(parent.width, parent.height, false)
 
             overlayView?.background = android.graphics.drawable.BitmapDrawable(activity.resources, blurred)
             fadeOverlay(true)
