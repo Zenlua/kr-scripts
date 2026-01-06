@@ -11,7 +11,6 @@ import android.widget.TextView
 import com.omarea.common.shell.ShellExecutor
 import com.omarea.krscript.executor.ScriptEnvironmen
 import com.projectkr.shell.databinding.ActivitySplashBinding
-import com.projectkr.shell.permissions.CheckRootStatus
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.util.HashMap
@@ -41,24 +40,20 @@ class SplashActivity : Activity() {
 
     private fun updateThemeStyle() {
         window.navigationBarColor = getColor(R.color.splash_bg_color)
-
-        val decorView = window.decorView
-        decorView.systemUiVisibility =
+        window.decorView.systemUiVisibility =
             View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-
         window.statusBarColor = Color.TRANSPARENT
     }
 
     /**
      * LẦN ĐẦU MỞ APP:
      * - Gọi su (Magisk có thể popup)
-     * - Không root vẫn chạy
+     * - Deny / không root vẫn chạy
      */
     private fun checkRootAndStart() {
         Thread {
             hasRoot = requestRootOnce()
-            CheckRootStatus.lastCheckResult = hasRoot
 
             mainHandler.post {
                 startToFinish()
@@ -82,7 +77,7 @@ class SplashActivity : Activity() {
     }
 
     /**
-     * GIỮ NGUYÊN CODE GỐC
+     * GIỮ NGUYÊN LUỒNG CODE GỐC
      */
     private fun startToFinish() {
         binding.startStateText.text = getString(R.string.pop_started)
@@ -93,6 +88,7 @@ class SplashActivity : Activity() {
             BeforeStartThread(
                 this,
                 config,
+                hasRoot,
                 UpdateLogViewHandler(binding.startStateText) {
                     gotoHome()
                 }
@@ -151,6 +147,7 @@ class SplashActivity : Activity() {
     private class BeforeStartThread(
         private val context: Context,
         private val config: KrScriptConfig,
+        private val hasRoot: Boolean,
         private val logHandler: UpdateLogViewHandler
     ) : Thread() {
 
@@ -159,7 +156,7 @@ class SplashActivity : Activity() {
         override fun run() {
             try {
                 val process =
-                    if (CheckRootStatus.lastCheckResult)
+                    if (hasRoot)
                         ShellExecutor.getSuperUserRuntime()
                     else
                         ShellExecutor.getRuntime()
