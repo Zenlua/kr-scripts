@@ -30,19 +30,7 @@ class KeepShell(private var rootMode: Boolean = true) {
     private val endTagBytes = "\necho '$endTag'\n".toByteArray(charset)
 
     private val checkRootState = """
-        if [[ $(id -u 2>&1) == '0' ]] || [[ $($UID) == '0' ]] || [[ $(whoami 2>&1) == 'root' ]] || [[ $(set | grep 'USER_ID=0') == 'USER_ID=0' ]]; then
-          echo 'success'
-        else
-          if [[ -d /cache ]]; then
-            echo 1 > /cache/vtools_root
-            if [[ -f /cache/vtools_root ]] && [[ $(cat /cache/vtools_root) == '1' ]]; then
-              echo 'success'
-              rm -rf /cache/vtools_root
-              return
-            fi
-          fi
-          exit 1
-        fi
+    [ "$(id -u 2>/dev/null)" = "0" ] && echo success || exit 1
     """.trimIndent()
 
     /** Thoát shell an toàn */
