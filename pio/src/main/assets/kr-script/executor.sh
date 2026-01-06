@@ -1,11 +1,5 @@
 #!/system/bin/sh
 
-# 参数说明
-# $1 脚本路径
-
-# 将要执行的具体脚本，执行 executor.sh 时传入，如 ./executor.sh test.sh
-script_path="$1"
-
 # 全局变量 - 会由脚本引擎为其赋值
 # 框架并不需要这些变量，如果你不需要可以将其删除
 # 如有需要，你也可以增加一些自己的变量定义
@@ -31,22 +25,21 @@ export TMPDIR="$TEMP_DIR"
 
 # toolkit工具目录
 export TOOLKIT="$({TOOLKIT})"
+
 # 添加toolkit添加为应用程序目录
-if [[ ! "$TOOLKIT" = "" ]]; then
-    # export PATH="$PATH:$TOOLKIT"
-    PATH="$PATH:$TOOLKIT"
+if [ -d "$TOOLKIT" ]; then
+    export PATH="$TOOLKIT:$PATH"
 fi
 
 # 判断是否有指定执行目录，跳转到起始目录
-if [[ "$START_DIR" != "" ]] && [[ -d "$START_DIR" ]]
+if [ -d "$START_DIR" ]
 then
     cd "$START_DIR"
 fi
 
 # 运行脚本
-if [[ -f "$script_path" ]]; then
-    # sh "$script_path"     # 2019.09.02 before
-    source "$script_path"   # 2019.09.02 after
+if [ -f "$1" ]; then
+    source "$1"
 else
-    echo "${script_path} 已丢失" 1>&2
+    echo "$1 已丢失" 1>&2
 fi
