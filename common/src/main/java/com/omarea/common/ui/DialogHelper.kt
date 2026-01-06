@@ -440,7 +440,7 @@ fun setWindowBlurBg(window: Window, activity: Activity) {
     val wallpaperMode = activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER != 0
 
     window.run {
-        // Blur bitmap nếu có
+        // Lấy blur bitmap nếu có
         val blurBitmap = if (disableBlurBg || wallpaperMode) {
             null
         } else {
@@ -463,7 +463,7 @@ fun setWindowBlurBg(window: Window, activity: Activity) {
             }
         }
 
-        // Chỉnh light/dark status bar
+        // Chỉnh light/dark status bar chuẩn Android 30+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             window.insetsController?.let { controller ->
                 val isLightStatusBar = !isNightMode(activity)
@@ -474,8 +474,8 @@ fun setWindowBlurBg(window: Window, activity: Activity) {
             }
         } else {
             @Suppress("DEPRECATION")
-            decorView.systemUiVisibility = if (!isNightMode(activity))
-                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR else 0
+            decorView.systemUiVisibility =
+                if (!isNightMode(activity)) View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR else 0
         }
     }
 }
