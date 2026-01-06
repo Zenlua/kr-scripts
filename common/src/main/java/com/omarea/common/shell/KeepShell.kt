@@ -1,200 +1,171 @@
 package com.omarea.common.shell
 
 import android.util.Log
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import java.io.BufferedReader
 import java.io.OutputStream
 import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.thread
 
-
-/**
- * Created by Hello on 2018/01/23.
- */
 class KeepShell(private var rootMode: Boolean = true) {
-    private var p: Process? = null
+
+    private var process: Process? = null
     private var out: OutputStream? = null
     private var reader: BufferedReader? = null
-    private var currentIsIdle = true // 是否处于闲置状态
-    val isIdle: Boolean
-        get() {
-            return currentIsIdle
-        }
+    private var currentIsIdle = true
 
-    //尝试退出命令行程序
+    val isIdle: Boolean
+        get() = currentIsIdle
+
+    private val lock = ReentrantLock()
+    private val LOCK_TIMEOUT = 10_000L
+    private var enterLockTime = 0L
+
+    private val checkRootState = """
+        if [[ $(id -u 2>&1) == '0' ]] || [[ "$UID" == '0' ]] || [[ $(whoami 2>&1) == 'root' ]] || [[ $(set | grep 'USER_ID=0') == 'USER_ID=0' ]]; then
+          echo 'success'
+        else
+          if [[ -d /cache ]]; then
+            echo 1 > /cache/vtools_root
+            if [[ -f /cache/vtools_root ]] && [[ $(cat /cache/vtools_root) == '1' ]]; then
+              echo 'success'
+              rm -rf /cache/vtools_root
+              return
+            fi
+          fi
+          exit 1
+        fi
+    """.trimIndent()
+
+    // Thoát shell
     fun tryExit() {
-        try {
-            if (out != null)
-                out!!.close()
-            if (reader != null)
-                reader!!.close()
-        } catch (_: Exception) {
-        }
-        try {
-            p!!.destroy()
-        } catch (_: Exception) {
-        }
+        try { out?.close() } catch (_: Exception) {}
+        try { reader?.close() } catch (_: Exception) {}
+        try { process?.destroy() } catch (_: Exception) {}
         enterLockTime = 0L
         out = null
         reader = null
-        p = null
+        process = null
         currentIsIdle = true
     }
 
-    //获取ROOT超时时间
-    private val mLock = ReentrantLock()
-    private val LOCK_TIMEOUT = 10000L
-    private var enterLockTime = 0L
-
-    private var checkRootState =
-            // "if [[ \$(id -u 2>&1) == '0' ]] || [[ \$(\$UID) == '0' ]] || [[ \$(whoami 2>&1) == 'root' ]] || [[ \$(\$USER_ID) == '0' ]]; then\n" +
-            $$"if [[ $(id -u 2>&1) == '0' ]] || [[ $($UID) == '0' ]] || [[ $(whoami 2>&1) == 'root' ]] || [[ $(set | grep 'USER_ID=0') == 'USER_ID=0' ]]; then\n" +
-                    "  echo 'success'\n" +
-                    "else\n" +
-                    "if [[ -d /cache ]]; then\n" +
-                    "  echo 1 > /cache/vtools_root\n" +
-                    "  if [[ -f /cache/vtools_root ]] && [[ $(cat /cache/vtools_root) == '1' ]]; then\n" +
-                    "    echo 'success'\n" +
-                    "    rm -rf /cache/vtools_root\n" +
-                    "    return\n" +
-                    "  fi\n" +
-                    "fi\n" +
-                    "exit 1\n" +
-                    "exit 1\n" +
-                    "fi\n"
-
+    // Kiểm tra root
     fun checkRoot(): Boolean {
-        val r = doCmdSync(checkRootState).lowercase(Locale.getDefault())
-        return if (r == "error" || r.contains("permission denied") || r.contains("not allowed") || r == "not found") {
-            if (rootMode) {
-                tryExit()
-            }
+        val result = doCmdSync(checkRootState).lowercase(Locale.getDefault())
+        val denied = listOf("error", "permission denied", "not allowed", "not found")
+        return if (denied.any { result.contains(it) }) {
+            if (rootMode) tryExit()
             false
-        } else if (r.contains("success")) {
-            true
-        } else {
-            if (rootMode) {
-                tryExit()
-            }
-            false
-        }
+        } else result.contains("success")
     }
 
+    // Khởi tạo shell
     private fun getRuntimeShell() {
-        if (p != null) return
-        val getSu = Thread {
+        if (process != null) return
+
+        val initThread = Thread {
             try {
-                mLock.lockInterruptibly()
+                lock.lockInterruptibly()
                 enterLockTime = System.currentTimeMillis()
-                p =
-                    if (rootMode) ShellExecutor.getSuperUserRuntime() else ShellExecutor.getRuntime()
-                out = p!!.outputStream
-                reader = p!!.inputStream.bufferedReader()
+
+                process = if (rootMode) ShellExecutor.getSuperUserRuntime()
+                          else ShellExecutor.getRuntime()
+                out = process?.outputStream
+                reader = process?.inputStream?.bufferedReader()
+
                 if (rootMode) {
-                    out?.run {
-                        write(checkRootState.toByteArray(Charset.defaultCharset()))
-                        flush()
+                    out?.write(checkRootState.toByteArray(Charset.defaultCharset()))
+                    out?.flush()
+                }
+
+                // Thread đọc lỗi shell
+                thread(isDaemon = true) {
+                    process?.errorStream?.bufferedReader()?.use { errReader ->
+                        while (true) {
+                            val line = errReader.readLine() ?: break
+                            Log.e("KeepShellError", line)
+                        }
                     }
                 }
-                Thread {
-                    try {
-                        val errorReader =
-                            p!!.errorStream.bufferedReader()
-                        while (true) {
-                            Log.e("KeepShellPublic", errorReader.readLine())
-                        }
-                    } catch (ex: Exception) {
-                        Log.e("c", "" + ex.message)
-                    }
-                }.start()
+
             } catch (ex: Exception) {
-                Log.e("getRuntime", "" + ex.message)
+                Log.e("KeepShellInit", ex.message ?: "")
             } finally {
                 enterLockTime = 0L
-                mLock.unlock()
+                lock.unlock()
             }
         }
-        getSu.start()
-        getSu.join(10000)
-        if (p == null && getSu.state != Thread.State.TERMINATED) {
+
+        initThread.start()
+        initThread.join(10_000)
+        if (process == null && initThread.state != Thread.State.TERMINATED) {
             enterLockTime = 0L
-            getSu.interrupt()
+            initThread.interrupt()
         }
     }
 
-    private var br = "\n\n".toByteArray(Charset.defaultCharset())
-
-    private val shellOutputCache = StringBuilder()
     private val startTag = "|SH>>|"
     private val endTag = "|<<SH|"
     private val startTagBytes = "\necho '$startTag'\n".toByteArray(Charset.defaultCharset())
     private val endTagBytes = "\necho '$endTag'\n".toByteArray(Charset.defaultCharset())
 
-    //执行脚本
+    // Thực thi lệnh shell đồng bộ
     fun doCmdSync(cmd: String): String {
-        if (mLock.isLocked && enterLockTime > 0 && System.currentTimeMillis() - enterLockTime > LOCK_TIMEOUT) {
+        if (lock.isLocked && enterLockTime > 0 && System.currentTimeMillis() - enterLockTime > LOCK_TIMEOUT) {
             tryExit()
-            Log.e("doCmdSync-Lock", "线程等待超时${System.currentTimeMillis()} - $enterLockTime > $LOCK_TIMEOUT")
+            Log.e("KeepShell", "Lock timeout exceeded")
         }
-        getRuntimeShell()
 
+        getRuntimeShell()
+        val outputBuilder = StringBuilder()
 
         try {
-            mLock.lockInterruptibly()
+            lock.lockInterruptibly()
             currentIsIdle = false
 
-            out?.run {
-                GlobalScope.launch(Dispatchers.IO) {
-                    write(startTagBytes)
-                    write(cmd.toByteArray(Charset.defaultCharset()))
-                    write(endTagBytes)
-                    flush()
+            out?.apply {
+                write(startTagBytes)
+                write(cmd.toByteArray(Charset.defaultCharset()))
+                write(endTagBytes)
+                flush()
+            }
+
+            var reading = false
+            while (true) {
+                val line = reader?.readLine() ?: break
+
+                when {
+                    line.contains(startTag) -> {
+                        outputBuilder.clear()
+                        outputBuilder.append(line.substringAfter(startTag))
+                        reading = true
+                    }
+                    line.contains(endTag) -> {
+                        outputBuilder.append(line.substringBefore(endTag))
+                        break
+                    }
+                    reading -> {
+                        outputBuilder.append(line).append("\n")
+                    }
                 }
             }
 
-            var unstart = true
-            while (reader != null) {
-                val line = reader!!.readLine()
-                if (line == null) {
-                    break
-                } else if (line.contains(endTag)) {
-                    shellOutputCache.append(line.substringBefore(endTag))
-                    break
-                } else if (line.contains(startTag)) {
-                    shellOutputCache.clear()
-                    shellOutputCache.append(line.substring(line.indexOf(startTag) + startTag.length))
-                    unstart = false
-                } else if (!unstart) {
-                    shellOutputCache.append(line)
-                    shellOutputCache.append("\n")
-                }
-            }
-            // Log.e("shell-unlock", cmd)
-            // Log.d("Shell", cmd.toString() + "\n" + "Result:"+results.toString().trim())
-            return shellOutputCache.toString().trim()
-        }
-        catch (e: Exception) {
+            return outputBuilder.toString().trim()
+        } catch (e: Exception) {
             tryExit()
-            Log.e("KeepShellAsync", "" + e.message)
+            Log.e("KeepShellCmd", e.message ?: "")
             return "error"
         } finally {
             enterLockTime = 0L
-            mLock.unlock()
-
+            lock.unlock()
             currentIsIdle = true
         }
     }
 
-    // 执行脚本，并对结果进行ResourceID翻译
-    fun doCmdSync(shellCommand: String, shellTranslation: ShellTranslation): String {
-        val rows = doCmdSync(shellCommand).split("\n")
-        return if (rows.isNotEmpty()) {
-            shellTranslation.resolveRows(rows)
-        } else {
-            ""
-        }
+    // Thực thi lệnh với translation
+    fun doCmdSync(cmd: String, translation: ShellTranslation): String {
+        val rows = doCmdSync(cmd).lines()
+        return translation.resolveRows(rows)
     }
 }
