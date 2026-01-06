@@ -10,28 +10,13 @@ open class ObjectStorage<T : Serializable>(private val context: Context) {
 
     private val objectStorageDir = "objects/"
 
-    protected fun getSaveDir(configFile: String): String {
-        return FileWrite.getPrivateFilePath(context, objectStorageDir + configFile)
-    }
-
-    open fun load(configFile: String): T? {
-        val file = File(getSaveDir(configFile))
-        if (!file.exists()) return null
-
-        return try {
-            FileInputStream(file).use { fis ->
-                ObjectInputStream(fis).use { ois ->
-                    ois.readObject() as? T
-                }
-            }
-        } catch (ex: Exception) {
-            ex.printStackTrace()
-            null
-        }
+    private fun getSaveFile(configFile: String): File {
+        val path = FileWrite.getPrivateFilePath(context, objectStorageDir + configFile)
+        return File(path)
     }
 
     open fun save(obj: T?, configFile: String): Boolean {
-        val file = File(getSaveDir(configFile))
+        val file = getSaveFile(configFile)
         file.parentFile?.takeIf { !it.exists() }?.mkdirs()
 
         if (obj == null) {
@@ -41,9 +26,7 @@ open class ObjectStorage<T : Serializable>(private val context: Context) {
 
         return try {
             FileOutputStream(file).use { fos ->
-                ObjectOutputStream(fos).use { oos ->
-                    oos.writeObject(obj)
-                }
+                ObjectOutputStream(fos).use { it.writeObject(obj) }
             }
             true
         } catch (ex: Exception) {
@@ -55,11 +38,34 @@ open class ObjectStorage<T : Serializable>(private val context: Context) {
         }
     }
 
-    open fun remove(configFile: String) {
-        File(getSaveDir(configFile)).takeIf { it.exists() }?.delete()
+    @Suppress("UNCHECKED_CAST")
+    open fun load(configFile: String): T? {
+        val file = getSaveFile(configFile)
+        if (!file.exists()) return null
+
+        return try {
+            FileInputStream(file).use { fis ->
+                ObjectInputStream(fis).use { it.readObject() as T }
+            }
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            null
+        }
     }
 
-    open fun exists(configFile: String): Boolean {
-        return File(getSaveDir(configFile)).exists()
+    inline fun <reified R : T> loadSafe(configFile: String): R? {
+        return try {
+            val obj = load(configFile)
+            if (obj is R) obj else null
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            null
+        }
     }
+
+    open fun remove(configFile: String) {
+        getSaveFile(configFile).takeIf { it.exists() }?.delete()
+    }
+
+    open fun exists(configFile: String): Boolean = getSaveFile(configFile).exists()
 }
