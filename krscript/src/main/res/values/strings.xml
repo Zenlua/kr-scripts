@@ -1,4 +1,6 @@
 <resources>
+    <string name="cancel">Cancel</string>
+    <string name="exit">Exit</string>
     <string name="btn_confirm">确定</string>
     <string name="shell_executor">脚本执行器</string>
     <string name="btn_cancel">取消</string>
