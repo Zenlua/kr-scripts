@@ -26,6 +26,7 @@ class ActionShortcutManager(private val context: Context) {
         // Lưu pageNode vào storage nếu intent có extra
         intent.getSerializableExtraCompat<PageNode>("page")?.let { pageNode ->
             intent.putExtra("shortcutId", saveShortcutTarget(pageNode))
+            intent.removeExtra("page")
         }
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -46,9 +47,10 @@ class ActionShortcutManager(private val context: Context) {
 
             val shortcut = Intent("com.android.launcher.action.INSTALL_SHORTCUT").apply {
                 putExtra("duplicate", false)
-                putExtra(Intent.EXTRA_SHORTCUT_NAME, config.title)
-                putExtra(Intent.EXTRA_SHORTCUT_ICON, (drawable as BitmapDrawable).bitmap)
-                putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent)
+                // Dùng string trực tiếp để tránh deprecated field trên Android cũ
+                putExtra("android.intent.extra.shortcut.NAME", config.title)
+                putExtra("android.intent.extra.shortcut.ICON", (drawable as BitmapDrawable).bitmap)
+                putExtra("android.intent.extra.shortcut.INTENT", shortcutIntent)
             }
 
             context.sendBroadcast(shortcut)
@@ -100,7 +102,7 @@ class ActionShortcutManager(private val context: Context) {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            // Kiểm tra nếu shortcut đã có → update, chưa có → request pin
+            // Nếu shortcut đã có → update, chưa có → request pin
             shortcutManager.pinnedShortcuts.find { it.id == id }?.let {
                 shortcutManager.updateShortcuts(listOf(info))
             } ?: shortcutManager.requestPinShortcut(info, callbackIntent.intentSender)
