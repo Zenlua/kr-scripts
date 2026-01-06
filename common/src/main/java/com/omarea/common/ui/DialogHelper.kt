@@ -307,7 +307,12 @@ class DialogHelper {
 
 private fun getStatusBarColor(context: Context, defaultColor: Int = Color.TRANSPARENT): Int {
     return try {
-        if (context is Activity) {
+        // Android 11+ dùng WindowInsetsController không có màu trực tiếp
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Không truy cập trực tiếp, trả về default
+            defaultColor
+        } else if (context is Activity) {
+            @Suppress("DEPRECATION")
             context.window.statusBarColor
         } else {
             defaultColor
