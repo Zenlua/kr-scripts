@@ -15,9 +15,9 @@
     <string name="author_name">xxx</string>
     <string name="about_title">About · PIO</string>
     <string name="appliction_desc">This is a framework demo application</string>
-    <string name="appliction_name">PIO Sample Framework</string>
+    <string name="appliction_name">PIO Framework</string>
     <string name="appliction_author">Author: DuduSki</string>
-    <string name="engine_version_name">Created based on [Kr-Script 4.0.3]</string>
+    <string name="engine_version_name">Created based on [Kr-Script 4.0.5]</string>
 
     <string name="tab_home">Home</string>
     <string name="tab_favorites">Favorites</string>
