@@ -1,37 +1,34 @@
 package com.omarea.common.ui
 
 import android.app.Activity
-import android.app.Dialog
 import android.graphics.Bitmap
-import android.os.Handler
-import android.os.Looper
-import android.renderscript.*
+import android.graphics.Canvas
+import android.os.Build
 import android.view.View
-import android.view.Window
-import android.view.WindowManager
-import android.widget.ImageView
+import android.view.ViewGroup
 import androidx.core.graphics.scale
 import kotlinx.coroutines.*
+import android.renderscript.*
 
 class BlurBackground(private val activity: Activity) {
 
-    private var dialogBg: ImageView? = null
+    private var overlayView: View? = null
     private var originalW = 0
     private var originalH = 0
-    private val mainHandler = Handler(Looper.getMainLooper())
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    private fun captureScreen(): Bitmap? {
-        val decorView = activity.window.decorView
-        decorView.destroyDrawingCache()
-        decorView.isDrawingCacheEnabled = true
-        val bmp = decorView.drawingCache ?: return null
-        originalW = bmp.width
-        originalH = bmp.height
-        return bmp.scale(originalW / 4, originalH / 4, false)
+    /** Capture ViewGroup as bitmap */
+    private fun captureView(view: View): Bitmap? {
+        val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        view.draw(canvas)
+        originalW = bitmap.width
+        originalH = bitmap.height
+        return bitmap.scale(originalW / 4, originalH / 4, false)
     }
 
-    private suspend fun blur(bitmap: Bitmap?): Bitmap? = withContext(Dispatchers.Default) {
+    /** Blur bitmap using RenderScript (legacy) */
+    private suspend fun blurRenderScript(bitmap: Bitmap?): Bitmap? = withContext(Dispatchers.Default) {
         bitmap ?: return@withContext null
         val output = Bitmap.createBitmap(bitmap)
         val rs = RenderScript.create(activity)
@@ -39,48 +36,82 @@ class BlurBackground(private val activity: Activity) {
             val blurScript = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs))
             val inputAlloc = Allocation.createFromBitmap(rs, bitmap)
             val outputAlloc = Allocation.createFromBitmap(rs, output)
-            blurScript.setRadius(10f) // 0 < radius <= 25
+            blurScript.setRadius(10f)
             blurScript.setInput(inputAlloc)
             blurScript.forEach(outputAlloc)
             outputAlloc.copyTo(output)
         } finally {
             rs.destroy()
         }
-        return@withContext output
+        output
     }
 
-    private fun fadeImage(inFade: Boolean) {
+    /** Blur bitmap using RenderEffect (API 31+) */
+    @androidx.annotation.RequiresApi(31)
+    private fun blurRenderEffect(bitmap: Bitmap): Bitmap {
+        val output = Bitmap.createBitmap(bitmap.width, bitmap.height, bitmap.config)
+        val canvas = Canvas(output)
+        val paint = android.graphics.Paint()
+        val effect = android.graphics.RenderEffect.createBlurEffect(10f, 10f, android.graphics.Shader.TileMode.CLAMP)
+        paint.setRenderEffect(effect)
+        canvas.drawBitmap(bitmap, 0f, 0f, paint)
+        return output
+    }
+
+    /** Add overlay View for blur */
+    private fun addOverlay(parent: ViewGroup): View {
+        val overlay = View(activity)
+        overlay.layoutParams = ViewGroup.LayoutParams(parent.width, parent.height)
+        overlay.alpha = 0f
+        parent.addView(overlay)
+        return overlay
+    }
+
+    /** Fade in/out overlay */
+    private fun fadeOverlay(inFade: Boolean) {
         scope.launch {
-            val start = if (inFade) 0 else 255
-            val end = if (inFade) 255 else 0
-            val step = 5
-            for (alpha in if (inFade) start..end step step else start downTo end step step) {
-                dialogBg?.imageAlpha = alpha
-                delay(4)
+            val start = if (inFade) 0f else 1f
+            val end = if (inFade) 1f else 0f
+            val steps = 20
+            val delayMs = 10L
+            for (i in 0..steps) {
+                val alpha = start + (end - start) * i / steps
+                overlayView?.alpha = alpha
+                delay(delayMs)
             }
-            if (!inFade) dialogBg?.visibility = View.GONE
-        }
-    }
-
-    private fun handleBlur() {
-        dialogBg?.let { imageView ->
-            scope.launch {
-                var bitmap = captureScreen()
-                bitmap = blur(bitmap)
-                bitmap = bitmap?.scale(originalW, originalH, false)
-                imageView.setImageBitmap(bitmap)
-                imageView.visibility = View.VISIBLE
-                fadeImage(true)
+            if (!inFade) {
+                (overlayView?.parent as? ViewGroup)?.removeView(overlayView)
+                overlayView = null
             }
         }
     }
 
-    fun setScreenBgLight(dialog: Dialog) {
-        dialog.window?.let { window ->
-            val lp: WindowManager.LayoutParams = window.attributes
-            lp.dimAmount = 0.2f
-            window.attributes = lp
+    /** Public: blur the whole parent view */
+    fun blurParent(parent: ViewGroup) {
+        if (overlayView != null) return  // already showing
+
+        overlayView = addOverlay(parent)
+
+        scope.launch {
+            val bitmap = captureView(parent)
+            val blurred = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                bitmap?.let { blurRenderEffect(it) }
+            } else {
+                blurRenderScript(bitmap)
+            }?.scale(parent.width, parent.height, false)
+
+            overlayView?.background = android.graphics.drawable.BitmapDrawable(activity.resources, blurred)
+            fadeOverlay(true)
         }
-        handleBlur()
+    }
+
+    /** Remove blur */
+    fun clearBlur() {
+        fadeOverlay(false)
+    }
+
+    /** Cancel ongoing coroutine to avoid leaks */
+    fun cancel() {
+        scope.cancel()
     }
 }
