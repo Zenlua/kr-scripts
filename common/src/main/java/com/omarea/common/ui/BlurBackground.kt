@@ -5,122 +5,82 @@ import android.app.Dialog
 import android.graphics.Bitmap
 import android.os.Handler
 import android.os.Looper
-import android.renderscript.Allocation
-import android.renderscript.Element
-import android.renderscript.RenderScript
-import android.renderscript.ScriptIntrinsicBlur
+import android.renderscript.*
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
 import android.widget.ImageView
 import androidx.core.graphics.scale
+import kotlinx.coroutines.*
 
 class BlurBackground(private val activity: Activity) {
+
     private var dialogBg: ImageView? = null
     private var originalW = 0
     private var originalH = 0
-    private var mHandler: Handler = Handler(Looper.getMainLooper())
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    private fun captureScreen(activity: Activity): Bitmap {
-        activity.window.decorView.destroyDrawingCache() //先清理屏幕绘制缓存(重要)
-        activity.window.decorView.isDrawingCacheEnabled = true
-        var bmp: Bitmap = activity.window.decorView.drawingCache
-        //获取原图尺寸
+    private fun captureScreen(): Bitmap? {
+        val decorView = activity.window.decorView
+        decorView.destroyDrawingCache()
+        decorView.isDrawingCacheEnabled = true
+        val bmp = decorView.drawingCache ?: return null
         originalW = bmp.width
         originalH = bmp.height
-        //对原图进行缩小，提高下一步高斯模糊的效率
-        bmp = bmp.scale(originalW / 4, originalH / 4, false)
-        return bmp
+        return bmp.scale(originalW / 4, originalH / 4, false)
     }
 
-    private fun asyncRefresh(`in`: Boolean) {
-        //淡出淡入效果的实现
-        if (`in`) {    //淡入效果
-            Thread {
-                var i = 0
-                while (i < 256) {
-                    refreshUI(i) //在UI线程刷新视图
-                    try {
-                        Thread.sleep(4)
-                    } catch (e: InterruptedException) {
-                        e.printStackTrace()
-                    }
-                    i += 5
-                }
-            }.start()
-        } else {    //淡出效果
-            Thread {
-                var i = 255
-                while (i >= 0) {
-                    refreshUI(i) //在UI线程刷新视图
-                    try {
-                        Thread.sleep(4)
-                    } catch (e: InterruptedException) {
-                        e.printStackTrace()
-                    }
-                    i -= 5
-                }
-                //当淡出效果完毕后发送消息给mHandler把对话框背景设为不可见
-                mHandler.sendEmptyMessage(0)
-            }.start()
+    private suspend fun blur(bitmap: Bitmap?): Bitmap? = withContext(Dispatchers.Default) {
+        bitmap ?: return@withContext null
+        val output = Bitmap.createBitmap(bitmap)
+        val rs = RenderScript.create(activity)
+        try {
+            val blurScript = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs))
+            val inputAlloc = Allocation.createFromBitmap(rs, bitmap)
+            val outputAlloc = Allocation.createFromBitmap(rs, output)
+            blurScript.setRadius(10f) // 0 < radius <= 25
+            blurScript.setInput(inputAlloc)
+            blurScript.forEach(outputAlloc)
+            outputAlloc.copyTo(output)
+        } finally {
+            rs.destroy()
+        }
+        return@withContext output
+    }
+
+    private fun fadeImage(inFade: Boolean) {
+        scope.launch {
+            val start = if (inFade) 0 else 255
+            val end = if (inFade) 255 else 0
+            val step = 5
+            for (alpha in if (inFade) start..end step step else start downTo end step step) {
+                dialogBg?.imageAlpha = alpha
+                delay(4)
+            }
+            if (!inFade) dialogBg?.visibility = View.GONE
         }
     }
 
-    private fun runOnUiThread(runnable: Runnable) {
-        mHandler.post(runnable)
-    }
-
-    private fun refreshUI(i: Int) {
-        runOnUiThread { dialogBg?.imageAlpha = i }
-    }
-
-    private fun hideBlur() {
-        //把对话框背景隐藏
-        asyncRefresh(false)
-        System.gc()
-    }
-
-    private fun blur(bitmap: Bitmap?): Bitmap? {
-        //使用RenderScript对图片进行高斯模糊处理
-        val output = bitmap?.let { Bitmap.createBitmap(it) } // 创建输出图片
-        val rs: RenderScript = RenderScript.create(activity) // 构建一个RenderScript对象
-        val gaussianBlue: ScriptIntrinsicBlur = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs)) //
-        // 创建高斯模糊脚本
-        val allIn: Allocation = Allocation.createFromBitmap(rs, bitmap) // 开辟输入内存
-        val allOut: Allocation = Allocation.createFromBitmap(rs, output) // 开辟输出内存
-        val radius = 10f //设置模糊半径
-        gaussianBlue.setRadius(radius) // 设置模糊半径，范围0f<radius<=25f
-        gaussianBlue.setInput(allIn) // 设置输入内存
-        gaussianBlue.forEach(allOut) // 模糊编码，并将内存填入输出内存
-        allOut.copyTo(output) // 将输出内存编码为Bitmap，图片大小必须注意
-        rs.destroy()
-        //rs.releaseAllContexts(); // 关闭RenderScript对象，API>=23则使用rs.releaseAllContexts()
-        return output
-    }
-
     private fun handleBlur() {
-        dialogBg?.run {
-            var bp: Bitmap? = captureScreen(activity)
-
-            bp = blur(bp) //对屏幕截图模糊处理
-            //将模糊处理后的图恢复到原图尺寸并显示出来
-            bp = bp?.scale(originalW, originalH, false)
-            setImageBitmap(bp)
-            visibility = View.VISIBLE
-            //防止UI线程阻塞，在子线程中让背景实现淡入效果
-            asyncRefresh(true)
+        dialogBg?.let { imageView ->
+            scope.launch {
+                var bitmap = captureScreen()
+                bitmap = blur(bitmap)
+                bitmap = bitmap?.scale(originalW, originalH, false)
+                imageView.setImageBitmap(bitmap)
+                imageView.visibility = View.VISIBLE
+                fadeImage(true)
+            }
         }
     }
 
     fun setScreenBgLight(dialog: Dialog) {
-        val window: Window? = dialog.window
-        val lp: WindowManager.LayoutParams
-        if (window != null) {
-            lp = window.attributes
+        dialog.window?.let { window ->
+            val lp: WindowManager.LayoutParams = window.attributes
             lp.dimAmount = 0.2f
             window.attributes = lp
         }
         handleBlur()
     }
-
 }
