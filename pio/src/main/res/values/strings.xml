@@ -30,9 +30,7 @@
 
     <string name="copy_success">Copy successful</string>
     <string name="btn_retry">Retry</string>
-    <string name="cancel">Cancel</string>
-    <string name="exit">Exit</string>
-    
+
     <string name="pio_starting">PIO·STARTING</string>
     <string name="pop_before_start">正准备启动应用…</string>
     <string name="pop_started">启动完成！</string>
