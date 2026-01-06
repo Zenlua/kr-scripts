@@ -21,7 +21,7 @@ public class ShellExecutor {
     private void killProcess(Context context) {
         ScriptEnvironmen.executeResultRoot(
                 context,
-                String.format("kill -s 1 `pgrep -f %s`", sessionTag),
+                String.format("shell_progres=\'%s\' killtree", sessionTag),
                 null);
         // KeepShellPublic.INSTANCE.doCmdSync(String.format("kill -s 1 `pgrep -f %s`", sessionTag));
     }
