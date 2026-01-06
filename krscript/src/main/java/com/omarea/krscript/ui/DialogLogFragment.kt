@@ -93,15 +93,9 @@ class DialogLogFragment : DialogFragment() {
         super.onResume()
         dialog?.setOnKeyListener { _, keyCode, event ->
             if (!uiVisible || !running) return@setOnKeyListener false
-
-            if (event.action == KeyEvent.ACTION_DOWN &&
+            event.action == KeyEvent.ACTION_DOWN &&
                 (keyCode == KeyEvent.KEYCODE_VOLUME_UP ||
                  keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
-            ) {
-                true
-            } else {
-                false
-            }
         }
     }
 
@@ -174,12 +168,10 @@ class DialogLogFragment : DialogFragment() {
 
         return MyShellHandler(
             object : IActionEventHandler {
-
                 override fun onStart(forceStop: Runnable?) {
                     running = true
                     canceled = false
                     forceStopRunnable = forceStop
-
                     binding?.btnExit?.apply {
                         visibility = View.VISIBLE
                         text = context?.getString(R.string.btn_cancel)
@@ -189,21 +181,17 @@ class DialogLogFragment : DialogFragment() {
                 override fun onCompleted() {
                     running = false
                     onExit.run()
-
                     binding?.btnExit?.apply {
                         visibility = View.VISIBLE
                         text = context?.getString(R.string.btn_exit)
                     }
                     binding?.btnHide?.visibility = View.GONE
                     binding?.actionProgress?.visibility = View.GONE
-
                     isCancelable = true
                 }
 
                 override fun onSuccess() {
-                    if (nodeInfo.autoOff) {
-                        dismissAllowingStateLoss()
-                    }
+                    if (nodeInfo.autoOff) dismissAllowingStateLoss()
                 }
             },
             binding?.shellOutput,
@@ -225,22 +213,20 @@ class DialogLogFragment : DialogFragment() {
 
         private val context = logView?.context
 
-        private fun getColorSafe(resId: Int): Int {
-            val ctx = context ?: return Color.WHITE
-            return if (Build.VERSION.SDK_INT >= 23)
-                ctx.getColor(resId)
+        private fun getColor(resId: Int): Int =
+            if (Build.VERSION.SDK_INT >= 23)
+                context!!.getColor(resId)
             else
-                ctx.resources.getColor(resId)
-        }
+                context!!.resources.getColor(resId)
 
-        private val errorColor = getColorSafe(R.color.kr_shell_log_error)
-        private val basicColor = getColorSafe(R.color.kr_shell_log_basic)
-        private val scriptColor = getColorSafe(R.color.kr_shell_log_script)
-        private val endColor = getColorSafe(R.color.kr_shell_log_end)
+        private val errorColor = getColor(R.color.kr_shell_log_error)
+        private val basicColor = getColor(R.color.kr_shell_log_basic)
+        private val scriptColor = getColor(R.color.kr_shell_log_script)
+        private val endColor = getColor(R.color.kr_shell_log_end)
 
         private var hasError = false
 
-        private val logBuffer = StringBuilder()
+        private val logBuffer = SpannableStringBuilder()
         @Volatile
         private var flushing = false
 
@@ -254,29 +240,23 @@ class DialogLogFragment : DialogFragment() {
             }
         }
 
-        // ====== ABSTRACT METHODS (BẮT BUỘC) ======
-
-        override fun onStart(msg: Any) {
-            // không dùng msg
-        }
+        override fun onStart(msg: Any) {}
 
         override fun updateLog(msg: SpannableString) {
             appendBuffered(msg)
         }
 
-        // =========================================
-
         override fun onReader(msg: Any) {
-            updateColoredLog(msg, basicColor)
+            updateColored(msg, basicColor)
         }
 
         override fun onWrite(msg: Any) {
-            updateColoredLog(msg, scriptColor)
+            updateColored(msg, scriptColor)
         }
 
         override fun onError(msg: Any) {
             hasError = true
-            updateColoredLog(msg, errorColor)
+            updateColored(msg, errorColor)
         }
 
         override fun onStart(forceStop: Runnable?) {
@@ -285,10 +265,7 @@ class DialogLogFragment : DialogFragment() {
         }
 
         override fun onExit(msg: Any?) {
-            updateColoredLog(
-                context?.getString(R.string.kr_shell_completed),
-                endColor
-            )
+            updateColored(context?.getString(R.string.kr_shell_completed), endColor)
             handler.onCompleted()
             if (!hasError) handler.onSuccess()
         }
@@ -309,7 +286,7 @@ class DialogLogFragment : DialogFragment() {
             }
         }
 
-        private fun updateColoredLog(msg: Any?, color: Int) {
+        private fun updateColored(msg: Any?, color: Int) {
             val text = SpannableString(msg?.toString() ?: "").apply {
                 setSpan(
                     android.text.style.ForegroundColorSpan(color),
@@ -321,7 +298,7 @@ class DialogLogFragment : DialogFragment() {
             appendBuffered(text)
         }
 
-        private fun appendBuffered(text: CharSequence) {
+        private fun appendBuffered(text: SpannableString) {
             synchronized(logBuffer) {
                 logBuffer.append(text)
             }
@@ -333,7 +310,7 @@ class DialogLogFragment : DialogFragment() {
                         out = SpannableStringBuilder(logBuffer)
                         logBuffer.clear()
                     }
-                    logView.append(out) // ✅ span còn nguyên
+                    logView.append(out)
                     (logView.parent as? ScrollView)
                         ?.fullScroll(ScrollView.FOCUS_DOWN)
                     flushing = false
