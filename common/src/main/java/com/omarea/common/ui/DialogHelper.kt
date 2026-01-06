@@ -1,7 +1,5 @@
 package com.omarea.common.ui
 
-import android.os.Build
-import android.view.WindowInsetsController
 import android.app.Activity
 import android.app.UiModeManager
 import android.content.Context
@@ -19,6 +17,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import com.omarea.common.R
 import androidx.core.graphics.drawable.toDrawable
+import android.os.Build
+import android.view.WindowInsetsController
 
 class DialogHelper {
     class DialogButton(val text: String, val onClick: Runnable? = null, val dismiss: Boolean = true)
@@ -435,12 +435,12 @@ fun customDialog(context: Context, view: View, cancelable: Boolean = true): Dial
             }
         }
 
-        fun setWindowBlurBg(window: Window, activity: Activity) {
-    // Kiểm tra có dùng dynamic wallpaper không
+fun setWindowBlurBg(window: Window, activity: Activity) {
+    // Kiểm tra dynamic wallpaper
     val wallpaperMode = activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER != 0
 
     window.run {
-        // Lấy blur bitmap nếu có
+        // Blur bitmap nếu có
         val blurBitmap = if (disableBlurBg || wallpaperMode) {
             null
         } else {
@@ -451,35 +451,21 @@ fun customDialog(context: Context, view: View, cancelable: Boolean = true): Dial
             setBackgroundDrawable(blurBitmap.toDrawable(activity.resources))
         } else {
             try {
-                // Lấy màu nền status bar / window mới
-                val bg = getStatusBarColor(activity)
-                if (bg == Color.TRANSPARENT) {
-                    if (isFloating) {
-                        val d = bg.toDrawable()
-                        setBackgroundDrawable(d)
-                        setDimAmount(0.9f)
-                        return
-                    } else {
-                        val d = if (wallpaperMode || isNightMode(activity)) {
-                            Color.argb(255, 18, 18, 18).toDrawable()
-                        } else {
-                            Color.argb(255, 245, 245, 245).toDrawable()
-                        }
-                        setBackgroundDrawable(d)
-                    }
+                val d = if (wallpaperMode || isNightMode(activity)) {
+                    Color.argb(255, 18, 18, 18).toDrawable()
                 } else {
-                    setBackgroundDrawable(bg.toDrawable())
+                    Color.argb(255, 245, 245, 245).toDrawable()
                 }
+                setBackgroundDrawable(d)
             } catch (_: Exception) {
                 val d = Color.argb(255, 245, 245, 245).toDrawable()
                 setBackgroundDrawable(d)
             }
         }
 
-        // Chỉnh status bar sáng/tối theo night mode
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-            val controller = insetsController
-            if (controller != null) {
+        // Chỉnh light/dark status bar
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.insetsController?.let { controller ->
                 val isLightStatusBar = !isNightMode(activity)
                 controller.setSystemBarsAppearance(
                     if (isLightStatusBar) WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS else 0,
