@@ -68,7 +68,7 @@ class AsynSuShellUnit(private val handler: Handler) {
     /**
      * Gửi lệnh shell đến process
      */
-    fun exec(cmd: String): AsyncSuShellUnit {
+    fun exec(cmd: String): AsynSuShellUnit {
         if (process == null) start()
         process?.outputStream?.bufferedWriter(Charset.forName("UTF-8"))?.apply {
             try {
