@@ -327,12 +327,12 @@ class DialogLogFragment : DialogFragment() {
             if (!flushing) {
                 flushing = true
                 logView?.postDelayed({
-                    val out: String
+                    val out: SpannableStringBuilder
                     synchronized(logBuffer) {
-                        out = logBuffer.toString()
+                        out = SpannableStringBuilder(logBuffer)
                         logBuffer.clear()
                     }
-                    logView.append(out)
+                    logView.append(out) // ✅ span còn nguyên
                     (logView.parent as? ScrollView)
                         ?.fullScroll(ScrollView.FOCUS_DOWN)
                     flushing = false
