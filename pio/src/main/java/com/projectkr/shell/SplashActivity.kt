@@ -1,164 +1,135 @@
 package com.projectkr.shell
 
-import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import androidx.core.app.ActivityCompat
-import androidx.core.content.PermissionChecker
+import android.os.*
 import android.util.TypedValue
 import android.view.View
 import android.widget.TextView
 import com.omarea.common.shell.ShellExecutor
 import com.omarea.krscript.executor.ScriptEnvironmen
 import com.projectkr.shell.databinding.ActivitySplashBinding
-import com.projectkr.shell.permissions.CheckRootStatus
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.util.HashMap
 
 class SplashActivity : Activity() {
+
     private lateinit var binding: ActivitySplashBinding
+    private val mainHandler = Handler(Looper.getMainLooper())
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (ScriptEnvironmen.isInited()) {
-            if (isTaskRoot) {
-                gotoHome()
-            }
-            return
-        }
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        updateThemeStyle()
 
-        checkPermissions()
+        updateThemeStyle()
+        requestRootOnceAndStart()
     }
 
-    /**
-     * 界面主题样式调整
-     */
     private fun updateThemeStyle() {
-        window.navigationBarColor = getColorAccent()
         window.navigationBarColor = getColor(R.color.splash_bg_color)
-
-        //  得到当前界面的装饰视图
-        val decorView = window.decorView
-        //让应用主题内容占用系统状态栏的空间,注意:下面两个参数必须一起使用 stable 牢固的
-        val option = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-        decorView.systemUiVisibility = option
-        //设置状态栏颜色为透明
+        window.decorView.systemUiVisibility =
+            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
         window.statusBarColor = Color.TRANSPARENT
     }
 
-    private fun getColorAccent(): Int {
-        val typedValue = TypedValue()
-        this.theme.resolveAttribute(androidx.appcompat.R.attr.colorAccent, typedValue, true)
-        return typedValue.data
-    }
-
     /**
-     * 开始检查必需权限
+     * LẦN ĐẦU MỞ APP:
+     * - Gọi su (Magisk có thể popup)
+     * - Không root vẫn chạy bình thường
      */
-    private fun checkPermissions() {
-        binding.startLogo.visibility = View.VISIBLE
-        checkRoot {
-            binding.startStateText.text = getString(R.string.pio_permission_checking)
-            hasRoot = true
-
-            /*
-            checkFileWrite(Runnable {
-                startToFinish()
-            })
-            */
-            startToFinish()
-        }
-    }
-
-    private fun checkPermission(permission: String): Boolean = PermissionChecker.checkSelfPermission(this.applicationContext, permission) == PermissionChecker.PERMISSION_GRANTED
-
-    /**
-     * 检查权限 主要是文件读写权限
-     */
-    private fun checkFileWrite(next: Runnable) {
+    private fun requestRootOnceAndStart() {
         Thread {
-            CheckRootStatus.grantPermission(this)
-            if (!(checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE) && checkPermission(
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                ))
-            ) {
-                ActivityCompat.requestPermissions(
-                    this@SplashActivity,
-                    arrayOf(
-                        Manifest.permission.READ_EXTERNAL_STORAGE,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                        Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS,
-                        Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                        Manifest.permission.WAKE_LOCK
-                    ),
-                    0x11
-                )
+            val hasRoot = requestRootWithPopup()
+            val runtime = if (hasRoot) {
+                ShellExecutor.getSuperUserRuntime()
+            } else {
+                ShellExecutor.getRuntime()
             }
-            myHandler.post {
-                next.run()
+
+            ScriptEnvironmen.init(runtime)
+
+            mainHandler.post {
+                startToFinish(hasRoot)
             }
         }.start()
     }
 
-    private var hasRoot = false
-    private var myHandler = Handler()
-
-    private fun checkRoot(next: Runnable) {
-        CheckRootStatus(this, next).forceGetRoot()
+    /**
+     * Gọi su → Magisk popup nếu có
+     * Allow = true, Deny / no root = false
+     */
+    private fun requestRootWithPopup(): Boolean {
+        return try {
+            val p = Runtime.getRuntime().exec("su")
+            p.outputStream.apply {
+                write("exit\n".toByteArray())
+                flush()
+            }
+            p.waitFor() == 0
+        } catch (_: Exception) {
+            false
+        }
     }
 
-    /**
-     * 启动完成
-     */
-    private fun startToFinish() {
+    private fun startToFinish(hasRoot: Boolean) {
         binding.startStateText.text = getString(R.string.pop_started)
 
         val config = KrScriptConfig().init(this)
+
         if (config.beforeStartSh.isNotEmpty()) {
-            BeforeStartThread(this, config, UpdateLogViewHandler(binding.startStateText) {
-                gotoHome()
-            }).start()
+            BeforeStartThread(
+                this,
+                config,
+                hasRoot,
+                UpdateLogViewHandler(binding.startStateText) {
+                    gotoHome()
+                }
+            ).start()
         } else {
             gotoHome()
         }
     }
 
     private fun gotoHome() {
-        if (this.intent != null && this.intent.hasExtra("JumpActionPage") && this.intent.getBooleanExtra("JumpActionPage", false)) {
-            val actionPage = Intent(this.applicationContext, ActionPage::class.java)
-            actionPage.putExtras(this.intent)
-            startActivity(actionPage)
+        val target = if (
+            intent?.getBooleanExtra("JumpActionPage", false) == true
+        ) {
+            Intent(this, ActionPage::class.java).apply {
+                putExtras(this@SplashActivity.intent!!)
+            }
         } else {
-            val home = Intent(this.applicationContext, MainActivity::class.java)
-            startActivity(home)
+            Intent(this, MainActivity::class.java)
         }
+
+        startActivity(target)
         finish()
     }
 
-    private class UpdateLogViewHandler(private var logView: TextView, private val onExit: Runnable) {
+    // ================= LOG HANDLER =================
+
+    private class UpdateLogViewHandler(
+        private val logView: TextView,
+        private val onExit: Runnable
+    ) {
         private val handler = Handler(Looper.getMainLooper())
-        private var notificationMessageRows = ArrayList<String>()
-        private var someIgnored = false
+        private val rows = ArrayList<String>()
+        private var ignored = false
 
         fun onLogOutput(log: String) {
             handler.post {
-                synchronized(notificationMessageRows) {
-                    if (notificationMessageRows.size > 6) {
-                        notificationMessageRows.remove(notificationMessageRows.first())
-                        someIgnored = true
+                synchronized(rows) {
+                    if (rows.size > 6) {
+                        rows.removeAt(0)
+                        ignored = true
                     }
-                    notificationMessageRows.add(log)
+                    rows.add(log)
                     logView.text =
-                        notificationMessageRows.joinToString("\n", if (someIgnored) "……\n" else "").trim()
+                        rows.joinToString("\n", if (ignored) "……\n" else "")
                 }
             }
         }
@@ -168,41 +139,64 @@ class SplashActivity : Activity() {
         }
     }
 
-    private class BeforeStartThread(private var context: Context, private val config: KrScriptConfig, private var updateLogViewHandler: UpdateLogViewHandler) : Thread() {
-        val params: HashMap<String?, String?>? = config.variables
+    // ================= SHELL THREAD =================
+
+    private class BeforeStartThread(
+        private val context: Context,
+        private val config: KrScriptConfig,
+        private val hasRoot: Boolean,
+        private val logHandler: UpdateLogViewHandler
+    ) : Thread() {
+
+        private val params: HashMap<String?, String?>? = config.variables
 
         override fun run() {
             try {
-                val process = if (CheckRootStatus.lastCheckResult) ShellExecutor.getSuperUserRuntime() else ShellExecutor.getRuntime()
+                val process = if (hasRoot) {
+                    ShellExecutor.getSuperUserRuntime()
+                } else {
+                    ShellExecutor.getRuntime()
+                }
+
                 if (process != null) {
-                    val outputStream = DataOutputStream(process.outputStream)
+                    val os = DataOutputStream(process.outputStream)
 
-                    ScriptEnvironmen.executeShell(context, outputStream, config.beforeStartSh, params, null, "pio-splash")
+                    ScriptEnvironmen.executeShell(
+                        context,
+                        os,
+                        config.beforeStartSh,
+                        params,
+                        null,
+                        "pio-splash"
+                    )
 
-                    StreamReadThread(process.inputStream.bufferedReader(), updateLogViewHandler).start()
-                    StreamReadThread(process.errorStream.bufferedReader(), updateLogViewHandler).start()
+                    StreamReadThread(
+                        process.inputStream.bufferedReader(),
+                        logHandler
+                    ).start()
+
+                    StreamReadThread(
+                        process.errorStream.bufferedReader(),
+                        logHandler
+                    ).start()
 
                     process.waitFor()
-                    updateLogViewHandler.onExit()
-                } else {
-                    updateLogViewHandler.onExit()
                 }
-            } catch (ex: Exception) {
-                updateLogViewHandler.onExit()
+            } catch (_: Exception) {
+            } finally {
+                logHandler.onExit()
             }
         }
     }
 
-    private class StreamReadThread(private var reader: BufferedReader, private var updateLogViewHandler: UpdateLogViewHandler) : Thread() {
+    private class StreamReadThread(
+        private val reader: BufferedReader,
+        private val logHandler: UpdateLogViewHandler
+    ) : Thread() {
         override fun run() {
-            var line: String?
             while (true) {
-                line = reader.readLine()
-                if (line == null) {
-                    break
-                } else {
-                    updateLogViewHandler.onLogOutput(line)
-                }
+                val line = reader.readLine() ?: break
+                logHandler.onLogOutput(line)
             }
         }
     }
