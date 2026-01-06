@@ -26,7 +26,7 @@
             android:layout_marginBottom="8dp">
             <LinearLayout
                 android:orientation="horizontal"
-                android:id="@id/power_shutdown"
+                android:id="@+id/power_shutdown"
                 android:background="@drawable/krscript_item_ripple"
                 android:layout_height="65dp"
                 android:layout_weight="1.0"
@@ -57,7 +57,7 @@
             </LinearLayout>
             <LinearLayout
                 android:orientation="horizontal"
-                android:id="@id/power_reboot"
+                android:id="@+id/power_reboot"
                 android:background="@drawable/krscript_item_ripple"
                 android:layout_height="65dp"
                 android:layout_weight="1.0"
@@ -90,7 +90,7 @@
         </LinearLayout>
         <LinearLayout
             android:orientation="horizontal"
-            android:id="@id/power_recovery"
+            android:id="@+id/power_recovery"
             android:background="@drawable/krscript_item_ripple"
             android:layout_height="65dp"
             android:layout_weight="1.0"
@@ -122,7 +122,7 @@
         </LinearLayout>
         <LinearLayout
             android:orientation="horizontal"
-            android:id="@id/power_fastboot"
+            android:id="@+id/power_fastboot"
             android:background="@drawable/krscript_item_ripple"
             android:layout_height="65dp"
             android:layout_weight="1.0"
@@ -155,7 +155,7 @@
         </LinearLayout>
         <LinearLayout
             android:orientation="horizontal"
-            android:id="@id/power_hot_reboot"
+            android:id="@+id/power_hot_reboot"
             android:background="@drawable/krscript_item_ripple"
             android:layout_height="65dp"
             android:layout_weight="1.0"
@@ -187,7 +187,7 @@
         </LinearLayout>
         <LinearLayout
             android:orientation="horizontal"
-            android:id="@id/power_emergency"
+            android:id="@+id/power_emergency"
             android:background="@drawable/krscript_item_ripple"
             android:layout_height="65dp"
             android:layout_weight="1.0"
