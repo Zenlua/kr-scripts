@@ -1,9 +1,6 @@
 #!/system/bin/sh
-
-if [ -d "$TOOLKIT" ]; then
-    cd "$TOOLKIT"
-    if [[ ! -f busybox_installed ]]; then
-        busybox --install $TOOLKIT
-        echo > busybox_installed
-    fi
+if [ ! -f $TOOLKIT/busybox_installed ]; then
+    chmod 777 $TOOLKIT
+    busybox --install -s $TOOLKIT
+    echo > $TOOLKIT/busybox_installed
 fi
