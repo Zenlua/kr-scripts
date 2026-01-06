@@ -1,75 +1,62 @@
 package com.omarea.common.shared
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import java.io.*
 
 open class ObjectStorage<T : Serializable>(private val context: Context) {
+
     private val objectStorageDir = "objects/"
+
     protected fun getSaveDir(configFile: String): String {
         return FileWrite.getPrivateFilePath(context, objectStorageDir + configFile)
     }
 
     open fun load(configFile: String): T? {
         val file = File(getSaveDir(configFile))
-        if (file.exists()) {
-            var fileInputStream: FileInputStream? = null
-            var objectInputStream: ObjectInputStream? = null
-            try {
-                fileInputStream = FileInputStream(file)
-                objectInputStream = ObjectInputStream(fileInputStream)
-                return objectInputStream.readObject() as T?
-            } catch (_: Exception) {
-            } finally {
-                try {
-                    objectInputStream?.close()
-                    fileInputStream?.close()
-                } catch (ex: Exception) {
+        if (!file.exists()) return null
+
+        return try {
+            FileInputStream(file).use { fis ->
+                ObjectInputStream(fis).use { ois ->
+                    ois.readObject() as? T
                 }
             }
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            null
         }
-        return null
     }
 
     open fun save(obj: T?, configFile: String): Boolean {
         val file = File(getSaveDir(configFile))
-        val parentFile = file.parentFile
-        if (parentFile != null) {
-            if (!parentFile.exists()) {
-                parentFile.mkdirs()
-            }
+        file.parentFile?.takeIf { !it.exists() }?.mkdirs()
+
+        if (obj == null) {
+            if (file.exists()) file.delete()
+            return true
         }
-        if (obj != null) {
-            var fileOutputStream: FileOutputStream? = null
-            var objectOutputStream: ObjectOutputStream? = null
-            try {
-                fileOutputStream = FileOutputStream(file)
-                objectOutputStream = ObjectOutputStream(fileOutputStream)
-                objectOutputStream.writeObject(obj)
-                return true
-            } catch (ex: Exception) {
-                Toast.makeText(context, "存储配置失败！", Toast.LENGTH_SHORT).show()
-                return false
-            } finally {
-                try {
-                    objectOutputStream?.close()
-                    fileOutputStream?.close()
-                } catch (ex: Exception) {
+
+        return try {
+            FileOutputStream(file).use { fos ->
+                ObjectOutputStream(fos).use { oos ->
+                    oos.writeObject(obj)
                 }
             }
-        } else {
-            if (file.exists()) {
-                file.delete()
+            true
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            Handler(Looper.getMainLooper()).post {
+                Toast.makeText(context, "Storage configuration failed!", Toast.LENGTH_SHORT).show()
             }
+            false
         }
-        return true
     }
 
     open fun remove(configFile: String) {
-        val file = File(getSaveDir(configFile))
-        if (file.exists()) {
-            file.delete()
-        }
+        File(getSaveDir(configFile)).takeIf { it.exists() }?.delete()
     }
 
     open fun exists(configFile: String): Boolean {
