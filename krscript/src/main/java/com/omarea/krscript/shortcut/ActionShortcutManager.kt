@@ -120,5 +120,5 @@ class ActionShortcutManager(private val context: Context) {
  */
 inline fun <reified T : java.io.Serializable> Intent.getSerializableExtraCompat(name: String): T? {
     return if (Build.VERSION.SDK_INT >= 33) getSerializableExtra(name, T::class.java)
-    else getSerializableExtra(name) as? T
+    else @Suppress("DEPRECATION") getSerializableExtra(name) as? T
 }
