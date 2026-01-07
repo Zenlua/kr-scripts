@@ -18,16 +18,16 @@ object ThemeModeState {
 
     private val themeMode = ThemeMode()
 
-    private fun hasPermission(context: Context, permission: String): Boolean =
+    private fun hasPermission(activity: Activity, permission: String): Boolean =
         PermissionChecker.checkSelfPermission(
-            context,
+            activity,
             permission
         ) == PermissionChecker.PERMISSION_GRANTED
 
-    private fun canUseWallpaper(context: Context): Boolean =
-        ThemeConfig(context).getAllowTransparentUI() &&
-                hasPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) &&
-                hasPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    private fun canUseWallpaper(activity: Activity): Boolean =
+        ThemeConfig(activity).getAllowTransparentUI() &&
+                hasPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE) &&
+                hasPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
     fun switchTheme(activity: Activity? = null): ThemeMode {
         activity ?: return themeMode
@@ -54,9 +54,13 @@ object ThemeModeState {
         val wallpaperInfo = wallpaperManager.wallpaperInfo
 
         themeMode.isDarkMode = isNight
+
         activity.setTheme(
-            if (isNight) R.style.AppThemeWallpaper
-            else R.style.AppThemeWallpaperLight
+            if (isNight) {
+                R.style.AppThemeWallpaper
+            } else {
+                R.style.AppThemeWallpaperLight
+            }
         )
 
         if (wallpaperInfo?.packageName != null) {
