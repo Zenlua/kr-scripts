@@ -5,9 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.*
-import android.util.TypedValue
-import android.view.View
 import android.widget.TextView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.omarea.common.shell.ShellExecutor
 import com.omarea.krscript.executor.ScriptEnvironmen
 import com.projectkr.shell.databinding.ActivitySplashBinding
@@ -39,11 +39,17 @@ class SplashActivity : Activity() {
     }
 
     private fun updateThemeStyle() {
-        window.navigationBarColor = getColor(R.color.splash_bg_color)
-        window.decorView.systemUiVisibility =
-            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+        // Cho phép layout vẽ dưới system bars (thay cho systemUiVisibility)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        // Màu system bars
         window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = getColor(R.color.splash_bg_color)
+
+        // Điều khiển icon status/navigation bar
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+        controller.isAppearanceLightStatusBars = false
+        controller.isAppearanceLightNavigationBars = false
     }
 
     /**
@@ -99,15 +105,14 @@ class SplashActivity : Activity() {
     }
 
     private fun gotoHome() {
-        val target = if (
-            intent?.getBooleanExtra("JumpActionPage", false) == true
-        ) {
-            Intent(this, ActionPage::class.java).apply {
-                putExtras(this@SplashActivity.intent!!)
+        val target =
+            if (intent?.getBooleanExtra("JumpActionPage", false) == true) {
+                Intent(this, ActionPage::class.java).apply {
+                    putExtras(this@SplashActivity.intent!!)
+                }
+            } else {
+                Intent(this, MainActivity::class.java)
             }
-        } else {
-            Intent(this, MainActivity::class.java)
-        }
 
         startActivity(target)
         finish()
