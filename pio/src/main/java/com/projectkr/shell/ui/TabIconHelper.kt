@@ -1,3 +1,4 @@
+@Suppress("DEPRECATION")
 package com.projectkr.shell.ui
 
 import android.app.Activity
