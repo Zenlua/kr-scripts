@@ -6,7 +6,6 @@ import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
-import android.widget.TabHost
 import android.widget.TextView
 import com.projectkr.shell.R
 
