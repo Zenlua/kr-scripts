@@ -3,7 +3,6 @@ package com.projectkr.shell
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.os.*
 import android.widget.TextView
 import androidx.core.view.WindowCompat
@@ -42,11 +41,7 @@ class SplashActivity : Activity() {
         // Cho phép layout vẽ dưới system bars (thay cho systemUiVisibility)
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        // Màu system bars
-        window.statusBarColor = Color.TRANSPARENT
-        window.navigationBarColor = getColor(R.color.splash_bg_color)
-
-        // Điều khiển icon status/navigation bar
+        // Điều khiển icon status/navigation bar (KHÔNG set màu ở đây)
         val controller = WindowInsetsControllerCompat(window, window.decorView)
         controller.isAppearanceLightStatusBars = false
         controller.isAppearanceLightNavigationBars = false
@@ -60,7 +55,6 @@ class SplashActivity : Activity() {
     private fun checkRootAndStart() {
         Thread {
             hasRoot = requestRootOnce()
-
             mainHandler.post {
                 startToFinish()
             }
