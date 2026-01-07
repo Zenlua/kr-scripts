@@ -1,64 +1,92 @@
 <resources>
 
+    <!-- ================= LIGHT THEME ================= -->
+
     <style name="AppTheme" parent="Base.Theme.AppCompat.Light">
+        <!-- Colors -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+
+        <!-- System bars (KHÔNG deprecated) -->
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:windowTranslucentStatus">false</item>
-        <item name="android:windowTranslucentNavigation">false</item>
         <item name="android:statusBarColor">@color/status_bg_light</item>
         <item name="android:navigationBarColor">@android:color/white</item>
+
+        <!-- Window -->
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <item name="android:windowAnimationStyle">@style/activityAnim</item>
-        <item name="android:actionBarTheme">@style/AppTheme.AppBarOverlay.Light</item>
         <item name="android:windowBackground">@color/window_bg_light</item>
+        <item name="android:windowAnimationStyle">@style/activityAnim</item>
+
+        <!-- ActionBar -->
+        <item name="android:actionBarTheme">@style/AppTheme.AppBarOverlay.Light</item>
+
+        <!-- Custom attrs -->
         <item name="cardBg">@color/cardBgLight</item>
+
+        <!-- Widgets -->
         <item name="android:switchStyle">@style/SceneSwitch</item>
         <item name="android:seekBarStyle">@style/SceneSeekBar</item>
         <item name="android:checkboxStyle">@style/SceneCheckBox</item>
         <item name="android:radioButtonStyle">@style/SceneRadioBox</item>
     </style>
 
+
+    <!-- ================= DARK THEME ================= -->
+
     <style name="AppThemeDark" parent="Theme.AppCompat">
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:windowTranslucentStatus">false</item>
-        <item name="android:windowTranslucentNavigation">false</item>
-        <item name="android:statusBarColor">@color/status_bg_dark</item>
-        <item name="android:windowBackground">@color/window_bg_dark</item>
-        <item name="android:navigationBarColor">@color/status_bg_dark</item>
+        <!-- Colors -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+
+        <!-- System bars -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@color/status_bg_dark</item>
+        <item name="android:navigationBarColor">@color/status_bg_dark</item>
+
+        <!-- Window -->
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <item name="android:windowBackground">@color/window_bg_dark</item>
         <item name="android:windowAnimationStyle">@style/activityAnim</item>
+
+        <!-- ActionBar -->
         <item name="android:actionBarTheme">@style/AppTheme.AppBarOverlay</item>
+
+        <!-- Custom attrs -->
         <item name="cardBg">@color/cardBgDark</item>
+
+        <!-- Widgets -->
         <item name="android:switchStyle">@style/SceneSwitch</item>
         <item name="android:seekBarStyle">@style/SceneSeekBar</item>
         <item name="android:checkboxStyle">@style/SceneCheckBox</item>
         <item name="android:radioButtonStyle">@style/SceneRadioBox</item>
     </style>
+
+
+    <!-- ================= ACTION BAR OVERLAY ================= -->
 
     <style name="AppTheme.AppBarOverlay.Light" parent="ThemeOverlay.AppCompat.ActionBar">
         <item name="titleTextColor">?android:textColorPrimary</item>
         <item name="subtitleTextColor">?android:textColorSecondary</item>
         <item name="colorControlNormal">?android:textColorPrimary</item>
-        <item name="android:foregroundTint">?android:textColorSecondary</item>
-        <item name="android:foregroundTintMode">screen</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.ActionBar">
         <item name="titleTextColor">?android:textColorPrimary</item>
         <item name="subtitleTextColor">?android:textColorSecondary</item>
         <item name="colorControlNormal">?android:textColorPrimary</item>
-        <item name="android:foregroundTint">?android:textColorSecondary</item>
-        <item name="android:foregroundTintMode">screen</item>
     </style>
 
+
+    <!-- ================= POPUP ================= -->
+
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+
+    <!-- ================= TEXT ================= -->
 
     <style name="textTitle">
         <item name="android:textColor">?android:attr/textColorPrimary</item>
@@ -72,6 +100,8 @@
     </style>
 
 
+    <!-- ================= ACTIVITY ANIMATION ================= -->
+
     <style name="activityAnim">
         <item name="android:activityOpenEnterAnimation">@anim/activity_open_enter</item>
         <item name="android:activityOpenExitAnimation">@anim/activity_open_exit</item>
@@ -82,6 +112,9 @@
         <item name="android:taskCloseEnterAnimation">@anim/task_close_enter</item>
         <item name="android:taskCloseExitAnimation">@anim/task_close_exit</item>
     </style>
+
+
+    <!-- ================= LIST CARD ================= -->
 
     <style name="ListCardItem">
         <item name="android:layout_marginLeft">@dimen/activity_horizontal_margin</item>
@@ -96,6 +129,7 @@
         <item name="android:paddingLeft">16dp</item>
         <item name="android:paddingRight">16dp</item>
     </style>
+
     <style name="ListCardItemSmall" parent="ListCardItem">
         <item name="android:paddingTop">8dp</item>
         <item name="android:paddingBottom">8dp</item>
@@ -103,4 +137,5 @@
         <item name="android:layout_marginLeft">8dp</item>
         <item name="android:layout_marginRight">8dp</item>
     </style>
+
 </resources>
