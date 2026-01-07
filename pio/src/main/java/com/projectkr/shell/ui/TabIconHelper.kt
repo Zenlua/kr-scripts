@@ -1,7 +1,5 @@
-
 package com.projectkr.shell.ui
 
-@Suppress("DEPRECATION")
 import android.app.Activity
 import android.graphics.drawable.Drawable
 import android.util.TypedValue
