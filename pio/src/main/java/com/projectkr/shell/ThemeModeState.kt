@@ -9,9 +9,9 @@ import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
-import android.view.View
-import android.view.WindowManager
 import androidx.core.content.PermissionChecker
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.omarea.common.ui.ThemeMode
 
 object ThemeModeState {
@@ -64,7 +64,7 @@ object ThemeModeState {
         )
 
         if (wallpaperInfo?.packageName != null) {
-            activity.window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
+            activity.window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
         } else {
             activity.window.setBackgroundDrawable(wallpaperManager.drawable)
         }
@@ -79,20 +79,28 @@ object ThemeModeState {
         }
     }
 
+    /**
+     * Light status bar + navigation bar
+     * Không dùng API deprecated
+     * Chuẩn Android 11+
+     */
     private fun applyLightSystemBar(activity: Activity) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
+        val window = activity.window
 
-        activity.window.run {
-            clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
-            addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        // Edge-to-edge (API 21+)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
-            decorView.systemUiVisibility =
-                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
-                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-                        View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                            View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-                        else 0
+        val controller = WindowInsetsControllerCompat(
+            window,
+            window.decorView
+        )
+
+        // Icon status bar màu đen
+        controller.isAppearanceLightStatusBars = true
+
+        // Icon navigation bar màu đen (Android 8.0+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            controller.isAppearanceLightNavigationBars = true
         }
     }
 
