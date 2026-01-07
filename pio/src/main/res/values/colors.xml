@@ -18,4 +18,5 @@
     <color name="colorPrimary">#80B4DD</color>
     <color name="colorPrimaryDark">#3D9AE6</color>
     <color name="status_bg_splash">@color/status_bg_light</color>
+    <color name="splash_bg_color">#8199B1</color>
 </resources>
