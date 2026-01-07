@@ -10,6 +10,7 @@ import android.widget.TabHost
 import android.widget.TextView
 import com.projectkr.shell.R
 
+@Suppress("DEPRECATION")
 class TabIconHelper(
     private val tabHost: TabHost,
     private val activity: Activity
