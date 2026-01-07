@@ -1,41 +1,77 @@
 package com.projectkr.shell.ui
 
+import android.app.Activity
+import android.graphics.drawable.Drawable
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
+import android.widget.TabHost
 import android.widget.TextView
-import com.google.android.material.tabs.TabLayout
-import com.google.android.material.tabs.TabLayoutMediator
-import androidx.viewpager2.widget.ViewPager2
 import com.projectkr.shell.R
 
+@Suppress("DEPRECATION")
 class TabIconHelper(
-    private val tabLayout: TabLayout,
-    private val viewPager: ViewPager2,
-    private val inflater: LayoutInflater
+    private val tabHost: TabHost,
+    private val activity: Activity
 ) {
+    private val views = ArrayList<View>()
+    private val inflater: LayoutInflater = LayoutInflater.from(activity)
 
-    fun attach(
-        tabCount: Int,
-        bindView: (position: Int, view: View) -> Unit
-    ) {
-        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
-            val view = inflater.inflate(R.layout.list_item_tab, null)
-            bindView(position, view)
-            view.alpha = if (position == 0) 1f else 0.3f
-            tab.customView = view
-        }.attach()
+    fun newTabSpec(drawable: Drawable, content: Int): String =
+        newTabSpec("", drawable, content)
 
-        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab) {
-                tab.customView?.alpha = 1f
-            }
+    fun newTabSpec(text: String, drawable: Drawable, content: Int): String {
+        val tabId = "tab_${views.size}"
+        val view = createTabView(text, drawable)
 
-            override fun onTabUnselected(tab: TabLayout.Tab) {
-                tab.customView?.alpha = 0.3f
-            }
+        views.add(view)
+        addTabInternal(tabId, view, content)
 
-            override fun onTabReselected(tab: TabLayout.Tab) {}
-        })
+        return tabId
+    }
+
+    private fun createTabView(text: String, drawable: Drawable): View {
+        val view = inflater.inflate(R.layout.list_item_tab, null, false)
+
+        view.findViewById<ImageView>(R.id.ItemIcon).setImageDrawable(drawable)
+        view.findViewById<TextView>(R.id.ItemTitle).text = text
+
+        view.alpha = if (views.isEmpty()) 1f else 0.3f
+        return view
+    }
+
+    @Suppress("DEPRECATION")
+    private fun addTabInternal(tabId: String, indicator: View, content: Int) {
+        tabHost.addTab(
+            tabHost.newTabSpec(tabId)
+                .setContent(content)
+                .setIndicator(indicator)
+        )
+    }
+
+    fun updateHighlight() {
+        updateHighlightInternal()
+    }
+
+    @Suppress("DEPRECATION")
+    private fun updateHighlightInternal() {
+        val widget = tabHost.tabWidget
+        val current = tabHost.currentTab
+
+        for (i in 0 until widget.tabCount) {
+            widget.getChildAt(i)?.alpha =
+                if (i == current) 1f else 0.3f
+        }
+    }
+
+    fun getColorAccent(): Int {
+        val tv = TypedValue()
+        activity.theme.resolveAttribute(
+            androidx.appcompat.R.attr.colorAccent,
+            tv,
+            true
+        )
+        return tv.data
     }
 }
