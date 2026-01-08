@@ -63,8 +63,7 @@ public class AdapterFileSelector extends BaseAdapter {
         new Thread(() -> {
             File parent = dir.getParentFile();
             if (parent != null) {
-                String parentPath = parent.getAbsolutePath();
-                hasParent = parent.exists() && parent.canRead() && (leaveRootDir || !(rootDir.startsWith(parentPath) && rootDir.length() > parentPath.length()));
+                hasParent = parent.exists() && parent.canRead();
             } else {
                 hasParent = false;
             }
