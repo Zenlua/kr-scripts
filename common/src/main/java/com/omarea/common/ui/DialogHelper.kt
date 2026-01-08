@@ -55,7 +55,6 @@ class DialogHelper {
     companion object {
         var disableBlurBg = false
 
-        // === THÊM HÀM BỊ THIẾU: setOutsideTouchDismiss ===
         private fun setOutsideTouchDismiss(view: View, dialogWrap: DialogWrap): DialogWrap {
             val dialog = dialogWrap.dialog
             val rootView = dialog.window?.decorView
@@ -78,7 +77,6 @@ class DialogHelper {
             return dialogWrap
         }
 
-        // === Các hàm tiện ích cơ bản (giữ nguyên như code gốc của bạn) ===
         fun animDialog(dialog: AlertDialog?): DialogWrap? {
             if (dialog != null && !dialog.isShowing) {
                 dialog.window?.setWindowAnimations(R.style.windowAnim)
@@ -113,7 +111,6 @@ class DialogHelper {
             return view
         }
 
-        // === customDialog – đã có sẵn trong code bạn gửi ===
         fun customDialog(context: Context, view: View, cancelable: Boolean = true): DialogWrap {
             val useBlur = (
                     context is Activity &&
@@ -145,24 +142,20 @@ class DialogHelper {
             return setOutsideTouchDismiss(view, DialogWrap(dialog).setCancelable(cancelable))
         }
 
-        // === Xác định dark mode mà không dùng UiModeManager ===
         private fun isNightMode(context: Context): Boolean {
             val currentNightMode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
             return currentNightMode == Configuration.UI_MODE_NIGHT_YES
         }
 
-        // === Áp dụng appearance cho status bar + navigation bar ===
         private fun applySystemBarsAppearance(window: Window, context: Context) {
             val isDark = isNightMode(context)
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 window.insetsController?.let { controller ->
-                    // Xóa appearance cũ trước
                     controller.setSystemBarsAppearance(
                         0,
                         WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
                     )
-                    // Nếu light mode → dùng icon sáng (light icons)
                     if (!isDark) {
                         controller.setSystemBarsAppearance(
                             WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
@@ -180,7 +173,6 @@ class DialogHelper {
             }
         }
 
-        // === Blur background + system bars ===
         fun setWindowBlurBg(window: Window, activity: Activity) {
             val wallpaperMode = activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER != 0
             val isDark = isNightMode(activity)
@@ -211,23 +203,143 @@ class DialogHelper {
             }
         }
 
-        // === Các hàm dialog phổ biến (bạn có thể thêm đầy đủ hơn nếu cần) ===
+        // ====================== CÁC HÀM DIALOG ======================
+
         fun helpInfo(context: Context, message: String, onDismiss: Runnable? = null): DialogWrap {
             return helpInfo(context, context.getString(R.string.help_title), message, onDismiss)
         }
 
         fun helpInfo(context: Context, title: String, message: String, onDismiss: Runnable? = null): DialogWrap {
             val view = getCustomDialogView(context, R.layout.dialog_help_info, title, message)
+            val d = customDialog(context, view)
+            view.findViewById<View>(R.id.btn_confirm).setOnClickListener {
+                d.dismiss()
+                onDismiss?.run()
+            }
+            return d
+        }
+
+        fun helpInfo(
+            context: Context,
+            title: String = "",
+            message: String = "",
+            contentView: View,
+            onConfirm: Runnable? = null
+        ): DialogWrap {
+            val view = getCustomDialogView(context, R.layout.dialog_help_info, title, message, contentView)
             val dialog = customDialog(context, view)
             view.findViewById<View>(R.id.btn_confirm).setOnClickListener {
                 dialog.dismiss()
-                onDismiss?.run()
+                onConfirm?.run()
             }
             return dialog
         }
 
         fun confirm(
             context: Context,
+            title: String = "",
+            message: String = "",
+            onConfirm: Runnable? = null,
+            onCancel: Runnable? = null
+        ): DialogWrap {
+            val view = getCustomDialogView(context, R.layout.dialog_confirm, title, message)
+            val dialog = customDialog(context, view)
+            view.findViewById<View?>(R.id.btn_cancel)?.setOnClickListener {
+                dialog.dismiss()
+                onCancel?.run()
+            }
+            view.findViewById<View?>(R.id.btn_confirm)?.setOnClickListener {
+                dialog.dismiss()
+                onConfirm?.run()
+            }
+            return dialog
+        }
+
+        fun warning(
+            context: Context,
+            title: String = "",
+            message: String = "",
+            onConfirm: Runnable? = null,
+            onCancel: Runnable? = null
+        ): DialogWrap {
+            val view = getCustomDialogView(context, R.layout.dialog_warning, title, message)
+            val dialog = customDialog(context, view)
+            view.findViewById<View?>(R.id.btn_cancel)?.setOnClickListener {
+                dialog.dismiss()
+                onCancel?.run()
+            }
+            view.findViewById<View?>(R.id.btn_confirm)?.setOnClickListener {
+                dialog.dismiss()
+                onConfirm?.run()
+            }
+            return dialog
+        }
+
+        fun confirm(
+            context: Context,
+            title: String = "",
+            message: String = "",
+            contentView: View? = null,
+            onConfirm: Runnable? = null,
+            onCancel: Runnable? = null
+        ): DialogWrap {
+            val view = getCustomDialogView(context, R.layout.dialog_confirm, title, message, contentView)
+            val dialog = customDialog(context, view)
+            view.findViewById<View?>(R.id.btn_cancel)?.setOnClickListener {
+                dialog.dismiss()
+                onCancel?.run()
+            }
+            view.findViewById<View?>(R.id.btn_confirm)?.setOnClickListener {
+                dialog.dismiss()
+                onConfirm?.run()
+            }
+            return dialog
+        }
+
+        fun confirm(
+            context: Context,
+            title: String = "",
+            message: String = "",
+            onConfirm: DialogButton? = null,
+            onCancel: DialogButton? = null
+        ): DialogWrap {
+            return confirm(context, title, message, null, onConfirm, onCancel)
+        }
+
+        fun confirm(
+            context: Context,
+            title: String = "",
+            message: String = "",
+            contentView: View? = null,
+            onConfirm: DialogButton? = null,
+            onCancel: DialogButton? = null
+        ): DialogWrap {
+            val view = getCustomDialogView(context, R.layout.dialog_confirm, title, message, contentView)
+            val dialog = customDialog(context, view)
+
+            val btnConfirm = view.findViewById<TextView?>(R.id.btn_confirm)
+            onConfirm?.let { btnConfirm?.text = it.text }
+            btnConfirm?.setOnClickListener {
+                if (onConfirm?.dismiss != false) dialog.dismiss()
+                onConfirm?.onClick?.run()
+            }
+
+            val btnCancel = view.findViewById<TextView?>(R.id.btn_cancel)
+            onCancel?.let { btnCancel?.text = it.text }
+            btnCancel?.setOnClickListener {
+                if (onCancel?.dismiss != false) dialog.dismiss()
+                onCancel?.onClick?.run()
+            }
+
+            return dialog
+        }
+
+        fun confirm(context: Context, contentView: View? = null, onConfirm: DialogButton? = null, onCancel: DialogButton? = null): DialogWrap {
+            return confirm(context, "", "", contentView, onConfirm, onCancel)
+        }
+
+        fun confirmBlur(
+            context: Activity,
             title: String = "",
             message: String = "",
             onConfirm: Runnable? = null,
@@ -261,6 +373,20 @@ class DialogHelper {
             return dialog
         }
 
-        // Bạn có thể tiếp tục thêm các hàm confirm overload khác, warning, v.v. nếu cần
+        fun alert(
+            context: Context,
+            title: String = "",
+            message: String = "",
+            contentView: View,
+            onConfirm: Runnable? = null
+        ): DialogWrap {
+            val view = getCustomDialogView(context, R.layout.dialog_alert, title, message, contentView)
+            val dialog = customDialog(context, view)
+            view.findViewById<View>(R.id.btn_confirm).setOnClickListener {
+                dialog.dismiss()
+                onConfirm?.run()
+            }
+            return dialog
+        }
     }
 }
