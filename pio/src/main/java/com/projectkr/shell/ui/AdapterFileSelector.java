@@ -1,6 +1,5 @@
 package com.projectkr.shell.ui;
 
-import android.content.Context;
 import android.os.Handler;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +16,6 @@ import java.io.File;
 import java.io.FileFilter;
 
 public class AdapterFileSelector extends BaseAdapter {
-    private final Context context;
     private File[] fileArray;
     private Runnable fileSelected;
     private File currentDir;
@@ -30,19 +28,18 @@ public class AdapterFileSelector extends BaseAdapter {
     private final boolean leaveRootDir = true;
     private boolean folderChooserMode = false;
 
-    public AdapterFileSelector(Context context, File rootDir, Runnable fileSelected, ProgressBarDialog progressBarDialog, String extension) {
-        this.context = context;
+    private AdapterFileSelector(File rootDir, Runnable fileSelected, ProgressBarDialog progressBarDialog, String extension) {
         init(rootDir, fileSelected, progressBarDialog, extension);
     }
 
-    public static AdapterFileSelector FolderChooser(Context context, File rootDir, Runnable fileSelected, ProgressBarDialog progressBarDialog) {
-        AdapterFileSelector adapterFileSelector = new AdapterFileSelector(context, rootDir, fileSelected, progressBarDialog, null);
+    public static AdapterFileSelector FolderChooser(File rootDir, Runnable fileSelected, ProgressBarDialog progressBarDialog) {
+        AdapterFileSelector adapterFileSelector = new AdapterFileSelector(rootDir, fileSelected, progressBarDialog, null);
         adapterFileSelector.folderChooserMode = true;
         return adapterFileSelector;
     }
 
-    public static AdapterFileSelector FileChooser(Context context, File rootDir, Runnable fileSelected, ProgressBarDialog progressBarDialog, String extension) {
-        AdapterFileSelector adapterFileSelector = new AdapterFileSelector(context, rootDir, fileSelected, progressBarDialog, extension);
+    public static AdapterFileSelector FileChooser(File rootDir, Runnable fileSelected, ProgressBarDialog progressBarDialog, String extension) {
+        AdapterFileSelector adapterFileSelector = new AdapterFileSelector(rootDir, fileSelected, progressBarDialog, extension);
         adapterFileSelector.folderChooserMode = false;
         return adapterFileSelector;
     }
@@ -62,7 +59,7 @@ public class AdapterFileSelector extends BaseAdapter {
     }
 
     private void loadDir(final File dir) {
-        progressBarDialog.showDialog(context.getString(R.string.afs_loading));
+        progressBarDialog.showDialog("Loading...");
         new Thread(() -> {
             File parent = dir.getParentFile();
             if (parent != null) {
@@ -84,29 +81,29 @@ public class AdapterFileSelector extends BaseAdapter {
                     }
                 });
 
-                if (files != null) {
-                    // Sort directories first, then by name
-                    for (int i = 0; i < files.length; i++) {
-                        for (int j = i + 1; j < files.length; j++) {
-                            if ((files[j].isDirectory() && files[i].isFile())) {
-                                File t = files[i];
-                                files[i] = files[j];
-                                files[j] = t;
-                            } else if (files[j].isDirectory() == files[i].isDirectory() &&
-                                    files[j].getName().toLowerCase().compareTo(files[i].getName().toLowerCase()) < 0) {
-                                File t = files[i];
-                                files[i] = files[j];
-                                files[j] = t;
-                            }
+                // 文件排序
+                for (int i = 0; i < files.length; i++) {
+                    for (int j = i + 1; j < files.length; j++) {
+                        if ((files[j].isDirectory() && files[i].isFile())) {
+                            File t = files[i];
+                            files[i] = files[j];
+                            files[j] = t;
+                        } else if (files[j].isDirectory() == files[i].isDirectory() && (files[j].getName().toLowerCase().compareTo(files[i].getName().toLowerCase()) < 0)) {
+                            File t = files[i];
+                            files[i] = files[j];
+                            files[j] = t;
                         }
                     }
-                    fileArray = files;
                 }
+                fileArray = files;
             }
             currentDir = dir;
-            handler.post(() -> {
-                notifyDataSetChanged();
-                progressBarDialog.hideDialog();
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    notifyDataSetChanged();
+                    progressBarDialog.hideDialog();
+                }
             });
         }).start();
     }
@@ -122,16 +119,32 @@ public class AdapterFileSelector extends BaseAdapter {
     @Override
     public int getCount() {
         if (hasParent) {
-            return fileArray == null ? 1 : fileArray.length + 1;
+            if (fileArray == null) {
+                return 1;
+            }
+            return fileArray.length + 1;
         } else {
-            return fileArray == null ? 0 : fileArray.length;
+            if (fileArray == null) {
+                return 0;
+            }
+            return fileArray.length;
+        }
+    }
+
+    public void refresh() {
+        if (this.currentDir != null) {
+            this.loadDir(currentDir);
         }
     }
 
     @Override
     public Object getItem(int position) {
         if (hasParent) {
-            return position == 0 ? new File(currentDir.getParent()) : fileArray[position - 1];
+            if (position == 0) {
+                return new File(currentDir.getParent());
+            } else {
+                return fileArray[position - 1];
+            }
         } else {
             return fileArray[position];
         }
@@ -145,77 +158,98 @@ public class AdapterFileSelector extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         final View view;
-
         if (hasParent && position == 0) {
-            view = View.inflate(context, R.layout.list_item_dir, null);
-            ((TextView) view.findViewById(R.id.ItemTitle)).setText("...");
-            view.setOnClickListener(v -> goParent());
+            view = View.inflate(parent.getContext(), R.layout.list_item_dir, null);
+            ((TextView) (view.findViewById(R.id.ItemTitle))).setText("...");
+            view.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    goParent();
+                }
+            });
             return view;
         } else {
             final File file = (File) getItem(position);
             if (file.isDirectory()) {
-                view = View.inflate(context, R.layout.list_item_dir, null);
-                view.setOnClickListener(v -> {
-                    if (!file.exists()) {
-                        Toast.makeText(context, context.getString(R.string.afs_folder_deleted), Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    File[] files = file.listFiles();
-                    if (files != null && files.length > 0) {
-                        loadDir(file);
-                    } else {
-                        Snackbar.make(v, context.getString(R.string.afs_empty_dir), Snackbar.LENGTH_SHORT).show();
+                view = View.inflate(parent.getContext(), R.layout.list_item_dir, null);
+                view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (!file.exists()) {
+                            Toast.makeText(view.getContext(), "The selected file has been deleted. Please select again!", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        File[] files = file.listFiles();
+                        if (files != null && files.length > 0) {
+                            loadDir(file);
+                        } else {
+                            Snackbar.make(view, "There are no files in this directory!", Snackbar.LENGTH_SHORT).show();
+                        }
                     }
                 });
-
                 if (folderChooserMode) {
-                    view.setOnLongClickListener(v -> {
-                        DialogHelper.Companion.confirm(context,
-                                context.getString(R.string.afs_select_folder),
-                                file.getAbsolutePath(),
-                                () -> {
+                    view.setOnLongClickListener(new View.OnLongClickListener() {
+                        @Override
+                        public boolean onLongClick(View v) {
+                            DialogHelper.Companion.confirm(view.getContext(), "Select a directory?", file.getAbsolutePath(), new Runnable() {
+                                @Override
+                                public void run() {
                                     if (!file.exists()) {
-                                        Toast.makeText(context, context.getString(R.string.afs_folder_deleted), Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(view.getContext(), "The selected directory has been deleted. Please select another one!", Toast.LENGTH_SHORT).show();
                                         return;
                                     }
                                     selectedFile = file;
                                     fileSelected.run();
-                                },
-                                () -> {});
-                        return true;
+                                }
+                            }, new Runnable() {
+                                @Override
+                                public void run() {
+
+                                }
+                            });
+                            return true;
+                        }
                     });
                 }
             } else {
-                view = View.inflate(context, R.layout.list_item_file, null);
+                view = View.inflate(parent.getContext(), R.layout.list_item_file, null);
                 long fileLength = file.length();
                 String fileSize;
                 if (fileLength < 1024) {
                     fileSize = fileLength + "B";
                 } else if (fileLength < 1048576) {
-                    fileSize = String.format("%.2fKB", (fileLength / 1024.0));
+                    fileSize = String.format("%sKB", String.format("%.2f", (file.length() / 1024.0)));
                 } else if (fileLength < 1073741824) {
-                    fileSize = String.format("%.2fMB", (fileLength / 1048576.0));
+                    fileSize = String.format("%sMB", String.format("%.2f", (file.length() / 1048576.0)));
                 } else {
-                    fileSize = String.format("%.2fGB", (fileLength / 1073741824.0));
+                    fileSize = String.format("%sGB", String.format("%.2f", (file.length() / 1073741824.0)));
                 }
 
-                ((TextView) view.findViewById(R.id.ItemText)).setText(fileSize);
+                ((TextView) (view.findViewById(R.id.ItemText))).setText(fileSize);
 
-                view.setOnClickListener(v -> DialogHelper.Companion.confirm(context,
-                        context.getString(R.string.afs_select_file),
-                        file.getAbsolutePath(),
-                        () -> {
-                            if (!file.exists()) {
-                                Toast.makeText(context, context.getString(R.string.afs_file_deleted), Toast.LENGTH_SHORT).show();
-                                return;
+                view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        DialogHelper.Companion.confirm(view.getContext(), "Selected file?", file.getAbsolutePath(), new Runnable() {
+                            @Override
+                            public void run() {
+                                if (!file.exists()) {
+                                    Toast.makeText(view.getContext(), "The selected file has been deleted. Please select again!", Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+                                selectedFile = file;
+                                fileSelected.run();
                             }
-                            selectedFile = file;
-                            fileSelected.run();
-                        },
-                        () -> {}));
-            }
+                        }, new Runnable() {
+                            @Override
+                            public void run() {
 
-            ((TextView) view.findViewById(R.id.ItemTitle)).setText(file.getName());
+                            }
+                        });
+                    }
+                });
+            }
+            ((TextView) (view.findViewById(R.id.ItemTitle))).setText(file.getName());
             return view;
         }
     }
