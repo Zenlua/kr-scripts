@@ -5,15 +5,11 @@ import android.content.Context
 import android.content.DialogInterface
 import android.content.res.Configuration
 import android.graphics.Color
-import android.graphics.Rect
 import android.os.Build
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.Window
 import android.view.WindowInsetsController
-import android.view.WindowManager
-import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
@@ -24,7 +20,7 @@ class DialogHelper {
     class DialogButton(val text: String, val onClick: Runnable? = null, val dismiss: Boolean = true)
 
     class DialogWrap(private val d: AlertDialog) {
-        val context: Context = dialog.context
+        val context: Context = d.context
         private var mCancelable = true
         val isCancelable: Boolean
             get() = mCancelable
@@ -95,7 +91,9 @@ class DialogHelper {
                 text = message
             }
 
-            val d = customDialog(context, dialogView, onDismiss == null)
+            // ĐÃ SỬA: Thêm lambda block rỗng
+            val d = customDialog(context, dialogView, onDismiss == null) { }
+
             dialogView.findViewById<View>(R.id.btn_confirm)?.setOnClickListener {
                 d.dismiss()
             }
@@ -137,6 +135,9 @@ class DialogHelper {
         ): DialogWrap {
             val view = LayoutInflater.from(context).inflate(layout, null)
 
+            // Có thể thêm code set title/message ở đây nếu layout có view tương ứng
+            // (tùy theo layout dialog_confirm/warning có chứa title và message không)
+
             view.findViewById<View>(R.id.btn_confirm)?.setOnClickListener {
                 onConfirm?.run()
             }
@@ -145,7 +146,8 @@ class DialogHelper {
                 onCancel?.run()
             }
 
-            return customDialog(context, view)
+            // ĐÃ SỬA: Thêm lambda block rỗng
+            return customDialog(context, view) { }
         }
 
         fun alert(
@@ -193,7 +195,7 @@ class DialogHelper {
             return DialogWrap(dialog)
         }
 
-        /** ✅ DARK MODE – API 21 → 36, KHÔNG UiModeManager */
+        /** DARK MODE – API 21 → 36, KHÔNG dùng UiModeManager */
         private fun isNightMode(context: Context): Boolean {
             return when (AppCompatDelegate.getDefaultNightMode()) {
                 AppCompatDelegate.MODE_NIGHT_YES -> true
