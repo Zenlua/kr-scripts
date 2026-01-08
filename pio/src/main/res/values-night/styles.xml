@@ -1,4 +1,4 @@
 <resources>
-    <!-- <style name="AppTheme" parent="@style/AppThemeDark" /> -->
+    <style name="AppTheme" parent="@style/AppThemeDark" />
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Dark" />
 </resources>
