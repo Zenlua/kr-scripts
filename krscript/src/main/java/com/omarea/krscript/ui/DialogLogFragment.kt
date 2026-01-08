@@ -175,6 +175,7 @@ class DialogLogFragment : DialogFragment() {
                     binding?.btnExit?.apply {
                         visibility = View.VISIBLE
                         text = context?.getString(R.string.btn_cancel)
+                        setBackgroundColor(context?.getColor(R.color.warning) ?: Color.parseColor("#FFA500"))
                     }
                 }
 
@@ -184,6 +185,7 @@ class DialogLogFragment : DialogFragment() {
                     binding?.btnExit?.apply {
                         visibility = View.VISIBLE
                         text = context?.getString(R.string.btn_exit)
+                        setBackgroundColor(context?.getColor(R.color.colorAccent) ?: Color.BLUE)
                     }
                     binding?.btnHide?.visibility = View.GONE
                     binding?.actionProgress?.visibility = View.GONE
