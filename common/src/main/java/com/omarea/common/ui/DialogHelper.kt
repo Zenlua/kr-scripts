@@ -121,7 +121,46 @@ class DialogHelper {
             )
         }
 
-        /** ✅ KHÔI PHỤC API warning() */
+        /** 🔙 API CŨ: confirm với DialogButton */
+        fun confirm(
+            context: Context,
+            title: String = "",
+            message: String = "",
+            onConfirm: DialogButton? = null,
+            onCancel: DialogButton? = null
+        ): DialogWrap {
+
+            val view = getCustomView(
+                context,
+                R.layout.dialog_confirm,
+                title,
+                message,
+                null
+            )
+
+            val dialog = customDialog(context, view)
+
+            val btnConfirm = view.findViewById<TextView?>(R.id.btn_confirm)
+            if (onConfirm != null) btnConfirm?.text = onConfirm.text
+            btnConfirm?.setOnClickListener {
+                if (onConfirm != null) {
+                    if (onConfirm.dismiss) dialog.dismiss()
+                    onConfirm.onClick?.run()
+                } else dialog.dismiss()
+            }
+
+            val btnCancel = view.findViewById<TextView?>(R.id.btn_cancel)
+            if (onCancel != null) btnCancel?.text = onCancel.text
+            btnCancel?.setOnClickListener {
+                if (onCancel != null) {
+                    if (onCancel.dismiss) dialog.dismiss()
+                    onCancel.onClick?.run()
+                } else dialog.dismiss()
+            }
+
+            return dialog
+        }
+
         fun warning(
             context: Context,
             title: String = "",
@@ -274,7 +313,7 @@ class DialogHelper {
             )
         }
 
-        /* ========================= ANIMATION API (KHÔI PHỤC) ========================= */
+        /* ========================= ANIMATION API (CŨ) ========================= */
 
         fun animDialog(dialog: AlertDialog?): DialogWrap? {
             if (dialog != null && !dialog.isShowing) {
