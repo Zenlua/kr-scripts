@@ -14,6 +14,7 @@ import com.projectkr.shell.R;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.Arrays;
 
 public class AdapterFileSelector extends BaseAdapter {
     private File[] fileArray;
@@ -61,24 +62,23 @@ public class AdapterFileSelector extends BaseAdapter {
     private void loadDir(final File dir) {
         progressBarDialog.showDialog("加载中...");
         new Thread(() -> {
-            // === CHỖ SỬA: luôn có nút ... nếu parent khác null
+            // Luôn check parent, để hiển thị nút "..."
             File parent = dir.getParentFile();
             hasParent = parent != null;
 
             if (dir.exists() && dir.canRead()) {
-                File[] files = dir.listFiles(new FileFilter() {
-                    @Override
-                    public boolean accept(File fileItem) {
+                File[] files = dir.listFiles();
+                if (files != null) {
+                    final String ext = extension;
+                    files = Arrays.stream(files).filter(fileItem -> {
                         if (folderChooserMode) {
                             return fileItem.isDirectory();
                         } else {
-                            return fileItem.exists() && (!fileItem.isFile() || extension == null || extension.isEmpty() || fileItem.getName().endsWith(extension));
+                            return fileItem.isDirectory() || (fileItem.isFile() && (ext == null || ext.isEmpty() || fileItem.getName().endsWith(ext)));
                         }
-                    }
-                });
+                    }).toArray(File[]::new);
 
-                // 文件排序
-                if (files != null) {
+                    // Sắp xếp file và folder
                     for (int i = 0; i < files.length; i++) {
                         for (int j = i + 1; j < files.length; j++) {
                             if ((files[j].isDirectory() && files[i].isFile())) {
@@ -95,21 +95,22 @@ public class AdapterFileSelector extends BaseAdapter {
                     }
                     fileArray = files;
                 } else {
+                    // Thư mục không đọc được → vẫn hiển thị nút "..."
                     fileArray = new File[0];
                 }
+            } else {
+                fileArray = new File[0];
             }
+
             currentDir = dir;
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    notifyDataSetChanged();
-                    progressBarDialog.hideDialog();
-                }
+            handler.post(() -> {
+                notifyDataSetChanged();
+                progressBarDialog.hideDialog();
             });
         }).start();
     }
 
-    // === CHỖ SỬA: dùng parentFile trực tiếp
+    // Bấm nút "..." sẽ load parent nếu có
     public boolean goParent() {
         File parent = currentDir.getParentFile();
         if (parent != null) {
@@ -140,7 +141,6 @@ public class AdapterFileSelector extends BaseAdapter {
         }
     }
 
-    // === CHỖ SỬA: trả parentFile trực tiếp
     @Override
     public Object getItem(int position) {
         if (hasParent) {
@@ -165,54 +165,35 @@ public class AdapterFileSelector extends BaseAdapter {
         if (hasParent && position == 0) {
             view = View.inflate(parent.getContext(), R.layout.list_item_dir, null);
             ((TextView) (view.findViewById(R.id.ItemTitle))).setText("...");
-            view.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    goParent();
-                }
-            });
+            view.setOnClickListener(v -> goParent());
             return view;
         } else {
             final File file = (File) getItem(position);
             if (file.isDirectory()) {
                 view = View.inflate(parent.getContext(), R.layout.list_item_dir, null);
-                view.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (!file.exists()) {
-                            Toast.makeText(view.getContext(), "所选的文件已被删除，请重新选择！", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-                        File[] files = file.listFiles();
-                        if (files != null && files.length > 0) {
-                            loadDir(file);
-                        } else {
-                            Snackbar.make(view, "该目录下没有文件！", Snackbar.LENGTH_SHORT).show();
-                        }
+                view.setOnClickListener(v -> {
+                    if (!file.exists()) {
+                        Toast.makeText(view.getContext(), "所选的文件已被删除，请重新选择！", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    File[] files = file.listFiles();
+                    if (files != null && files.length > 0) {
+                        loadDir(file);
+                    } else {
+                        Snackbar.make(view, "该目录下没有文件！", Snackbar.LENGTH_SHORT).show();
                     }
                 });
                 if (folderChooserMode) {
-                    view.setOnLongClickListener(new View.OnLongClickListener() {
-                        @Override
-                        public boolean onLongClick(View v) {
-                            DialogHelper.Companion.confirm(view.getContext(), "选定目录？", file.getAbsolutePath(), new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (!file.exists()) {
-                                        Toast.makeText(view.getContext(), "所选的目录已被删除，请重新选择！", Toast.LENGTH_SHORT).show();
-                                        return;
-                                    }
-                                    selectedFile = file;
-                                    fileSelected.run();
-                                }
-                            }, new Runnable() {
-                                @Override
-                                public void run() {
-
-                                }
-                            });
-                            return true;
-                        }
+                    view.setOnLongClickListener(v -> {
+                        DialogHelper.Companion.confirm(view.getContext(), "选定目录？", file.getAbsolutePath(), () -> {
+                            if (!file.exists()) {
+                                Toast.makeText(view.getContext(), "所选的目录已被删除，请重新选择！", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                            selectedFile = file;
+                            fileSelected.run();
+                        }, () -> {});
+                        return true;
                     });
                 }
             } else {
@@ -231,27 +212,14 @@ public class AdapterFileSelector extends BaseAdapter {
 
                 ((TextView) (view.findViewById(R.id.ItemText))).setText(fileSize);
 
-                view.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        DialogHelper.Companion.confirm(view.getContext(), "选定文件？", file.getAbsolutePath(), new Runnable() {
-                            @Override
-                            public void run() {
-                                if (!file.exists()) {
-                                    Toast.makeText(view.getContext(), "所选的文件已被删除，请重新选择！", Toast.LENGTH_SHORT).show();
-                                    return;
-                                }
-                                selectedFile = file;
-                                fileSelected.run();
-                            }
-                        }, new Runnable() {
-                            @Override
-                            public void run() {
-
-                            }
-                        });
+                view.setOnClickListener(v -> DialogHelper.Companion.confirm(view.getContext(), "选定文件？", file.getAbsolutePath(), () -> {
+                    if (!file.exists()) {
+                        Toast.makeText(view.getContext(), "所选的文件已被删除，请重新选择！", Toast.LENGTH_SHORT).show();
+                        return;
                     }
-                });
+                    selectedFile = file;
+                    fileSelected.run();
+                }, () -> {}));
             }
             ((TextView) (view.findViewById(R.id.ItemTitle))).setText(file.getName());
             return view;
