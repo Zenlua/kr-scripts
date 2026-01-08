@@ -37,15 +37,16 @@ class SplashActivity : Activity() {
         checkRootAndStart()
     }
 
-    private fun updateThemeStyle() {
-        // Cho phép layout vẽ dưới system bars (thay cho systemUiVisibility)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+private fun updateThemeStyle() {
+    WindowCompat.setDecorFitsSystemWindows(window, true)
 
-        // Điều khiển icon status/navigation bar (KHÔNG set màu ở đây)
-        val controller = WindowInsetsControllerCompat(window, window.decorView)
-        controller.isAppearanceLightStatusBars = false
-        controller.isAppearanceLightNavigationBars = false
-    }
+    window.statusBarColor = getColor(R.color.splash_bg_color)
+    window.navigationBarColor = getColor(R.color.splash_bg_color)
+
+    val controller = WindowInsetsControllerCompat(window, window.decorView)
+    controller.isAppearanceLightStatusBars = false
+    controller.isAppearanceLightNavigationBars = false
+}
 
     /**
      * LẦN ĐẦU MỞ APP:
