@@ -12,9 +12,12 @@ import com.omarea.common.ui.DialogHelper;
 import com.omarea.common.ui.ProgressBarDialog;
 import com.projectkr.shell.R;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileFilter;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class AdapterFileSelector extends BaseAdapter {
     private File[] fileArray;
@@ -24,10 +27,8 @@ public class AdapterFileSelector extends BaseAdapter {
     private final Handler handler = new Handler();
     private ProgressBarDialog progressBarDialog;
     private String extension;
-    private boolean hasParent = false; // 是否还有父级
-    private String rootDir = "/"; // 根目录
-    private final boolean leaveRootDir = true; // 是否允许离开设定的rootDir到更父级的目录去
-    private boolean folderChooserMode = false; // 是否是目录选择模式（目录选择模式下不显示文件，长按目录选中）
+    private boolean hasParent = false;
+    private boolean folderChooserMode = false;
 
     private AdapterFileSelector(File rootDir, Runnable fileSelected, ProgressBarDialog progressBarDialog, String extension) {
         init(rootDir, fileSelected, progressBarDialog, extension);
@@ -46,15 +47,10 @@ public class AdapterFileSelector extends BaseAdapter {
     }
 
     private void init(File rootDir, Runnable fileSelected, ProgressBarDialog progressBarDialog, String extension) {
-        this.rootDir = rootDir.getAbsolutePath();
         this.fileSelected = fileSelected;
         this.progressBarDialog = progressBarDialog;
         if (extension != null) {
-            if (extension.startsWith(".")) {
-                this.extension = extension;
-            } else {
-                this.extension = "." + extension;
-            }
+            this.extension = extension.startsWith(".") ? extension : "." + extension;
         }
         loadDir(rootDir);
     }
@@ -62,47 +58,36 @@ public class AdapterFileSelector extends BaseAdapter {
     private void loadDir(final File dir) {
         progressBarDialog.showDialog("加载中...");
         new Thread(() -> {
-            // Luôn check parent, để hiển thị nút "..."
             File parent = dir.getParentFile();
-            hasParent = parent != null;
+            hasParent = parent != null && parent.exists() && parent.canRead();
 
-            if (dir.exists() && dir.canRead()) {
-                File[] files = dir.listFiles();
-                if (files != null) {
-                    final String ext = extension;
-                    files = Arrays.stream(files).filter(fileItem -> {
-                        if (folderChooserMode) {
-                            return fileItem.isDirectory();
-                        } else {
-                            return fileItem.isDirectory() || (fileItem.isFile() && (ext == null || ext.isEmpty() || fileItem.getName().endsWith(ext)));
-                        }
-                    }).toArray(File[]::new);
+            File[] files;
 
-                    // Sắp xếp file và folder
-                    for (int i = 0; i < files.length; i++) {
-                        for (int j = i + 1; j < files.length; j++) {
-                            if ((files[j].isDirectory() && files[i].isFile())) {
-                                File t = files[i];
-                                files[i] = files[j];
-                                files[j] = t;
-                            } else if (files[j].isDirectory() == files[i].isDirectory() &&
-                                    files[j].getName().toLowerCase().compareTo(files[i].getName().toLowerCase()) < 0) {
-                                File t = files[i];
-                                files[i] = files[j];
-                                files[j] = t;
-                            }
-                        }
-                    }
-                    fileArray = files;
-                } else {
-                    // Thư mục không đọc được → vẫn hiển thị nút "..."
-                    fileArray = new File[0];
-                }
+            // Nếu là root / thì dùng shell ls
+            if (dir.getAbsolutePath().equals("/")) {
+                files = listFilesShell(dir);
             } else {
-                fileArray = new File[0];
+                File[] rawFiles = dir.listFiles();
+                if (rawFiles != null) {
+                    final String ext = extension;
+                    files = Arrays.stream(rawFiles)
+                            .filter(f -> folderChooserMode ? f.isDirectory() : (f.isDirectory() || (ext == null || ext.isEmpty() || f.getName().endsWith(ext))))
+                            .toArray(File[]::new);
+                } else {
+                    files = new File[0];
+                }
             }
 
+            // Sắp xếp thư mục trước, file sau, theo tên
+            Arrays.sort(files, (f1, f2) -> {
+                if (f1.isDirectory() && !f2.isDirectory()) return -1;
+                if (!f1.isDirectory() && f2.isDirectory()) return 1;
+                return f1.getName().compareToIgnoreCase(f2.getName());
+            });
+
+            fileArray = files;
             currentDir = dir;
+
             handler.post(() -> {
                 notifyDataSetChanged();
                 progressBarDialog.hideDialog();
@@ -110,11 +95,31 @@ public class AdapterFileSelector extends BaseAdapter {
         }).start();
     }
 
-    // Bấm nút "..." sẽ load parent nếu có
+    private File[] listFilesShell(File dir) {
+        try {
+            Process process = Runtime.getRuntime().exec(new String[]{"sh", "-c", "ls -1ALF \"" + dir.getAbsolutePath() + "\""});
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            List<File> fileList = new ArrayList<>();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty()) continue;
+                boolean isDir = line.endsWith("/");
+                if (isDir) line = line.substring(0, line.length() - 1);
+                File f = new File(dir, line);
+                fileList.add(f);
+            }
+            process.waitFor();
+            return fileList.toArray(new File[0]);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new File[0];
+        }
+    }
+
     public boolean goParent() {
-        File parent = currentDir.getParentFile();
-        if (parent != null) {
-            loadDir(parent);
+        if (hasParent) {
+            loadDir(new File(currentDir.getParent()));
             return true;
         }
         return false;
@@ -122,33 +127,14 @@ public class AdapterFileSelector extends BaseAdapter {
 
     @Override
     public int getCount() {
-        if (hasParent) {
-            if (fileArray == null) {
-                return 1;
-            }
-            return fileArray.length + 1;
-        } else {
-            if (fileArray == null) {
-                return 0;
-            }
-            return fileArray.length;
-        }
-    }
-
-    public void refresh() {
-        if (this.currentDir != null) {
-            this.loadDir(currentDir);
-        }
+        if (fileArray == null) return hasParent ? 1 : 0;
+        return hasParent ? fileArray.length + 1 : fileArray.length;
     }
 
     @Override
     public Object getItem(int position) {
         if (hasParent) {
-            if (position == 0) {
-                return currentDir.getParentFile();
-            } else {
-                return fileArray[position - 1];
-            }
+            return position == 0 ? new File(currentDir.getParent()) : fileArray[position - 1];
         } else {
             return fileArray[position];
         }
@@ -164,7 +150,7 @@ public class AdapterFileSelector extends BaseAdapter {
         final View view;
         if (hasParent && position == 0) {
             view = View.inflate(parent.getContext(), R.layout.list_item_dir, null);
-            ((TextView) (view.findViewById(R.id.ItemTitle))).setText("...");
+            ((TextView) view.findViewById(R.id.ItemTitle)).setText("...");
             view.setOnClickListener(v -> goParent());
             return view;
         } else {
@@ -176,8 +162,8 @@ public class AdapterFileSelector extends BaseAdapter {
                         Toast.makeText(view.getContext(), "所选的文件已被删除，请重新选择！", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    File[] files = file.listFiles();
-                    if (files != null && files.length > 0) {
+                    File[] filesInDir = file.listFiles();
+                    if (filesInDir != null && filesInDir.length > 0) {
                         loadDir(file);
                     } else {
                         Snackbar.make(view, "该目录下没有文件！", Snackbar.LENGTH_SHORT).show();
@@ -200,17 +186,12 @@ public class AdapterFileSelector extends BaseAdapter {
                 view = View.inflate(parent.getContext(), R.layout.list_item_file, null);
                 long fileLength = file.length();
                 String fileSize;
-                if (fileLength < 1024) {
-                    fileSize = fileLength + "B";
-                } else if (fileLength < 1048576) {
-                    fileSize = String.format("%sKB", String.format("%.2f", (file.length() / 1024.0)));
-                } else if (fileLength < 1073741824) {
-                    fileSize = String.format("%sMB", String.format("%.2f", (file.length() / 1048576.0)));
-                } else {
-                    fileSize = String.format("%sGB", String.format("%.2f", (file.length() / 1073741824.0)));
-                }
+                if (fileLength < 1024) fileSize = fileLength + "B";
+                else if (fileLength < 1048576) fileSize = String.format("%.2fKB", fileLength / 1024.0);
+                else if (fileLength < 1073741824) fileSize = String.format("%.2fMB", fileLength / 1048576.0);
+                else fileSize = String.format("%.2fGB", fileLength / 1073741824.0);
 
-                ((TextView) (view.findViewById(R.id.ItemText))).setText(fileSize);
+                ((TextView) view.findViewById(R.id.ItemText)).setText(fileSize);
 
                 view.setOnClickListener(v -> DialogHelper.Companion.confirm(view.getContext(), "选定文件？", file.getAbsolutePath(), () -> {
                     if (!file.exists()) {
@@ -221,12 +202,18 @@ public class AdapterFileSelector extends BaseAdapter {
                     fileSelected.run();
                 }, () -> {}));
             }
-            ((TextView) (view.findViewById(R.id.ItemTitle))).setText(file.getName());
+            ((TextView) view.findViewById(R.id.ItemTitle)).setText(file.getName());
             return view;
         }
     }
 
     public File getSelectedFile() {
         return this.selectedFile;
+    }
+
+    public void refresh() {
+        if (this.currentDir != null) {
+            loadDir(currentDir);
+        }
     }
 }
