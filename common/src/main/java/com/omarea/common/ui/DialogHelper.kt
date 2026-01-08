@@ -121,6 +121,24 @@ class DialogHelper {
             )
         }
 
+        /** ✅ KHÔI PHỤC API warning() */
+        fun warning(
+            context: Context,
+            title: String = "",
+            message: String = "",
+            onConfirm: Runnable? = null,
+            onCancel: Runnable? = null
+        ): DialogWrap {
+            return openConfirm(
+                context,
+                R.layout.dialog_warning,
+                title,
+                message,
+                onConfirm,
+                onCancel
+            )
+        }
+
         fun alert(
             context: Context,
             title: String = "",
@@ -254,6 +272,21 @@ class DialogHelper {
                 view,
                 DialogWrap(dialog).setCancelable(cancelable)
             )
+        }
+
+        /* ========================= ANIMATION API (KHÔI PHỤC) ========================= */
+
+        fun animDialog(dialog: AlertDialog?): DialogWrap? {
+            if (dialog != null && !dialog.isShowing) {
+                dialog.window?.setWindowAnimations(R.style.windowAnim)
+                dialog.show()
+            }
+            return dialog?.let { DialogWrap(it) }
+        }
+
+        fun animDialog(builder: AlertDialog.Builder): DialogWrap {
+            val dialog = builder.create()
+            return animDialog(dialog)!!
         }
 
         /* ========================= BLUR BACKGROUND ========================= */
