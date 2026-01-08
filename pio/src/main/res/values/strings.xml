@@ -1,4 +1,12 @@
 <resources>
+
+    <string name="afs_loading">Loading...</string>
+    <string name="afs_select_file">Selected file?</string>
+    <string name="afs_select_folder">Select a directory?</string>
+    <string name="afs_empty_dir">There are no files in this directory!</string>
+    <string name="afs_file_deleted">The selected file has been deleted. Please select again!</string>
+    <string name="afs_folder_deleted">The selected directory has been deleted. Please select another one!</string>
+
     <!-- Important content, modify with caution -->
     <string name="kr_script_config">kr-script.conf</string>
 
