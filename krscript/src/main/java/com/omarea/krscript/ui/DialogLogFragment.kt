@@ -185,7 +185,7 @@ class DialogLogFragment : DialogFragment() {
                     binding?.btnExit?.apply {
                         visibility = View.VISIBLE
                         text = context?.getString(R.string.btn_exit)
-                        setBackgroundColor(context?.getColor(com.omarea.pio.R.color.colorAccent) ?: Color.parseColor("#4ba5ff"))
+                        setBackgroundColor(context?.getColor(com.omarea.R.color.colorAccent) ?: Color.parseColor("#4ba5ff"))
                     }
                     binding?.btnHide?.visibility = View.GONE
                     binding?.actionProgress?.visibility = View.GONE
