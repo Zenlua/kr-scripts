@@ -33,6 +33,9 @@ class SplashActivity : Activity() {
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val blink = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.blink)
+        binding.startLogo.startAnimation(blink)
+
         updateThemeStyle()
         checkRootAndStart()
     }
