@@ -124,7 +124,7 @@ class DialogHelper {
             if (blurDrawable != null) {
                 window.setBackgroundDrawable(blurDrawable.toDrawable(activity.resources))
             } else {
-                val color = activity.getColor(R.color.dialog_bg_color)
+                val color = activity.getColor(R.color.splash_bg_color)
                 window.setBackgroundDrawable(color.toDrawable())
             }
         }
