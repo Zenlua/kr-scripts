@@ -1,6 +1,5 @@
 package com.projectkr.shell.ui;
 
-import android.os.Environment;
 import android.os.Handler;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,7 +23,9 @@ public class AdapterFileSelector extends BaseAdapter {
     private final Handler handler = new Handler();
     private ProgressBarDialog progressBarDialog;
     private String extension;
-    private boolean hasParent = false; 
+    private boolean hasParent = false;
+    private String rootDir = "/";
+    private final boolean leaveRootDir = true;
     private boolean folderChooserMode = false;
 
     private AdapterFileSelector(File rootDir, Runnable fileSelected, ProgressBarDialog progressBarDialog, String extension) {
@@ -32,49 +33,74 @@ public class AdapterFileSelector extends BaseAdapter {
     }
 
     public static AdapterFileSelector FolderChooser(File rootDir, Runnable fileSelected, ProgressBarDialog progressBarDialog) {
-        AdapterFileSelector adapter = new AdapterFileSelector(rootDir, fileSelected, progressBarDialog, null);
-        adapter.folderChooserMode = true;
-        return adapter;
+        AdapterFileSelector adapterFileSelector = new AdapterFileSelector(rootDir, fileSelected, progressBarDialog, null);
+        adapterFileSelector.folderChooserMode = true;
+        return adapterFileSelector;
     }
 
     public static AdapterFileSelector FileChooser(File rootDir, Runnable fileSelected, ProgressBarDialog progressBarDialog, String extension) {
-        AdapterFileSelector adapter = new AdapterFileSelector(rootDir, fileSelected, progressBarDialog, extension);
-        adapter.folderChooserMode = false;
-        return adapter;
+        AdapterFileSelector adapterFileSelector = new AdapterFileSelector(rootDir, fileSelected, progressBarDialog, extension);
+        adapterFileSelector.folderChooserMode = false;
+        return adapterFileSelector;
     }
 
     private void init(File rootDir, Runnable fileSelected, ProgressBarDialog progressBarDialog, String extension) {
+        this.rootDir = rootDir.getAbsolutePath();
         this.fileSelected = fileSelected;
         this.progressBarDialog = progressBarDialog;
         if (extension != null) {
-            this.extension = extension.startsWith(".") ? extension : "." + extension;
+            if (extension.startsWith(".")) {
+                this.extension = extension;
+            } else {
+                this.extension = "." + extension;
+            }
         }
         loadDir(rootDir);
     }
 
     private void loadDir(final File dir) {
-        progressBarDialog.showDialog("加载中...");
+        progressBarDialog.showDialog(dir.getContext().getString(R.string.afs_loading));
         new Thread(() -> {
-            // Xác định parent
             File parent = dir.getParentFile();
-            if (dir.equals(Environment.getExternalStorageDirectory())) {
-                hasParent = true; // hiển thị ... ở /sdcard
-            } else if (parent != null) {
-                hasParent = parent.exists() && parent.canRead();
+            if (parent != null) {
+                String parentPath = parent.getAbsolutePath();
+                hasParent = parent.exists() && parent.canRead() && (leaveRootDir || !(rootDir.startsWith(parentPath) && rootDir.length() > parentPath.length()));
             } else {
                 hasParent = false;
             }
 
-            // Liệt kê file
             if (dir.exists() && dir.canRead()) {
-                File[] files = dir.listFiles(file -> folderChooserMode ? file.isDirectory()
-                        : (file.exists() && (extension == null || extension.isEmpty() || file.getName().endsWith(extension))));
-                fileArray = files != null ? files : new File[0];
+                File[] files = dir.listFiles(new FileFilter() {
+                    @Override
+                    public boolean accept(File fileItem) {
+                        if (folderChooserMode) {
+                            return fileItem.isDirectory();
+                        } else {
+                            return fileItem.exists() && (!fileItem.isFile() || extension == null || extension.isEmpty() || fileItem.getName().endsWith(extension));
+                        }
+                    }
+                });
+
+                if (files != null) {
+                    // Sort directories first, then by name
+                    for (int i = 0; i < files.length; i++) {
+                        for (int j = i + 1; j < files.length; j++) {
+                            if ((files[j].isDirectory() && files[i].isFile())) {
+                                File t = files[i];
+                                files[i] = files[j];
+                                files[j] = t;
+                            } else if (files[j].isDirectory() == files[i].isDirectory() &&
+                                    files[j].getName().toLowerCase().compareTo(files[i].getName().toLowerCase()) < 0) {
+                                File t = files[i];
+                                files[i] = files[j];
+                                files[j] = t;
+                            }
+                        }
+                    }
+                    fileArray = files;
+                }
             }
-
             currentDir = dir;
-            sortFiles();
-
             handler.post(() -> {
                 notifyDataSetChanged();
                 progressBarDialog.hideDialog();
@@ -82,28 +108,9 @@ public class AdapterFileSelector extends BaseAdapter {
         }).start();
     }
 
-    private void sortFiles() {
-        if (fileArray == null) return;
-        for (int i = 0; i < fileArray.length; i++) {
-            for (int j = i + 1; j < fileArray.length; j++) {
-                if ((fileArray[j].isDirectory() && fileArray[i].isFile())
-                        || (fileArray[j].isDirectory() == fileArray[i].isDirectory()
-                        && fileArray[j].getName().compareToIgnoreCase(fileArray[i].getName()) < 0)) {
-                    File t = fileArray[i];
-                    fileArray[i] = fileArray[j];
-                    fileArray[j] = t;
-                }
-            }
-        }
-    }
-
     public boolean goParent() {
-        if (currentDir.equals(Environment.getExternalStorageDirectory())) {
-            // Ở /sdcard nhấn ... → vào /
-            loadDir(new File("/"));
-            return true;
-        } else if (hasParent) {
-            loadDir(currentDir.getParentFile());
+        if (hasParent) {
+            loadDir(new File(currentDir.getParent()));
             return true;
         }
         return false;
@@ -111,15 +118,20 @@ public class AdapterFileSelector extends BaseAdapter {
 
     @Override
     public int getCount() {
-        return hasParent ? (fileArray == null ? 1 : fileArray.length + 1)
-                : (fileArray == null ? 0 : fileArray.length);
+        if (hasParent) {
+            if (fileArray == null) return 1;
+            return fileArray.length + 1;
+        } else {
+            if (fileArray == null) return 0;
+            return fileArray.length;
+        }
     }
 
     @Override
     public Object getItem(int position) {
         if (hasParent) {
-            if (position == 0) return currentDir.equals(Environment.getExternalStorageDirectory()) ? new File("/") : currentDir.getParentFile();
-            return fileArray[position - 1];
+            if (position == 0) return new File(currentDir.getParent());
+            else return fileArray[position - 1];
         } else {
             return fileArray[position];
         }
@@ -131,55 +143,85 @@ public class AdapterFileSelector extends BaseAdapter {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parentView) {
+    public View getView(int position, View convertView, ViewGroup parent) {
         final View view;
+
         if (hasParent && position == 0) {
-            view = View.inflate(parentView.getContext(), R.layout.list_item_dir, null);
+            view = View.inflate(parent.getContext(), R.layout.list_item_dir, null);
             ((TextView) view.findViewById(R.id.ItemTitle)).setText("...");
             view.setOnClickListener(v -> goParent());
             return view;
         } else {
             final File file = (File) getItem(position);
             if (file.isDirectory()) {
-                view = View.inflate(parentView.getContext(), R.layout.list_item_dir, null);
+                view = View.inflate(parent.getContext(), R.layout.list_item_dir, null);
                 view.setOnClickListener(v -> {
                     if (!file.exists()) {
-                        Toast.makeText(view.getContext(), "所选的文件已被删除，请重新选择！", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(view.getContext(), view.getContext().getString(R.string.afs_folder_deleted), Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    loadDir(file);
+                    File[] files = file.listFiles();
+                    if (files != null && files.length > 0) {
+                        loadDir(file);
+                    } else {
+                        Snackbar.make(view, view.getContext().getString(R.string.afs_empty_dir), Snackbar.LENGTH_SHORT).show();
+                    }
                 });
+
                 if (folderChooserMode) {
                     view.setOnLongClickListener(v -> {
-                        DialogHelper.Companion.confirm(view.getContext(), "选定目录？", file.getAbsolutePath(), () -> {
-                            selectedFile = file;
-                            fileSelected.run();
-                        }, () -> {});
+                        DialogHelper.Companion.confirm(view.getContext(),
+                                view.getContext().getString(R.string.afs_select_folder),
+                                file.getAbsolutePath(),
+                                () -> {
+                                    if (!file.exists()) {
+                                        Toast.makeText(view.getContext(), view.getContext().getString(R.string.afs_folder_deleted), Toast.LENGTH_SHORT).show();
+                                        return;
+                                    }
+                                    selectedFile = file;
+                                    fileSelected.run();
+                                },
+                                () -> {});
                         return true;
                     });
                 }
             } else {
-                view = View.inflate(parentView.getContext(), R.layout.list_item_file, null);
+                view = View.inflate(parent.getContext(), R.layout.list_item_file, null);
                 long fileLength = file.length();
                 String fileSize;
-                if (fileLength < 1024) fileSize = fileLength + "B";
-                else if (fileLength < 1048576) fileSize = String.format("%.2fKB", fileLength / 1024.0);
-                else if (fileLength < 1073741824) fileSize = String.format("%.2fMB", fileLength / 1048576.0);
-                else fileSize = String.format("%.2fGB", fileLength / 1073741824.0);
+                if (fileLength < 1024) {
+                    fileSize = fileLength + "B";
+                } else if (fileLength < 1048576) {
+                    fileSize = String.format("%.2fKB", (fileLength / 1024.0));
+                } else if (fileLength < 1073741824) {
+                    fileSize = String.format("%.2fMB", (fileLength / 1048576.0));
+                } else {
+                    fileSize = String.format("%.2fGB", (fileLength / 1073741824.0));
+                }
 
                 ((TextView) view.findViewById(R.id.ItemText)).setText(fileSize);
 
-                view.setOnClickListener(v -> DialogHelper.Companion.confirm(view.getContext(), "选定文件？", file.getAbsolutePath(), () -> {
-                    selectedFile = file;
-                    fileSelected.run();
-                }, () -> {}));
+                view.setOnClickListener(v -> DialogHelper.Companion.confirm(view.getContext(),
+                        view.getContext().getString(R.string.afs_select_file),
+                        file.getAbsolutePath(),
+                        () -> {
+                            if (!file.exists()) {
+                                Toast.makeText(view.getContext(), view.getContext().getString(R.string.afs_file_deleted), Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                            selectedFile = file;
+                            fileSelected.run();
+                        },
+                        () -> {}));
             }
+
             ((TextView) view.findViewById(R.id.ItemTitle)).setText(file.getName());
             return view;
         }
     }
 
     public File getSelectedFile() {
-        return selectedFile;
+        return this.selectedFile;
     }
+
 }
