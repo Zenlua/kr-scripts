@@ -58,14 +58,12 @@ public class AdapterFileSelector extends BaseAdapter {
     private void loadDir(final File dir) {
         progressBarDialog.showDialog("加载中...");
         new Thread(() -> {
-            File parent = dir.getParentFile();
-            hasParent = parent != null && parent.exists() && parent.canRead();
+            // Chỉ kiểm tra parent != null để xác định nút ...
+            hasParent = dir.getParent() != null;
 
             File[] files;
-
-            // Nếu là root / thì dùng shell ls
             if (dir.getAbsolutePath().equals("/")) {
-                files = listFilesShell(dir);
+                files = listFilesShell(dir); // root thì dùng shell ls
             } else {
                 File[] rawFiles = dir.listFiles();
                 if (rawFiles != null) {
