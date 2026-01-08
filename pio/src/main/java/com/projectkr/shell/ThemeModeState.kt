@@ -68,28 +68,25 @@ object ThemeModeState {
         return themeMode
     }
 
-    private fun applySystemBarMode(activity: Activity, darkMode: Boolean) {
-        val window = activity.window
+private fun applySystemBarMode(activity: Activity, darkMode: Boolean) {
+    val window = activity.window
+    val decorView = window.decorView
 
+    decorView.post {
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val controller = window.insetsController ?: return
+            val controller = window.insetsController ?: return@post
+
+            val lightFlags =
+                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
+                        WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
 
             if (darkMode) {
-                controller.setSystemBarsAppearance(
-                    0,
-                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
-                            WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
-                )
+                controller.setSystemBarsAppearance(0, lightFlags)
             } else {
-                controller.setSystemBarsAppearance(
-                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
-                            WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
-                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
-                            WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
-                )
+                controller.setSystemBarsAppearance(lightFlags, lightFlags)
             }
         } else {
             var flags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
@@ -103,9 +100,10 @@ object ThemeModeState {
                 flags = flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
             }
 
-            window.decorView.systemUiVisibility = flags
+            decorView.systemUiVisibility = flags
         }
     }
+}
 
     private fun isDarkColor(wallPaper: Drawable): Boolean {
         val bitmap = (wallPaper as BitmapDrawable).bitmap
