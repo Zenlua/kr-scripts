@@ -61,12 +61,9 @@ public class AdapterFileSelector extends BaseAdapter {
     private void loadDir(final File dir) {
         progressBarDialog.showDialog("加载中...");
         new Thread(() -> {
+            // === CHỖ SỬA: luôn có nút ... nếu parent khác null
             File parent = dir.getParentFile();
-            if (parent != null) {
-                hasParent = parent.exists() && parent.canRead();
-            } else {
-                hasParent = false;
-            }
+            hasParent = parent != null;
 
             if (dir.exists() && dir.canRead()) {
                 File[] files = dir.listFiles(new FileFilter() {
@@ -81,20 +78,25 @@ public class AdapterFileSelector extends BaseAdapter {
                 });
 
                 // 文件排序
-                for (int i = 0; i < files.length; i++) {
-                    for (int j = i + 1; j < files.length; j++) {
-                        if ((files[j].isDirectory() && files[i].isFile())) {
-                            File t = files[i];
-                            files[i] = files[j];
-                            files[j] = t;
-                        } else if (files[j].isDirectory() == files[i].isDirectory() && (files[j].getName().toLowerCase().compareTo(files[i].getName().toLowerCase()) < 0)) {
-                            File t = files[i];
-                            files[i] = files[j];
-                            files[j] = t;
+                if (files != null) {
+                    for (int i = 0; i < files.length; i++) {
+                        for (int j = i + 1; j < files.length; j++) {
+                            if ((files[j].isDirectory() && files[i].isFile())) {
+                                File t = files[i];
+                                files[i] = files[j];
+                                files[j] = t;
+                            } else if (files[j].isDirectory() == files[i].isDirectory() &&
+                                    files[j].getName().toLowerCase().compareTo(files[i].getName().toLowerCase()) < 0) {
+                                File t = files[i];
+                                files[i] = files[j];
+                                files[j] = t;
+                            }
                         }
                     }
+                    fileArray = files;
+                } else {
+                    fileArray = new File[0];
                 }
-                fileArray = files;
             }
             currentDir = dir;
             handler.post(new Runnable() {
@@ -107,9 +109,11 @@ public class AdapterFileSelector extends BaseAdapter {
         }).start();
     }
 
+    // === CHỖ SỬA: dùng parentFile trực tiếp
     public boolean goParent() {
-        if (hasParent) {
-            loadDir(new File(currentDir.getParent()));
+        File parent = currentDir.getParentFile();
+        if (parent != null) {
+            loadDir(parent);
             return true;
         }
         return false;
@@ -136,11 +140,12 @@ public class AdapterFileSelector extends BaseAdapter {
         }
     }
 
+    // === CHỖ SỬA: trả parentFile trực tiếp
     @Override
     public Object getItem(int position) {
         if (hasParent) {
             if (position == 0) {
-                return new File(currentDir.getParent());
+                return currentDir.getParentFile();
             } else {
                 return fileArray[position - 1];
             }
