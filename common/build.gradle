@@ -49,7 +49,6 @@ dependencies {
     // implementation files('libs/fastscroll_v1.2_20160903.jar')
     
     implementation project(':pio')
-    implementation project(':krscript')
 }
 repositories {
     mavenCentral()
