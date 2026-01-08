@@ -11,6 +11,7 @@ import android.graphics.drawable.Drawable
 import android.os.Build
 import android.view.View
 import android.view.Window
+import android.view.WindowInsetsController  // ← 必须添加这一行
 import android.view.WindowManager
 import androidx.core.content.PermissionChecker
 import com.omarea.common.ui.ThemeMode
@@ -21,23 +22,23 @@ object ThemeModeState {
     private fun checkPermission(context: Context, permission: String): Boolean =
         PermissionChecker.checkSelfPermission(context, permission) == PermissionChecker.PERMISSION_GRANTED
 
-    /** Xác định hệ thống đang ở dark mode hay không – cách hiện đại, không dùng UiModeManager */
+    /** 当前系统是否处于暗色模式（不使用已废弃的 UiModeManager） */
     private fun isSystemInDarkMode(context: Context): Boolean {
         val uiMode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
         return uiMode == Configuration.UI_MODE_NIGHT_YES
     }
 
-    /** Áp dụng appearance đúng cho status bar và navigation bar trên mọi API */
+    /** 统一处理状态栏和导航栏的亮/暗图标（支持 Android 11+ 的新 API） */
     private fun applySystemBarsAppearance(window: Window, isDark: Boolean) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // Android 11+ (API 30+)
+            // Android 11 (API 30) 及以上
             window.insetsController?.let { controller ->
-                // Xóa appearance cũ
+                // 先清除旧的 appearance
                 controller.setSystemBarsAppearance(
                     0,
                     WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
                 )
-                // Nếu là light mode → dùng icon sáng (light status/navigation bar)
+                // Light 模式下使用亮色图标（白色背景 + 黑色图标）
                 if (!isDark) {
                     controller.setSystemBarsAppearance(
                         WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
@@ -46,7 +47,7 @@ object ThemeModeState {
                 }
             }
         } else {
-            // Android 6.0 đến 10 (API 23-29)
+            // Android 6.0 ~ 10
             @Suppress("DEPRECATION")
             var flags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
             if (!isDark) {
@@ -60,7 +61,7 @@ object ThemeModeState {
             window.decorView.systemUiVisibility = flags
         }
 
-        // Đảm bảo vẽ nền system bar
+        // 确保可以绘制系统栏背景
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
     }
@@ -77,34 +78,31 @@ object ThemeModeState {
                 checkPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
         if (allowTransparent) {
-            // Dùng wallpaper làm nền
+            // 使用壁纸作为背景
             activity.setTheme(if (isDark) R.style.AppThemeWallpaper else R.style.AppThemeWallpaperLight)
 
             val wallpaperManager = WallpaperManager.getInstance(activity)
             val wallpaperInfo = wallpaperManager.wallpaperInfo
 
             if (wallpaperInfo != null && wallpaperInfo.packageName != null) {
-                // Dynamic (live) wallpaper
+                // 动态壁纸
                 activity.window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
             } else {
                 val wallpaperDrawable = wallpaperManager.drawable
                 activity.window.setBackgroundDrawable(wallpaperDrawable)
             }
 
-            // Với nền trong suốt, status bar thường nên theo màu wallpaper
-            // Bạn có thể mở comment đoạn dưới nếu muốn tự động detect màu wallpaper
-            // val isWallpaperDark = isDarkColor(wallpaperManager.drawable)
-            // applySystemBarsAppearance(activity.window, isWallpaperDark)
-
-            // Hiện tại giữ theo hệ thống (sạch sẽ hơn)
+            // 这里统一按照系统暗色模式设置图标颜色（最安全）
             applySystemBarsAppearance(activity.window, isDark)
         } else {
-            // Không dùng wallpaper → theme bình thường
+            // 普通不透明主题
             if (isDark) {
                 activity.setTheme(R.style.AppThemeDark)
                 themeMode.isLightStatusBar = false
             } else {
-                activity.setTheme(R.style.AppThemeLight) // hoặc theme light mặc định của bạn
+                // ← 这里修复 Unresolved reference 'AppThemeLight'
+                // 请根据你项目中实际的 light 主题替换下面的名字
+                activity.setTheme(R.style.AppTheme)  // 常见替代：AppTheme、MainTheme、Theme_AppCompat_Light_NoActionBar 等
                 themeMode.isLightStatusBar = true
             }
 
@@ -114,7 +112,7 @@ object ThemeModeState {
         return themeMode
     }
 
-    /** Kiểm tra xem wallpaper có màu tối không (tùy chọn dùng để set light/dark status bar) */
+    /** 可选：根据壁纸颜色自动判断是否使用亮色状态栏图标 */
     private fun isDarkColor(wallPaper: Drawable?): Boolean {
         if (wallPaper !is BitmapDrawable) return false
         val bitmap = wallPaper.bitmap
