@@ -3,10 +3,10 @@ package com.omarea.common.ui
 import android.app.Activity
 import android.content.Context
 import android.content.DialogInterface
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
 import android.os.Build
-import android.util.TypedValue
 import android.view.*
 import android.widget.FrameLayout
 import android.widget.TextView
@@ -23,11 +23,12 @@ class DialogHelper {
     )
 
     class DialogWrap(private val d: AlertDialog) {
-        val context: Context = d.context
         private var mCancelable = true
 
-        val isCancelable: Boolean
-            get() = mCancelable
+        val dialog: AlertDialog get() = d
+        val isCancelable get() = mCancelable
+        val isShowing get() = d.isShowing
+        val context: Context get() = d.context
 
         fun setCancelable(cancelable: Boolean): DialogWrap {
             mCancelable = cancelable
@@ -40,9 +41,6 @@ class DialogHelper {
             return this
         }
 
-        val dialog: AlertDialog
-            get() = d
-
         fun dismiss() {
             try { d.dismiss() } catch (_: Exception) {}
         }
@@ -50,53 +48,21 @@ class DialogHelper {
         fun hide() {
             try { d.hide() } catch (_: Exception) {}
         }
-
-        val isShowing: Boolean
-            get() = d.isShowing
     }
 
     companion object {
 
         var disableBlurBg = false
 
-        /* ================== CORE ================== */
+        /* ========================= DARK MODE CORE ========================= */
 
-        fun customDialog(
-            context: Context,
-            view: View,
-            cancelable: Boolean = true
-        ): DialogWrap {
-
-            val dialog = AlertDialog.Builder(context, R.style.custom_alert_dialog)
-                .setView(view)
-                .setCancelable(cancelable)
-                .create()
-
-            dialog.show()
-
-            dialog.window?.let { window ->
-                if (context is Activity) {
-                    setWindowBlurBg(window, context)
-                    applySystemBarAppearance(window, context)
-                } else {
-                    window.setBackgroundDrawableResource(android.R.color.transparent)
-                }
-            }
-
-            return setOutsideTouchDismiss(view, DialogWrap(dialog).setCancelable(cancelable))
+        private fun isNightMode(context: Context): Boolean {
+            val mode = context.resources.configuration.uiMode and
+                    Configuration.UI_MODE_NIGHT_MASK
+            return mode == Configuration.UI_MODE_NIGHT_YES
         }
 
-        /* ================== THEME ================== */
-
-        private fun isLightTheme(context: Context): Boolean {
-            val value = TypedValue()
-            context.theme.resolveAttribute(android.R.attr.isLightTheme, value, true)
-            return value.data != 0
-        }
-
-        private fun applySystemBarAppearance(window: Window, context: Context) {
-            val light = isLightTheme(context)
-
+        private fun setSystemBars(window: Window, light: Boolean) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 window.insetsController?.setSystemBarsAppearance(
                     if (light) WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS else 0,
@@ -109,67 +75,77 @@ class DialogHelper {
             }
         }
 
-        /* ================== BACKGROUND ================== */
+        /* ========================= PUBLIC API ========================= */
 
-        fun setWindowBlurBg(window: Window, activity: Activity) {
-            val wallpaperMode =
-                activity.window.attributes.flags and
-                        WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER != 0
-
-            val blurDrawable =
-                if (!disableBlurBg && !wallpaperMode)
-                    FastBlurUtility.getBlurBackgroundDrawer(activity)
-                else null
-
-            if (blurDrawable != null) {
-                window.setBackgroundDrawable(blurDrawable.toDrawable(activity.resources))
-            } else {
-                val color = activity.getColor(R.color.dialog_bg_color)
-                window.setBackgroundDrawable(color.toDrawable())
-            }
-        }
-
-        /* ================== OUTSIDE TOUCH ================== */
-
-        private fun setOutsideTouchDismiss(
-            view: View,
-            dialogWrap: DialogWrap
-        ): DialogWrap {
-
-            dialogWrap.dialog.window?.decorView?.setOnTouchListener { _, event ->
-                if (event.action == MotionEvent.ACTION_UP) {
-                    val loc = IntArray(2)
-                    view.getLocationOnScreen(loc)
-
-                    val left = loc[0]
-                    val top = loc[1]
-                    val right = left + view.width
-                    val bottom = top + view.height
-
-                    val x = event.rawX.toInt()
-                    val y = event.rawY.toInt()
-
-                    if ((x < left || x > right || y < top || y > bottom)
-                        && dialogWrap.isCancelable
-                    ) {
-                        dialogWrap.dismiss()
-                    }
-                    true
-                } else false
-            }
-            return dialogWrap
-        }
-
-        /* ================== SIMPLE DIALOG APIs ================== */
-
-        private fun getCustomDialogView(
+        fun helpInfo(
             context: Context,
-            layout: Int,
             title: String = "",
             message: String = "",
-            contentView: View? = null
-        ): View {
+            onDismiss: Runnable? = null
+        ): DialogWrap {
+            val view = getCustomView(
+                context,
+                R.layout.dialog_help_info,
+                title,
+                message,
+                null
+            )
 
+            val dialog = customDialog(context, view)
+
+            view.findViewById<View>(R.id.btn_confirm)?.setOnClickListener {
+                dialog.dismiss()
+            }
+
+            if (onDismiss != null) {
+                dialog.setOnDismissListener { onDismiss.run() }
+            }
+
+            return dialog
+        }
+
+        fun confirm(
+            context: Context,
+            title: String = "",
+            message: String = "",
+            onConfirm: Runnable? = null,
+            onCancel: Runnable? = null
+        ): DialogWrap {
+            return openConfirm(
+                context,
+                R.layout.dialog_confirm,
+                title,
+                message,
+                onConfirm,
+                onCancel
+            )
+        }
+
+        fun alert(
+            context: Context,
+            title: String = "",
+            message: String = "",
+            onConfirm: Runnable? = null
+        ): DialogWrap {
+            return openConfirm(
+                context,
+                R.layout.dialog_alert,
+                title,
+                message,
+                onConfirm,
+                null
+            )
+        }
+
+        /* ========================= INTERNAL ========================= */
+
+        private fun getCustomView(
+            context: Context,
+            layout: Int,
+            title: String,
+            message: String,
+            custom: View?
+        ): View {
             val view = LayoutInflater.from(context).inflate(layout, null)
 
             view.findViewById<TextView?>(R.id.confirm_title)?.apply {
@@ -180,26 +156,130 @@ class DialogHelper {
                 if (message.isEmpty()) visibility = View.GONE else text = message
             }
 
-            contentView?.let {
-                view.findViewById<FrameLayout>(R.id.confirm_custom_view)?.addView(it)
+            if (custom != null) {
+                view.findViewById<FrameLayout?>(R.id.confirm_custom_view)
+                    ?.addView(custom)
             }
 
             return view
         }
 
-        fun alert(
+        private fun openConfirm(
             context: Context,
-            title: String = "",
-            message: String = "",
-            onConfirm: Runnable? = null
+            layout: Int,
+            title: String,
+            message: String,
+            onConfirm: Runnable?,
+            onCancel: Runnable?
         ): DialogWrap {
-            val view = getCustomDialogView(context, R.layout.dialog_alert, title, message)
+
+            val view = getCustomView(context, layout, title, message, null)
             val dialog = customDialog(context, view)
-            view.findViewById<View>(R.id.btn_confirm).setOnClickListener {
+
+            view.findViewById<View?>(R.id.btn_confirm)?.setOnClickListener {
                 dialog.dismiss()
                 onConfirm?.run()
             }
+
+            view.findViewById<View?>(R.id.btn_cancel)?.setOnClickListener {
+                dialog.dismiss()
+                onCancel?.run()
+            }
+
             return dialog
+        }
+
+        private fun setOutsideTouchDismiss(
+            content: View,
+            wrap: DialogWrap
+        ): DialogWrap {
+
+            val root = wrap.dialog.window?.decorView ?: return wrap
+
+            root.setOnTouchListener { _, event ->
+                if (event.action == MotionEvent.ACTION_UP && wrap.isCancelable) {
+                    val rect = Rect()
+                    content.getGlobalVisibleRect(rect)
+                    if (!rect.contains(event.rawX.toInt(), event.rawY.toInt())) {
+                        wrap.dismiss()
+                    }
+                    true
+                } else false
+            }
+
+            return wrap
+        }
+
+        /* ========================= DIALOG CORE ========================= */
+
+        fun customDialog(
+            context: Context,
+            view: View,
+            cancelable: Boolean = true
+        ): DialogWrap {
+
+            val dialog = AlertDialog.Builder(
+                context,
+                R.style.custom_alert_dialog
+            )
+                .setView(view)
+                .setCancelable(cancelable)
+                .create()
+
+            dialog.show()
+
+            dialog.window?.let { window ->
+                val dark = isNightMode(context)
+
+                if (context is Activity) {
+                    setWindowBlurBg(window, context)
+                } else {
+                    val bg = if (dark)
+                        Color.argb(255, 18, 18, 18)
+                    else
+                        Color.argb(255, 245, 245, 245)
+
+                    window.setBackgroundDrawable(bg.toDrawable())
+                }
+
+                setSystemBars(window, !dark)
+
+                window.setLayout(
+                    WindowManager.LayoutParams.MATCH_PARENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT
+                )
+            }
+
+            return setOutsideTouchDismiss(
+                view,
+                DialogWrap(dialog).setCancelable(cancelable)
+            )
+        }
+
+        /* ========================= BLUR BACKGROUND ========================= */
+
+        fun setWindowBlurBg(window: Window, activity: Activity) {
+            val dark = isNightMode(activity)
+
+            val blurDrawable =
+                if (!disableBlurBg)
+                    FastBlurUtility
+                        .getBlurBackgroundDrawer(activity)
+                        ?.toDrawable(activity.resources)
+                else null
+
+            if (blurDrawable != null) {
+                window.setBackgroundDrawable(blurDrawable)
+            } else {
+                val color = if (dark)
+                    Color.argb(255, 18, 18, 18)
+                else
+                    Color.argb(255, 245, 245, 245)
+
+                window.setBackgroundDrawable(color.toDrawable())
+            }
+
+            setSystemBars(window, !dark)
         }
     }
 }
