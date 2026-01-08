@@ -33,7 +33,6 @@
             android:layout_marginTop="24dp"
             android:text="@string/appliction_name"
             android:textAlignment="center"
-            android:textColor="#332200"
             android:textSize="36dp" />
 
         <TextView
