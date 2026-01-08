@@ -34,7 +34,7 @@ class SplashActivity : Activity() {
         setContentView(binding.root)
 
         val blink = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.blink)
-        binding.startLogo.startAnimation(blink)
+        binding.startLogoXml.startAnimation(blink)
 
         updateThemeStyle()
         checkRootAndStart()
