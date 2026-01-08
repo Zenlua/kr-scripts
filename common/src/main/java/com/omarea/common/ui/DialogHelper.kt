@@ -19,6 +19,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.graphics.drawable.toDrawable
 import com.omarea.common.R
+import com.omarea.common.ui.DialogHelper.Companion.warning
+import com.omarea.common.ui.DialogHelper.Companion.alert
+import com.omarea.common.ui.DialogHelper.Companion.confirm
 
 class DialogHelper {
 
