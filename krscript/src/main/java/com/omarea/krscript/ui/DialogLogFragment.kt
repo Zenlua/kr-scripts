@@ -175,7 +175,6 @@ class DialogLogFragment : DialogFragment() {
                     binding?.btnExit?.apply {
                         visibility = View.VISIBLE
                         text = context?.getString(R.string.btn_cancel)
-                        setBackgroundColor(context?.getColor(com.omarea.common.R.color.warning) ?: Color.parseColor("#FFB300"))
                     }
                 }
 
@@ -184,8 +183,7 @@ class DialogLogFragment : DialogFragment() {
                     onExit.run()
                     binding?.btnExit?.apply {
                         visibility = View.VISIBLE
-                        text = context?.getString(R.string.btn_exit)
-                        
+                        text = context?.getString(R.string.btn_exit) 
                     }
                     binding?.btnHide?.visibility = View.GONE
                     binding?.actionProgress?.visibility = View.GONE
