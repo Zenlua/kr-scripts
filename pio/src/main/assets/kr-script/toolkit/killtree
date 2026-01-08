@@ -12,5 +12,5 @@ done
 [ -e "$2" ] && rm -fr "$2"
 
 echo
-pid_goc="$(pgrep -f $shell_progres)"
+pid_goc="$(toybox pgrep -f $shell_progres)"
 kill $(listkill $pid_goc) 2>/dev/null
