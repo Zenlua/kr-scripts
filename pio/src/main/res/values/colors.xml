@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="window_bg_light">#F2F2F2</color>
-    <color name="window_bg_dark">#000000</color>
+    <color name="window_bg_dark">#0f0f0f</color>
     <color name="status_bg_dark">#222222</color>
     <color name="status_bg_light">@android:color/white</color>
     <color name="cardBgDark">#222222</color>
@@ -17,6 +17,5 @@
     <color name="colorAccent">#4ba5ff</color>
     <color name="colorPrimary">#80B4DD</color>
     <color name="colorPrimaryDark">#3D9AE6</color>
-    <color name="status_bg_splash">@color/status_bg_light</color>
     <color name="splash_bg_color">#8199B1</color>
 </resources>
