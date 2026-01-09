@@ -3,6 +3,8 @@
     <string name="btn_skip">Skip</string>
     <string name="btn_exit">Exit</string>
     <string name="btn_hide">Hide</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_confirm">Confirm</string>
     <string name="btn_execute">Execute</string>
     <string name="onloading">Loading data…</string>
     <string name="kr_shell_completed">Script execution completed</string>
