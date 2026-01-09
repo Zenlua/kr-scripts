@@ -47,7 +47,7 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
     //api files('libs/overscroll-release-v1.1-20160904.jar')
     // implementation files('libs/fastscroll_v1.2_20160903.jar')
-    implementation project(':krscript')
+    
 }
 repositories {
     mavenCentral()
