@@ -194,6 +194,9 @@ class DialogHelper {
                             Color.argb(255, 245, 245, 245)
                         }
                         setBackgroundDrawable(backgroundColor.toDrawable())
+                        if (isFloating()) {
+                        setDimAmount(0.9f)
+                        }
                     } catch (_: Exception) {
                         setBackgroundDrawable(Color.argb(0, 245, 245, 245).toDrawable())
                     }
