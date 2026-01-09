@@ -173,6 +173,15 @@ class DialogHelper {
             }
         }
 
+        private fun getWindowBackground(context: Context, defaultColor: Int = Color.TRANSPARENT): Int {
+            // val attrsArray = intArrayOf(android.R.attr.windowBackground)
+            val attrsArray = intArrayOf(android.R.attr.background)
+            val typedArray = context.obtainStyledAttributes(attrsArray)
+            val color = typedArray.getColor(0, defaultColor)
+            typedArray.recycle()
+            return color
+        }
+        
         fun setWindowBlurBg(window: Window, activity: Activity) {
             val wallpaperMode =
                 activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER != 0
