@@ -8,7 +8,7 @@
     <string name="help_title">Instructions</string>
     <string name="btn_cancel"/>
     <string name="btn_confirm"/>
-    <string name="confirm_message">Reminder Message</string>
-    <string name="confirm_title">Reminder content</string>
+    <string name="confirm_message">Reminder message</string>
+    <string name="confirm_title">Reminder title</string>
     <string name="btn_execute"/>
 </resources>
