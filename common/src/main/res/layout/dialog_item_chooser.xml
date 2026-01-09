@@ -107,7 +107,7 @@
         <Button
             android:id="@+id/btn_confirm"
             style="@style/dialogConfirmBtn"
-            android:text="@string/confirm_title">
+            android:text="@string/btn_confirm">
         </Button>
     </LinearLayout>
 </LinearLayout>
