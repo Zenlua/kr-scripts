@@ -184,9 +184,8 @@ class DialogHelper {
                     FastBlurUtility.getBlurBackgroundDrawer(activity)
                 }
 
-                if (blurBitmap != null && isFloating) {
+                if (blurBitmap != null) {
                     setBackgroundDrawable(blurBitmap.toDrawable(activity.resources))
-                    setDimAmount(0.9f)
                 } else {
                     try {
                         val backgroundColor = if (isDark) {
@@ -195,6 +194,9 @@ class DialogHelper {
                             Color.argb(255, 245, 245, 245)
                         }
                         setBackgroundDrawable(backgroundColor.toDrawable())
+                        if (isFloating) {
+                        setDimAmount(0.9f)
+                        }
                     } catch (_: Exception) {
                         setBackgroundDrawable(Color.argb(0, 245, 245, 245).toDrawable())
                     }
