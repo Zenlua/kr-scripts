@@ -8,4 +8,7 @@
     <string name="help_title">Instructions</string>
     <string name="btn_cancel"/>
     <string name="btn_confirm"/>
+    <string name="confirm_title"/>
+    <string name="confirm_message"/>
+    <string name="btn_execute"/>
 </resources>
