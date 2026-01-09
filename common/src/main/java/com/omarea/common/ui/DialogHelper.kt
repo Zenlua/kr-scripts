@@ -211,9 +211,12 @@ class DialogHelper {
                             setBackgroundDrawable(bg.toDrawable())
                         }
                     } catch (_: Exception) {
-                        setBackgroundDrawable(
-                            Color.argb(255, 245, 245, 245).toDrawable()
-                        )
+                        val fallbackColor = if (isDark) {
+                            Color.argb(255, 18, 18, 18)
+                        } else {
+                            Color.argb(255, 245, 245, 245)
+                        }
+                        setBackgroundDrawable(fallbackColor.toDrawable())
                     }
                 }
                 applySystemBarsAppearance(this, activity)
