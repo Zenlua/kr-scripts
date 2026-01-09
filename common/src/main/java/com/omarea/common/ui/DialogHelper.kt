@@ -174,34 +174,48 @@ class DialogHelper {
         }
 
         fun setWindowBlurBg(window: Window, activity: Activity) {
-            val wallpaperMode = activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER != 0
+            val wallpaperMode =
+                activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER != 0
             val isDark = isNightMode(activity)
-
+        
             window.run {
                 val blurBitmap = if (disableBlurBg || wallpaperMode) {
                     null
                 } else {
                     FastBlurUtility.getBlurBackgroundDrawer(activity)
                 }
-
+        
                 if (blurBitmap != null) {
                     setBackgroundDrawable(blurBitmap.toDrawable(activity.resources))
                 } else {
                     try {
-                        val backgroundColor = if (isDark) {
-                            Color.argb(255, 18, 18, 18)
+                        val bg = getWindowBackground(activity)
+        
+                        if (bg == Color.TRANSPARENT) {
+                            if (isFloating()) {
+                                setBackgroundDrawable(bg.toDrawable())
+                                setDimAmount(0.9f)
+                                applySystemBarsAppearance(this, activity)
+                                return
+                            }
+        
+                            val backgroundColor = when {
+                                wallpaperMode || isDark ->
+                                    Color.argb(255, 18, 18, 18)
+                                else ->
+                                    Color.argb(255, 245, 245, 245)
+                            }
+        
+                            setBackgroundDrawable(backgroundColor.toDrawable())
                         } else {
-                            Color.argb(255, 245, 245, 245)
-                        }
-                        setBackgroundDrawable(backgroundColor.toDrawable())
-                        if (isFloating) {
-                        setDimAmount(0.9f)
+                            setBackgroundDrawable(bg.toDrawable())
                         }
                     } catch (_: Exception) {
-                        setBackgroundDrawable(Color.argb(0, 245, 245, 245).toDrawable())
+                        setBackgroundDrawable(
+                            Color.argb(255, 245, 245, 245).toDrawable()
+                        )
                     }
                 }
-
                 applySystemBarsAppearance(this, activity)
             }
         }
