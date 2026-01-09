@@ -33,6 +33,22 @@ class ActivityFileSelector : AppCompatActivity() {
         binding = ActivityFileSelectorBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val darkMode = ThemeModeState.getThemeMode().isDarkMode
+        window.statusBarColor = if (darkMode) {
+            resources.getColor(R.color.window_bg_dark, theme)
+        } else {
+            resources.getColor(R.color.window_bg_light, theme)
+        }
+        
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            val decorView = window.decorView
+            decorView.systemUiVisibility = if (darkMode) {
+                0 // nền tối -> icon sáng
+            } else {
+                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+            }
+        }
+
         val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
         // setTitle(R.string.app_name)
