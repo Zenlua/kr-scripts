@@ -34,12 +34,6 @@ class ActivityFileSelector : AppCompatActivity() {
         setContentView(binding.root)
 
         val darkMode = ThemeModeState.getThemeMode().isDarkMode
-        window.statusBarColor = if (darkMode) {
-            resources.getColor(R.color.window_bg_dark, theme)
-        } else {
-            resources.getColor(R.color.window_bg_light, theme)
-        }
-        
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             val decorView = window.decorView
             decorView.systemUiVisibility = if (darkMode) {
