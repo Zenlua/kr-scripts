@@ -1,8 +1,6 @@
 package com.omarea.common.shell
 
 import android.util.Log
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.OutputStream
 import java.nio.charset.Charset
@@ -49,10 +47,6 @@ class KeepShell(private var rootMode: Boolean = true) {
     fun checkRoot(): Boolean {
         val result = doCmdSync(checkRootState).lowercase(Locale.getDefault())
         return when {
-            result == "error" || result.contains("permission denied") || result.contains("not allowed") || result == "not found" -> {
-                if (rootMode) tryExit()
-                false
-            }
             result.contains("success") -> true
             else -> {
                 if (rootMode) tryExit()
@@ -68,17 +62,19 @@ class KeepShell(private var rootMode: Boolean = true) {
             try {
                 lock.lockInterruptibly()
                 enterLockTime = System.currentTimeMillis()
-                process = if (rootMode) ShellExecutor.getSuperUserRuntime() else ShellExecutor.getRuntime()
+                process = if (rootMode)
+                    ShellExecutor.getSuperUserRuntime()
+                else
+                    ShellExecutor.getRuntime()
+
                 out = process!!.outputStream
                 reader = process!!.inputStream.bufferedReader(charset)
 
-                // Kiểm tra root ngay khi mở shell root
                 if (rootMode) {
                     out?.write(checkRootState.toByteArray(charset))
                     out?.flush()
                 }
 
-                // Thread đọc error stream an toàn
                 thread(start = true) {
                     try {
                         val errorReader = process!!.errorStream.bufferedReader(charset)
@@ -86,9 +82,7 @@ class KeepShell(private var rootMode: Boolean = true) {
                             val line = errorReader.readLine() ?: break
                             Log.e("KeepShellError", line)
                         }
-                    } catch (ex: Exception) {
-                        Log.e("KeepShellError", ex.message ?: "Unknown error")
-                    }
+                    } catch (_: Exception) {}
                 }
 
             } catch (ex: Exception) {
@@ -105,12 +99,12 @@ class KeepShell(private var rootMode: Boolean = true) {
         }
     }
 
-    /** Thực thi lệnh shell đồng bộ */
+    /** Thực thi lệnh shell đồng bộ (CŨ) */
     fun doCmdSync(cmd: String): String {
-        // Timeout lock
-        if (lock.isLocked && enterLockTime > 0 && System.currentTimeMillis() - enterLockTime > LOCK_TIMEOUT) {
+        if (lock.isLocked && enterLockTime > 0 &&
+            System.currentTimeMillis() - enterLockTime > LOCK_TIMEOUT
+        ) {
             tryExit()
-            Log.e("KeepShell", "Lock timeout: ${System.currentTimeMillis() - enterLockTime}ms")
         }
 
         getRuntimeShell()
@@ -119,13 +113,11 @@ class KeepShell(private var rootMode: Boolean = true) {
             lock.lockInterruptibly()
             currentIsIdle = false
 
-            // Gửi lệnh vào shell
             out?.write(startTagBytes)
             out?.write(cmd.toByteArray(charset))
             out?.write(endTagBytes)
             out?.flush()
 
-            // Đọc output
             var unstarted = true
             shellOutputCache.clear()
             while (reader != null) {
@@ -141,8 +133,7 @@ class KeepShell(private var rootMode: Boolean = true) {
                         break
                     }
                     !unstarted -> {
-                        shellOutputCache.append(line)
-                        shellOutputCache.append("\n")
+                        shellOutputCache.append(line).append('\n')
                     }
                 }
             }
@@ -151,7 +142,6 @@ class KeepShell(private var rootMode: Boolean = true) {
 
         } catch (e: Exception) {
             tryExit()
-            Log.e("KeepShell", e.message ?: "Unknown error")
             return "error"
         } finally {
             enterLockTime = 0L
@@ -160,9 +150,21 @@ class KeepShell(private var rootMode: Boolean = true) {
         }
     }
 
-    /** Thực thi lệnh với dịch ResourceID */
+    /** Thực thi lệnh với dịch ResourceID (CŨ – giữ nguyên) */
     fun doCmdSync(cmd: String, translation: ShellTranslation): String {
         val rows = doCmdSync(cmd).split("\n")
         return if (rows.isNotEmpty()) translation.resolveRows(rows) else ""
+    }
+
+    /** ✅ API MỚI – dùng cho @img */
+    fun doCmdSyncOutput(
+        cmd: String,
+        translation: ShellTranslation
+    ): List<ShellOutput> {
+        val rows = doCmdSync(cmd).split("\n")
+        return if (rows.isNotEmpty())
+            translation.resolveLines(rows)
+        else
+            emptyList()
     }
 }
