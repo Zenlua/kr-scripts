@@ -6,6 +6,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.DialogInterface
 import android.os.Build
+import android.graphics.Color
 import android.os.Message
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
