@@ -7,7 +7,6 @@ import android.os.Build;
 import android.os.Environment;
 
 import com.omarea.common.shared.FileWrite;
-import com.omarea.common.shared.MagiskExtend;
 import com.omarea.common.shell.KeepShell;
 import com.omarea.common.shell.KeepShellPublic;
 import com.omarea.common.shell.ShellTranslation;
@@ -253,12 +252,6 @@ public class ScriptEnvironmen {
         HashMap<String, String> params = new HashMap<>();
 
         params.put("TOOLKIT", TOOKIT_DIR);
-        if (MagiskExtend.moduleInstalled()) {
-            String magiskPath = MagiskExtend.MAGISK_PATH.endsWith("/") ? (MagiskExtend.MAGISK_PATH.substring(0, MagiskExtend.MAGISK_PATH.length() - 1)) : MagiskExtend.MAGISK_PATH;
-            params.put("MAGISK_PATH", magiskPath);
-        } else {
-            params.put("MAGISK_PATH", "");
-        }
         params.put("START_DIR", getStartPath(context));
         // params.put("EXECUTOR_PATH", environmentPath);
         params.put("TEMP_DIR", context.getCacheDir().getAbsolutePath());
@@ -280,12 +273,6 @@ public class ScriptEnvironmen {
         // params.put("ROOT_PERMISSION", rooted ? "granted" : "denied");
         params.put("ROOT_PERMISSION", rooted ? "true" : "false");
         params.put("SDCARD_PATH", Environment.getExternalStorageDirectory().getAbsolutePath());
-        String busyboxPath = FileWrite.INSTANCE.getPrivateFilePath(context, "busybox");
-        if (new File(FileWrite.INSTANCE.getPrivateFilePath(context, "busybox")).exists()) {
-            params.put("BUSYBOX", busyboxPath);
-        } else {
-            params.put("BUSYBOX", "busybox");
-        }
         try {
             PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
             params.put("PACKAGE_NAME", context.getPackageName());
