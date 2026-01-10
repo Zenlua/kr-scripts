@@ -1,6 +1,3 @@
-//
-// Optimized & fixed version
-//
 package com.projectkr.shell;
 
 import android.content.Context;
@@ -9,8 +6,8 @@ import android.content.pm.ProviderInfo;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
@@ -86,7 +83,6 @@ public class MTDataFilesProvider extends DocumentsProvider {
         super.attachInfo(context, info);
 
         pkg = context.getPackageName();
-
         dataDir = context.getFilesDir().getParentFile();
 
         if (dataDir.getPath().startsWith("/data/user/")) {
@@ -101,9 +97,11 @@ public class MTDataFilesProvider extends DocumentsProvider {
 
     // ===================== PATH MAP =====================
 
-    private File resolveFile(String docId, boolean mustExist) throws FileNotFoundException {
+    private File resolveFile(String docId, boolean mustExist)
+            throws FileNotFoundException {
+
         if (!docId.startsWith(pkg)) {
-            throw new FileNotFoundException(docId + " not found");
+            throw new FileNotFoundException(docId);
         }
 
         String sub = docId.substring(pkg.length());
@@ -128,7 +126,7 @@ public class MTDataFilesProvider extends DocumentsProvider {
         else if ("android_obb".equalsIgnoreCase(type)) base = obbDir;
         else if ("user_de_data".equalsIgnoreCase(type)) base = userDeDir;
 
-        if (base == null) throw new FileNotFoundException(docId + " not found");
+        if (base == null) throw new FileNotFoundException(docId);
 
         File out = rest.isEmpty() ? base : new File(base, rest);
 
@@ -136,10 +134,9 @@ public class MTDataFilesProvider extends DocumentsProvider {
             try {
                 Os.lstat(out.getPath());
             } catch (Exception e) {
-                throw new FileNotFoundException(docId + " not found");
+                throw new FileNotFoundException(docId);
             }
         }
-
         return out;
     }
 
@@ -152,7 +149,6 @@ public class MTDataFilesProvider extends DocumentsProvider {
         Context ctx = getContext();
         ApplicationInfo app = ctx.getApplicationInfo();
 
-        // ==== STORAGE INFO ====
         File dir = Environment.getDataDirectory();
         StatFs stat = new StatFs(dir.getAbsolutePath());
 
@@ -168,11 +164,12 @@ public class MTDataFilesProvider extends DocumentsProvider {
 
         long used = total - free;
 
-        String freeStr = Formatter.formatFileSize(ctx, free);
-        String usedStr = Formatter.formatFileSize(ctx, used);
-
-        String summary = freeStr + " / " + usedStr + " " +
-                ctx.getString(R.string.storage_used);
+        String summary =
+                Formatter.formatFileSize(ctx, free)
+                        + " / "
+                        + Formatter.formatFileSize(ctx, used)
+                        + " "
+                        + ctx.getString(R.string.storage_used);
 
         MatrixCursor c = new MatrixCursor(projection);
         MatrixCursor.RowBuilder r = c.newRow();
@@ -190,63 +187,14 @@ public class MTDataFilesProvider extends DocumentsProvider {
 
     // ===================== DOCUMENT =====================
 
-    private void addRow(MatrixCursor c, String docId, File f) {
-        if (f == null) {
-            c.newRow()
-                    .add("document_id", pkg)
-                    .add("_display_name", pkg)
-                    .add("_size", 0)
-                    .add("mime_type", "vnd.android.document/directory")
-                    .add("last_modified", 0)
-                    .add("flags", 0);
-            return;
-        }
-
-        int flags = 0;
-        if (f.canWrite()) flags |= f.isDirectory() ? 8 : 2;
-        if (f.getParentFile() != null && f.getParentFile().canWrite()) {
-            flags |= 4 | 64;
-        }
-
-        String name;
-        boolean realFile = true;
-        String p = f.getPath();
-
-        if (p.equals(dataDir.getPath())) name = "data";
-        else if (androidDataDir != null && p.equals(androidDataDir.getPath())) name = "android_data";
-        else if (obbDir != null && p.equals(obbDir.getPath())) name = "android_obb";
-        else if (userDeDir != null && p.equals(userDeDir.getPath())) name = "user_de_data";
-        else {
-            name = f.getName();
-            realFile = false;
-        }
-
-        MatrixCursor.RowBuilder r = c.newRow();
-        r.add("document_id", docId);
-        r.add("_display_name", name);
-        r.add("_size", f.length());
-        r.add("mime_type", getMimeType(f));
-        r.add("last_modified", f.lastModified());
-        r.add("flags", flags);
-        r.add("mt_path", f.getAbsolutePath());
-
-        if (!realFile) {
-            try {
-                StructStat st = Os.lstat(p);
-                String extra = st.st_mode + "|" + st.st_uid + "|" + st.st_gid;
-                if ((st.st_mode & 61440) == 40960) {
-                    extra += "|" + Os.readlink(p);
-                }
-                r.add("mt_extras", extra);
-            } catch (Exception ignored) {}
-        }
-    }
-
     @Override
     public Cursor queryDocument(String docId, String[] projection) {
         if (projection == null) projection = DOC_PROJECTION;
+
         MatrixCursor c = new MatrixCursor(projection);
-        addRow(c, docId, resolveFile(docId, true));
+        try {
+            addRow(c, docId, resolveFile(docId, true));
+        } catch (FileNotFoundException ignored) {}
         return c;
     }
 
@@ -256,28 +204,51 @@ public class MTDataFilesProvider extends DocumentsProvider {
         if (docId.endsWith("/")) docId = docId.substring(0, docId.length() - 1);
 
         MatrixCursor c = new MatrixCursor(projection);
-        File f = resolveFile(docId, true);
 
-        if (f == null) {
-            addRow(c, docId + "/data", dataDir);
-            if (androidDataDir != null) addRow(c, docId + "/android_data", androidDataDir);
-            if (obbDir != null) addRow(c, docId + "/android_obb", obbDir);
-            if (userDeDir != null) addRow(c, docId + "/user_de_data", userDeDir);
-        } else {
-            File[] list = f.listFiles();
-            if (list != null) {
-                for (File x : list) {
-                    addRow(c, docId + "/" + x.getName(), x);
+        try {
+            File f = resolveFile(docId, true);
+            if (f == null) {
+                addRow(c, docId + "/data", dataDir);
+                if (androidDataDir != null) addRow(c, docId + "/android_data", androidDataDir);
+                if (obbDir != null) addRow(c, docId + "/android_obb", obbDir);
+                if (userDeDir != null) addRow(c, docId + "/user_de_data", userDeDir);
+            } else {
+                File[] list = f.listFiles();
+                if (list != null) {
+                    for (File x : list) {
+                        addRow(c, docId + "/" + x.getName(), x);
+                    }
                 }
             }
-        }
+        } catch (FileNotFoundException ignored) {}
+
         return c;
+    }
+
+    private void addRow(MatrixCursor c, String docId, File f) {
+        if (f == null) return;
+
+        int flags = 0;
+        if (f.canWrite()) flags |= f.isDirectory() ? 8 : 2;
+        if (f.getParentFile() != null && f.getParentFile().canWrite()) {
+            flags |= 4 | 64;
+        }
+
+        MatrixCursor.RowBuilder r = c.newRow();
+        r.add("document_id", docId);
+        r.add("_display_name", f.getName());
+        r.add("_size", f.length());
+        r.add("mime_type", getMimeType(f));
+        r.add("last_modified", f.lastModified());
+        r.add("flags", flags);
+        r.add("mt_path", f.getAbsolutePath());
     }
 
     // ===================== FILE OPS =====================
 
     @Override
-    public ParcelFileDescriptor openDocument(String docId, String mode, CancellationSignal signal)
+    public ParcelFileDescriptor openDocument(String docId, String mode,
+                                             CancellationSignal signal)
             throws FileNotFoundException {
         return ParcelFileDescriptor.open(resolveFile(docId, false),
                 ParcelFileDescriptor.parseMode(mode));
@@ -286,17 +257,7 @@ public class MTDataFilesProvider extends DocumentsProvider {
     @Override
     public void deleteDocument(String docId) throws FileNotFoundException {
         File f = resolveFile(docId, true);
-        if (!deleteRecursive(f)) {
-            throw new FileNotFoundException("Failed to delete " + docId);
-        }
-    }
-
-    @Override
-    public String renameDocument(String docId, String name) throws FileNotFoundException {
-        File f = resolveFile(docId, true);
-        File n = new File(f.getParentFile(), name);
-        if (!f.renameTo(n)) throw new FileNotFoundException();
-        return docId.substring(0, docId.lastIndexOf('/')) + "/" + name;
+        if (!deleteRecursive(f)) throw new FileNotFoundException(docId);
     }
 
     @Override
