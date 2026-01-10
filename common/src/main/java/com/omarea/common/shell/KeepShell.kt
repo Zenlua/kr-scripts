@@ -161,7 +161,14 @@ class KeepShell(private var rootMode: Boolean = true) {
     }
 
     /** Thực thi lệnh với dịch ResourceID */
-    fun doCmdSync(cmd: String, translation: ShellTranslation): String {
-    return translation.getTranslatedResult(cmd, this)
+    fun resolveRows(rows: List<String>): String {
+    val sb = StringBuilder()
+    for (item in resolveLines(rows)) {
+        if (item is ShellOutput.Text) {
+            if (sb.isNotEmpty()) sb.append('\n')
+            sb.append(item.text)
+        }
     }
+    return sb.toString()
+}
 }
