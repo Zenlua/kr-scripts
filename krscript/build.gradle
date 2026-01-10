@@ -8,7 +8,7 @@ android {
         enabled = true
     }
     defaultConfig {
-        minSdkVersion 23
+        minSdkVersion 24
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     kotlin {
