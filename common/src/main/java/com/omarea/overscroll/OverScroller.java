@@ -667,7 +667,7 @@ public class OverScroller {
                 final float t_inf = SPLINE_TIME[index];
                 final float t_sup = SPLINE_TIME[index + 1];
                 final float timeCoef = t_inf + (x - x_inf) / (x_sup - x_inf) * (t_sup - t_inf);
-                mDuration *= timeCoef;
+                mDuration *= (int) timeCoef;
             }
         }
 
