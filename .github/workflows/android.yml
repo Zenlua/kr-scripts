@@ -12,32 +12,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
-
-    - name: Grant execute permission for gradlew
+    - name: Grant permission
       run: chmod +x gradlew
-
     - name: Build Release APK
       run: |
-        ./gradlew assembleRelease_mini \
-          --no-daemon \
-          --warning-mode=none \
+        ./gradlew assembleRelease \
+          --no-daemon --warning-mode=none \
           -x lint -x test
-
-    # ✅ UPLOAD APK
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: release-apk
-        path:  |
-          pio/build/outputs/apk/*/*.apk
-          common/build/outputs/apk/*/*.apk
-          krscript/build/outputs/apk/*/*.apk
-
+        path: pio/build/outputs/apk/*/*.apk
+          
           
