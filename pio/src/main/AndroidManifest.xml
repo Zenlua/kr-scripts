@@ -5,7 +5,7 @@
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
     tools:ignore="ScopedStorage" />
-    
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
@@ -82,10 +82,10 @@
         </activity>
 
         <provider
-            android:name="bin.mt.file.content.MTDataFilesProvider"
+            android:name=".MTDataFilesProvider"
             android:permission="android.permission.MANAGE_DOCUMENTS"
             android:exported="true"
-            android:authorities="com.projectkr.shell.MTDataFilesProvider"
+            android:authorities="${applicationId}.MTDataFilesProvider"
             android:grantUriPermissions="true">
             <intent-filter>
                 <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
