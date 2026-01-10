@@ -12,8 +12,8 @@ import java.util.regex.Pattern;
 /**
  * Created by Hello on 2018/04/01.
  */
-
 public abstract class ShellHandlerBase extends Handler {
+
     /**
      * 处理启动信息
      */
@@ -35,7 +35,13 @@ public abstract class ShellHandlerBase extends Handler {
     public static final int EVENT_WRITE = 6;
 
     /**
-     * 处理Exitvalue
+     * 图片输出（新增，不影响旧代码）
+     * msg.obj 通常是图片路径 String / File / Uri
+     */
+    public static final int EVENT_IMAGE = 8;
+
+    /**
+     * 处理 Exit value
      */
     public static final int EVENT_EXIT = -2;
 
@@ -48,33 +54,44 @@ public abstract class ShellHandlerBase extends Handler {
     protected abstract void onExit(Object msg);
 
     /**
-     * 输出格式化内容
-     *
-     * @param msg
+     * 输出格式化文本内容
      */
     protected abstract void updateLog(final SpannableString msg);
+
+    /**
+     * 输出图片（默认空实现，子类按需 override）
+     */
+    protected void onImage(Object msg) {
+        // 默认不处理，保证旧代码不受影响
+    }
 
     @Override
     public void handleMessage(Message msg) {
         super.handleMessage(msg);
         switch (msg.what) {
-            case ShellHandlerBase.EVENT_EXIT:
+            case EVENT_EXIT:
                 onExit(msg.obj);
                 break;
-            case ShellHandlerBase.EVENT_START: {
+
+            case EVENT_START:
                 onStart(msg.obj);
                 break;
-            }
-            case ShellHandlerBase.EVENT_REDE:
+
+            case EVENT_REDE:
                 onReaderMsg(msg.obj);
                 break;
-            case ShellHandlerBase.EVENT_READ_ERROR:
+
+            case EVENT_READ_ERROR:
                 onError(msg.obj);
                 break;
-            case ShellHandlerBase.EVENT_WRITE: {
+
+            case EVENT_WRITE:
                 onWrite(msg.obj);
                 break;
-            }
+
+            case EVENT_IMAGE:
+                onImage(msg.obj);
+                break;
         }
     }
 
@@ -105,16 +122,18 @@ public abstract class ShellHandlerBase extends Handler {
     }
 
     /**
-     * 输出指定颜色的内容
-     *
-     * @param msg
-     * @param color
+     * 输出指定颜色的文本内容
      */
     protected void updateLog(final Object msg, final String color) {
         if (msg != null) {
             String msgStr = msg.toString();
             SpannableString spannableString = new SpannableString(msgStr);
-            spannableString.setSpan(new ForegroundColorSpan(Color.parseColor(color)), 0, msgStr.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            spannableString.setSpan(
+                    new ForegroundColorSpan(Color.parseColor(color)),
+                    0,
+                    msgStr.length(),
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
             updateLog(spannableString);
         }
     }
@@ -123,7 +142,12 @@ public abstract class ShellHandlerBase extends Handler {
         if (msg != null) {
             String msgStr = msg.toString();
             SpannableString spannableString = new SpannableString(msgStr);
-            spannableString.setSpan(new ForegroundColorSpan(color), 0, msgStr.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            spannableString.setSpan(
+                    new ForegroundColorSpan(color),
+                    0,
+                    msgStr.length(),
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
             updateLog(spannableString);
         }
     }
