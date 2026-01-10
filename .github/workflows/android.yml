@@ -32,7 +32,7 @@ jobs:
       - name: Build Release APK
         run: |
           ./gradlew assembleRelease \
-            --no-daemon --warning-mode=none \
+            --no-daemon --warning-mode=all \
             -x lint -x test
 
       - name: Upload Release APK
