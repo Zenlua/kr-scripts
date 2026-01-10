@@ -11,7 +11,7 @@ android {
         baseline = file("lint-baseline.xml")
     }
     defaultConfig {
-        minSdkVersion 21
+        minSdkVersion 23
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     kotlin {
