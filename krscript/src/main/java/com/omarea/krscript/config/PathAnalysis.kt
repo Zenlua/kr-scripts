@@ -58,12 +58,12 @@ class PathAnalysis(private var context: Context, private var parentDir: String =
 
     private fun useRootOpenFile(filePath: String): InputStream? {
         if (RootFile.fileExists(filePath)) {
-            val dir = File(FileWrite.getPrivateFilePath(context, "kr-script"))
+            val dir = File(FileWrite.getPrivateFilePath(context, "icon"))
             if (!dir.exists()) {
                 dir.mkdirs()
             }
 
-            val cachePath = FileWrite.getPrivateFilePath(context, "kr-script/outside_file.cache")
+            val cachePath = FileWrite.getPrivateFilePath(context, "icon/outside_file.cache")
             val fileOwner = FileOwner(context).fileOwner
             KeepShellPublic.doCmdSync(
                     "cp -f \"$filePath\" \"$cachePath\"\n" +
