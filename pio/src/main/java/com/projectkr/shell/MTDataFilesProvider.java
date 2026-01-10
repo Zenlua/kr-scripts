@@ -36,26 +36,25 @@ public class MTDataFilesProvider extends DocumentsProvider {
         Code decompiled incorrectly, please refer to instructions dump.
     */
     public static boolean a(File file) {
-        boolean z;
-        File[] listFiles;
-        if (file.isDirectory()) {
-            try {
-            } catch (ErrnoException e) {
-                e.printStackTrace();
-            }
+        if (file == null || !file.exists()) {
+            return false;
+        }
+    
+        try {
+            // Nếu là symlink → xóa link, KHÔNG đệ quy
             if ((Os.lstat(file.getPath()).st_mode & 61440) == 40960) {
-                z = true;
-                if (!z && (listFiles = file.listFiles()) != null) {
-                    for (File file2 : listFiles) {
-                        if (!a(file2)) {
-                            return false;
-                        }
-                    }
-                }
+                return file.delete();
             }
-            z = false;
-            if (!z) {
-                while (r3 < r2) {
+        } catch (Exception ignored) {
+        }
+    
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (!a(f)) {
+                        return false;
+                    }
                 }
             }
         }
