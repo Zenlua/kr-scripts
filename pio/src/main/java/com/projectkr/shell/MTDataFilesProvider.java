@@ -6,16 +6,12 @@ import android.content.pm.ProviderInfo;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
-import android.os.StatFs;
 import android.provider.DocumentsProvider;
-import android.system.ErrnoException;
 import android.system.Os;
-import android.system.StructStat;
 import android.text.format.Formatter;
 import android.webkit.MimeTypeMap;
 
@@ -149,27 +145,12 @@ public class MTDataFilesProvider extends DocumentsProvider {
         Context ctx = getContext();
         ApplicationInfo app = ctx.getApplicationInfo();
 
-        File dir = Environment.getDataDirectory();
-        StatFs stat = new StatFs(dir.getAbsolutePath());
-
-        long total, free;
-        if (Build.VERSION.SDK_INT >= 18) {
-            total = stat.getTotalBytes();
-            free = stat.getAvailableBytes();
-        } else {
-            long bs = stat.getBlockSize();
-            total = stat.getBlockCount() * bs;
-            free = stat.getAvailableBlocks() * bs;
-        }
-
-        long used = total - free;
+        // 👉 dùng File.getFreeSpace()
+        File dataPartition = Environment.getDataDirectory();
+        long freeBytes = dataPartition.getFreeSpace();
 
         String summary =
-                Formatter.formatFileSize(ctx, free)
-                        + " / "
-                        + Formatter.formatFileSize(ctx, used)
-                        + " "
-                        + ctx.getString(R.string.storage_used);
+                Formatter.formatFileSize(ctx, freeBytes);
 
         MatrixCursor c = new MatrixCursor(projection);
         MatrixCursor.RowBuilder r = c.newRow();
