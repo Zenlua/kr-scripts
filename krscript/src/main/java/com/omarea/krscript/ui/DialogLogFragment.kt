@@ -5,9 +5,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.DialogInterface
-import android.graphics.BitmapFactory
 import android.os.Build
-import android.os.Bundle
 import android.os.Message
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
@@ -15,7 +13,6 @@ import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.TextView
@@ -42,50 +39,35 @@ class DialogLogFragment : DialogFragment() {
     private var themeResId: Int = 0
     private var onDismissRunnable: Runnable? = null
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: android.os.Bundle?): View {
         binding = KrDialogLogBinding.inflate(inflater, container, false)
         return binding!!.root
     }
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+    override fun onCreateDialog(savedInstanceState: android.os.Bundle?): Dialog {
         return Dialog(
             requireActivity(),
             if (themeResId != 0) themeResId else R.style.kr_full_screen_dialog_light
         )
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(view: View, savedInstanceState: android.os.Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         uiVisible = true
-        activity?.let {
-            dialog?.window?.let { win -> DialogHelper.setWindowBlurBg(win, it) }
+        activity?.let { activity ->
+            dialog?.window?.let { win ->
+                DialogHelper.setWindowBlurBg(win, activity)
+            }
         }
 
         nodeInfo?.let { node ->
-            if (node.reloadPage) binding?.btnHide?.visibility = View.GONE
-            val handler = openExecutor(node)
-            ShellExecutor().execute(
-                activity,
-                node,
-                script,
-                onExit,
-                params,
-                handler
-            )
-        } ?: dismissAllowingStateLoss()
-    }
+            if (node.reloadPage) {
+                binding?.btnHide?.visibility = View.GONE
+            }
 
-    override fun onResume() {
-        super.onResume()
-        dialog?.setOnKeyListener { _, keyCode, event ->
-            if (!uiVisible || !running) return@setOnKeyListener false
-            event.action == KeyEvent.ACTION_DOWN &&
-                (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
-        }
+            val handler = openExecutor(node)
+            ShellExecutor().execute(activity, node, script, onExit, params, handler)
+        } ?: dismissAllowingStateLoss()
     }
 
     override fun onDestroyView() {
@@ -114,7 +96,9 @@ class DialogLogFragment : DialogFragment() {
                 forceStopRunnable?.run()
                 binding?.btnExit?.text = context?.getString(R.string.btn_exit)
                 binding?.btnHide?.visibility = View.GONE
-            } else dismissAllowingStateLoss()
+            } else {
+                dismissAllowingStateLoss()
+            }
         }
 
         binding?.btnCopy?.setOnClickListener {
@@ -174,8 +158,7 @@ class DialogLogFragment : DialogFragment() {
                 }
             },
             binding?.shellOutput,
-            binding?.actionProgress,
-            binding?.shellImage // mới thêm: ImageView hiển thị ảnh
+            binding?.actionProgress
         )
     }
 
@@ -188,23 +171,19 @@ class DialogLogFragment : DialogFragment() {
     class MyShellHandler(
         private val handler: IActionEventHandler,
         private val logView: TextView?,
-        private val progress: ProgressBar?,
-        private val imageView: ImageView? = null // ImageView hiển thị ảnh
+        private val progress: ProgressBar?
     ) : ShellHandlerBase() {
 
         private val context = logView?.context
-        private fun getColor(resId: Int) =
-            if (Build.VERSION.SDK_INT >= 23) context!!.getColor(resId) else context!!.resources.getColor(resId)
 
-        private val errorColor = getColor(R.color.kr_shell_log_error)
-        private val basicColor = getColor(R.color.kr_shell_log_basic)
-        private val scriptColor = getColor(R.color.kr_shell_log_script)
-        private val endColor = getColor(R.color.kr_shell_log_end)
+        private val errorColor: Int by lazy { context?.getColor(R.color.kr_shell_log_error) ?: Color.RED }
+        private val basicColor: Int by lazy { context?.getColor(R.color.kr_shell_log_basic) ?: Color.GREEN }
+        private val scriptColor: Int by lazy { context?.getColor(R.color.kr_shell_log_script) ?: Color.BLUE }
+        private val endColor: Int by lazy { context?.getColor(R.color.kr_shell_log_end) ?: Color.GRAY }
 
         private var hasError = false
         private val logBuffer = SpannableStringBuilder()
-        @Volatile
-        private var flushing = false
+        @Volatile private var flushing = false
 
         override fun handleMessage(msg: Message) {
             when (msg.what) {
@@ -216,33 +195,15 @@ class DialogLogFragment : DialogFragment() {
             }
         }
 
-        override fun onStart(msg: Any) {}
-
-        override fun updateLog(msg: SpannableString) {
-            appendBuffered(msg)
-        }
-
-        override fun onReader(msg: Any) {
-            val str = msg.toString()
-            if (str.startsWith("@img:")) {
-                showImage(str.removePrefix("@img:"))
-            } else {
-                updateColored(msg, basicColor)
-            }
-        }
-
-        override fun onWrite(msg: Any) = updateColored(msg, scriptColor)
-        override fun onError(msg: Any) {
-            hasError = true
-            updateColored(msg, errorColor)
-        }
+        // === Overrides ShellHandlerBase ===
+        override fun onStart(msg: Any) { /* EVENT_START handler */ }
 
         override fun onStart(forceStop: Runnable?) {
             handler.onStart(forceStop)
             logView?.text = ""
         }
 
-        override fun onExit(msg: Any?) {
+        override fun onExit(msg: Any) {
             updateColored(context?.getString(R.string.kr_shell_completed), endColor)
             handler.onCompleted()
             if (!hasError) handler.onSuccess()
@@ -250,10 +211,7 @@ class DialogLogFragment : DialogFragment() {
 
         override fun onProgress(current: Int, total: Int) {
             when (current) {
-                -1 -> {
-                    progress?.visibility = View.VISIBLE
-                    progress?.isIndeterminate = true
-                }
+                -1 -> { progress?.visibility = View.VISIBLE; progress?.isIndeterminate = true }
                 total -> progress?.visibility = View.GONE
                 else -> {
                     progress?.visibility = View.VISIBLE
@@ -264,6 +222,15 @@ class DialogLogFragment : DialogFragment() {
             }
         }
 
+        override fun updateLog(msg: SpannableString) {
+            appendBuffered(msg)
+        }
+
+        override fun onReader(msg: Any) { updateColored(msg, basicColor) }
+        override fun onWrite(msg: Any) { updateColored(msg, scriptColor) }
+        override fun onError(msg: Any) { hasError = true; updateColored(msg, errorColor) }
+
+        // === Helpers ===
         private fun updateColored(msg: Any?, color: Int) {
             val text = SpannableString(msg?.toString() ?: "").apply {
                 setSpan(android.text.style.ForegroundColorSpan(color), 0, length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
@@ -272,33 +239,16 @@ class DialogLogFragment : DialogFragment() {
         }
 
         private fun appendBuffered(text: SpannableString) {
-            synchronized(logBuffer) {
-                logBuffer.append(text)
-            }
+            synchronized(logBuffer) { logBuffer.append(text) }
             if (!flushing) {
                 flushing = true
                 logView?.postDelayed({
                     val out: SpannableStringBuilder
-                    synchronized(logBuffer) {
-                        out = SpannableStringBuilder(logBuffer)
-                        logBuffer.clear()
-                    }
-                    logView.append(out)
-                    (logView.parent as? ScrollView)?.fullScroll(ScrollView.FOCUS_DOWN)
+                    synchronized(logBuffer) { out = SpannableStringBuilder(logBuffer); logBuffer.clear() }
+                    logView?.append(out)
+                    (logView?.parent as? ScrollView)?.fullScroll(ScrollView.FOCUS_DOWN)
                     flushing = false
                 }, 80)
-            }
-        }
-
-        private fun showImage(path: String) {
-            imageView?.post {
-                try {
-                    val bitmap = BitmapFactory.decodeFile(path)
-                    imageView.setImageBitmap(bitmap)
-                    imageView.visibility = View.VISIBLE
-                } catch (_: Exception) {
-                    imageView?.visibility = View.GONE
-                }
             }
         }
     }
