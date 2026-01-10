@@ -14,7 +14,9 @@ jobs:
 
       - name: Check current Java version
         id: java-check
-        run: echo "CURRENT_JAVA=$(java --version | head -n 1 | grep -co ' 17\.')" >> $GITHUB_ENV
+        run: |
+            java --version | head -n 1
+            echo "CURRENT_JAVA=$(java --version | head -n 1 | grep -co ' 17\.')" >> $GITHUB_ENV
 
       - name: Set up JDK 17
         if: env.CURRENT_JAVA != '1'
@@ -46,7 +48,10 @@ jobs:
 
       - name: Check current Java version
         id: java-check
-        run: echo "CURRENT_JAVA=$(java --version | head -n 1 | grep -co ' 17\.')" >> $GITHUB_ENV
+        run: |
+            java --version | head -n 1
+            echo "CURRENT_JAVA=$(java --version | head -n 1 | grep -co ' 17\.')" >> $GITHUB_ENV
+
 
       - name: Set up JDK 17
         if: env.CURRENT_JAVA != '1'
