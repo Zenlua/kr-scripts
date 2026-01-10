@@ -26,14 +26,10 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Grant permission
-        run: chmod +x gradlew
-
       - name: Build Release APK
         run: |
-          ./gradlew assembleRelease \
-            --no-daemon --warning-mode=none \
-            -x lint -x test
+          chmod +x gradlew
+          ./gradlew assembleRelease -x lint -x test
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
@@ -61,14 +57,10 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Grant permission
-        run: chmod +x gradlew
-
       - name: Build Debug APK
         run: |
-          ./gradlew assembleDebug \
-            --no-daemon --warning-mode=none \
-            -x lint -x test
+          chmod +x gradlew
+          ./gradlew assembleDebug -x lint -x test
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
