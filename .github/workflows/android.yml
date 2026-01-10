@@ -7,22 +7,36 @@ on:
     branches: [ "master" ]
 
 jobs:
-  build:
+  build-release:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
-    - name: Grant permission
-      run: chmod +x gradlew
-    - name: Build Release APK
-      run: |
-        ./gradlew assembleRelease \
-          --no-daemon --warning-mode=none \
-          -x lint -x test
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: release-apk
-        path: pio/build/outputs/apk/*/*.apk
-          
-          
+      - uses: actions/checkout@v4
+      - name: Grant permission
+        run: chmod +x gradlew
+      - name: Build Release APK
+        run: |
+          ./gradlew assembleRelease \
+            --no-daemon --warning-mode=none \
+            -x lint -x test
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: pio/build/outputs/apk/*/release/*.apk
+
+  build-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Grant permission
+        run: chmod +x gradlew
+      - name: Build Debug APK
+        run: |
+          ./gradlew assembleDebug \
+            --no-daemon --warning-mode=none \
+            -x lint -x test
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: pio/build/outputs/apk/*/debug/*.apk
