@@ -34,7 +34,7 @@ class ShellTranslation(private val context: Context) {
         }
 
         // 2️⃣ Text (resource / fallback)
-        return ShellOutput.Text(resolveRow(row))
+        return ShellOutput.Text(resolveRows(row))
     }
 
     /**
@@ -51,7 +51,7 @@ class ShellTranslation(private val context: Context) {
     /**
      * 原有逻辑：解析 @string / @dimen
      */
-    fun resolveRow(originRow: String): String {
+    fun resolveRows(originRow: String): String {
         val row = originRow.trim()
         val match = resRegex.matchEntire(row) ?: return fallback(row)
 
