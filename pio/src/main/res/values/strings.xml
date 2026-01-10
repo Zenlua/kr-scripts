@@ -32,7 +32,7 @@
     <string name="copy_success">Copy successful</string>
     <string name="btn_retry">Retry</string>
 
-    <string name="pio_starting">PIO · STARTING</string>
+    <string name="pio_starting">PIO · Starting</string>
     <string name="pop_before_start">Preparing to start the application…</string>
     <string name="pop_started">Startup completed!</string>
     <string name="pio_permission_checking">Checking and requesting required permissions…</string>
@@ -49,6 +49,7 @@
     <string name="text_power_fastboot">Fastboot</string>
     <string name="text_power_edl">9008 (EDL)</string>
     <string name="menu_power">Select action power</string>
+    <string name="storage_used">used</string>
     
     <string name="power_emergency_cmd">sync; svc power reboot edl || reboot edl</string>
     <string name="power_fastboot_cmd">sync; svc power reboot bootloader || reboot bootloader</string>
