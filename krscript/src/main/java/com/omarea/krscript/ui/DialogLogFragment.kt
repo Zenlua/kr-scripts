@@ -5,7 +5,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.DialogInterface
-import android.graphics.Color
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import android.os.Message
@@ -15,6 +15,7 @@ import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.TextView
@@ -30,7 +31,6 @@ import com.omarea.krscript.model.ShellHandlerBase
 class DialogLogFragment : DialogFragment() {
 
     private var binding: KrDialogLogBinding? = null
-
     private var running = false
     private var canceled = false
     private var uiVisible = false
@@ -54,29 +54,19 @@ class DialogLogFragment : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return Dialog(
             requireActivity(),
-            if (themeResId != 0)
-                themeResId
-            else
-                R.style.kr_full_screen_dialog_light
+            if (themeResId != 0) themeResId else R.style.kr_full_screen_dialog_light
         )
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         uiVisible = true
-
         activity?.let {
-            dialog?.window?.let { win ->
-                DialogHelper.setWindowBlurBg(win, it)
-            }
+            dialog?.window?.let { win -> DialogHelper.setWindowBlurBg(win, it) }
         }
 
         nodeInfo?.let { node ->
-            if (node.reloadPage) {
-                binding?.btnHide?.visibility = View.GONE
-            }
-
+            if (node.reloadPage) binding?.btnHide?.visibility = View.GONE
             val handler = openExecutor(node)
             ShellExecutor().execute(
                 activity,
@@ -94,8 +84,7 @@ class DialogLogFragment : DialogFragment() {
         dialog?.setOnKeyListener { _, keyCode, event ->
             if (!uiVisible || !running) return@setOnKeyListener false
             event.action == KeyEvent.ACTION_DOWN &&
-                (keyCode == KeyEvent.KEYCODE_VOLUME_UP ||
-                 keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
+                (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
         }
     }
 
@@ -125,21 +114,13 @@ class DialogLogFragment : DialogFragment() {
                 forceStopRunnable?.run()
                 binding?.btnExit?.text = context?.getString(R.string.btn_exit)
                 binding?.btnHide?.visibility = View.GONE
-            } else {
-                dismissAllowingStateLoss()
-            }
+            } else dismissAllowingStateLoss()
         }
 
         binding?.btnCopy?.setOnClickListener {
             try {
-                val cm = requireContext()
-                    .getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                cm.setPrimaryClip(
-                    ClipData.newPlainText(
-                        "log",
-                        binding?.shellOutput?.text.toString()
-                    )
-                )
+                val cm = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                cm.setPrimaryClip(ClipData.newPlainText("log", binding?.shellOutput?.text.toString()))
                 Toast.makeText(context, R.string.copy_success, Toast.LENGTH_SHORT).show()
             } catch (_: Exception) {
                 Toast.makeText(context, R.string.copy_fail, Toast.LENGTH_SHORT).show()
@@ -155,13 +136,11 @@ class DialogLogFragment : DialogFragment() {
         }
 
         binding?.title?.apply {
-            if (nodeInfo.title.isNotEmpty()) text = nodeInfo.title
-            else visibility = View.GONE
+            if (nodeInfo.title.isNotEmpty()) text = nodeInfo.title else visibility = View.GONE
         }
 
         binding?.desc?.apply {
-            if (nodeInfo.desc.isNotEmpty()) text = nodeInfo.desc
-            else visibility = View.GONE
+            if (nodeInfo.desc.isNotEmpty()) text = nodeInfo.desc else visibility = View.GONE
         }
 
         binding?.actionProgress?.isIndeterminate = true
@@ -183,7 +162,7 @@ class DialogLogFragment : DialogFragment() {
                     onExit.run()
                     binding?.btnExit?.apply {
                         visibility = View.VISIBLE
-                        text = context?.getString(R.string.btn_exit) 
+                        text = context?.getString(R.string.btn_exit)
                     }
                     binding?.btnHide?.visibility = View.GONE
                     binding?.actionProgress?.visibility = View.GONE
@@ -195,7 +174,8 @@ class DialogLogFragment : DialogFragment() {
                 }
             },
             binding?.shellOutput,
-            binding?.actionProgress
+            binding?.actionProgress,
+            binding?.shellImage // mới thêm: ImageView hiển thị ảnh
         )
     }
 
@@ -208,16 +188,13 @@ class DialogLogFragment : DialogFragment() {
     class MyShellHandler(
         private val handler: IActionEventHandler,
         private val logView: TextView?,
-        private val progress: ProgressBar?
+        private val progress: ProgressBar?,
+        private val imageView: ImageView? = null // ImageView hiển thị ảnh
     ) : ShellHandlerBase() {
 
         private val context = logView?.context
-
-        private fun getColor(resId: Int): Int =
-            if (Build.VERSION.SDK_INT >= 23)
-                context!!.getColor(resId)
-            else
-                context!!.resources.getColor(resId)
+        private fun getColor(resId: Int) =
+            if (Build.VERSION.SDK_INT >= 23) context!!.getColor(resId) else context!!.resources.getColor(resId)
 
         private val errorColor = getColor(R.color.kr_shell_log_error)
         private val basicColor = getColor(R.color.kr_shell_log_basic)
@@ -225,7 +202,6 @@ class DialogLogFragment : DialogFragment() {
         private val endColor = getColor(R.color.kr_shell_log_end)
 
         private var hasError = false
-
         private val logBuffer = SpannableStringBuilder()
         @Volatile
         private var flushing = false
@@ -247,13 +223,15 @@ class DialogLogFragment : DialogFragment() {
         }
 
         override fun onReader(msg: Any) {
-            updateColored(msg, basicColor)
+            val str = msg.toString()
+            if (str.startsWith("@img:")) {
+                showImage(str.removePrefix("@img:"))
+            } else {
+                updateColored(msg, basicColor)
+            }
         }
 
-        override fun onWrite(msg: Any) {
-            updateColored(msg, scriptColor)
-        }
-
+        override fun onWrite(msg: Any) = updateColored(msg, scriptColor)
         override fun onError(msg: Any) {
             hasError = true
             updateColored(msg, errorColor)
@@ -288,12 +266,7 @@ class DialogLogFragment : DialogFragment() {
 
         private fun updateColored(msg: Any?, color: Int) {
             val text = SpannableString(msg?.toString() ?: "").apply {
-                setSpan(
-                    android.text.style.ForegroundColorSpan(color),
-                    0,
-                    length,
-                    SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
+                setSpan(android.text.style.ForegroundColorSpan(color), 0, length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
             }
             appendBuffered(text)
         }
@@ -311,10 +284,21 @@ class DialogLogFragment : DialogFragment() {
                         logBuffer.clear()
                     }
                     logView.append(out)
-                    (logView.parent as? ScrollView)
-                        ?.fullScroll(ScrollView.FOCUS_DOWN)
+                    (logView.parent as? ScrollView)?.fullScroll(ScrollView.FOCUS_DOWN)
                     flushing = false
                 }, 80)
+            }
+        }
+
+        private fun showImage(path: String) {
+            imageView?.post {
+                try {
+                    val bitmap = BitmapFactory.decodeFile(path)
+                    imageView.setImageBitmap(bitmap)
+                    imageView.visibility = View.VISIBLE
+                } catch (_: Exception) {
+                    imageView?.visibility = View.GONE
+                }
             }
         }
     }
@@ -333,11 +317,7 @@ class DialogLogFragment : DialogFragment() {
                 this.onExit = onExit
                 this.script = script
                 this.params = params
-                this.themeResId =
-                    if (darkMode)
-                        R.style.kr_full_screen_dialog_dark
-                    else
-                        R.style.kr_full_screen_dialog_light
+                this.themeResId = if (darkMode) R.style.kr_full_screen_dialog_dark else R.style.kr_full_screen_dialog_light
                 this.onDismissRunnable = onDismiss
             }
         }
