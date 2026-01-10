@@ -40,7 +40,7 @@
     <string name="error_su_timeout">ROOT authorization timed out. Please check whether the authorization manager is running in the background!</string>
     <string name="transparent_ui">Transparent UI</string>
     <string name="title_activity_file_selector">Please select a file</string>
-    <string name="title_activity_folder_selector">Please long-press to select a directory</string>
+    <string name="title_activity_folder_selector">Please select a directory</string>
 
     <string name="text_power_shutdown">Shutdown</string>
     <string name="text_power_reboot">Restart</string>
