@@ -57,4 +57,9 @@
     <string name="power_reboot_cmd">sync; svc power reboot || reboot;</string>
     <string name="power_recovery_cmd">sync; svc power reboot recovery || reboot recovery</string>
     <string name="power_shutdown_cmd">sync; svc power shutdown || reboot -p;</string>
+
+    <string name="permission_dialog_title">Application Terms of Use</string>
+    <string name="permission_dialog_message">
+Request the following permissions:\n\n• Notification\n• Access all files\n• List of applications\n• Root (if permitted)\n• Create shortcut\n• Data network access\n\nI agree to continue using the application.
+</string>
 </resources>

@@ -4,8 +4,9 @@
     package="com.projectkr.shell">
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-    tools:ignore="ScopedStorage" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+         tools:ignore="ScopedStorage" android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+         tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
@@ -13,7 +14,10 @@
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
     <uses-permission android:name="com.android.launcher.permission.UNINSTALL_SHORTCUT" />
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS"
-        tools:ignore="ProtectedPermissions" />
+         tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+         tools:ignore="QueryAllPackagesPermission" />
+    
     <application
         android:name=".PIO"
         android:allowBackup="true"
