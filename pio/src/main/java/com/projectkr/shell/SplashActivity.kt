@@ -22,6 +22,8 @@ import android.net.Uri
 import android.provider.Settings
 import java.io.File
 import java.util.Locale
+import android.content.res.Configuration
+import android.widget.Toast
 
 class SplashActivity : Activity() {
 
