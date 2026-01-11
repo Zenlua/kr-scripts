@@ -159,9 +159,7 @@ public class MTDataFilesProvider extends DocumentsProvider {
                 dirSize(obbDir);
 
         StatFs stat = new StatFs(Environment.getDataDirectory().getAbsolutePath());
-        long total = Build.VERSION.SDK_INT >= 18
-                ? stat.getTotalBytes()
-                : (long) stat.getBlockCount() * stat.getBlockSize();
+        long total = stat.getTotalBytes();
 
         String summary =
                 Formatter.formatFileSize(ctx, total)
