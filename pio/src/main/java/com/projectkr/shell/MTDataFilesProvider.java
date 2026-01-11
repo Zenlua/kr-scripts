@@ -457,6 +457,10 @@ public class MTDataFilesProvider extends DocumentsProvider {
         }
         MatrixCursor matrixCursor = new MatrixCursor(strArr);
         MatrixCursor.RowBuilder newRow = matrixCursor.newRow();
+        File dataDir = getContext().getFilesDir().getParentFile();
+        long total = dataDir.getTotalSpace();
+        long free  = dataDir.getUsableSpace();
+
         newRow.add("root_id", this.b);
         newRow.add("document_id", this.b);
         newRow.add(
