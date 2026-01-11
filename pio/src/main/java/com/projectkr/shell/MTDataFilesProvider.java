@@ -5,40 +5,45 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.ProviderInfo;
 import android.database.Cursor;
 import android.database.MatrixCursor;
-import android.os.Build;
+import android.net.Uri;
+import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.StatFs;
 import android.provider.DocumentsProvider;
+import android.system.ErrnoException;
 import android.system.Os;
+import android.system.StructStat;
 import android.text.format.Formatter;
 import android.webkit.MimeTypeMap;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.List;
 
 public class MTDataFilesProvider extends DocumentsProvider {
 
-    public static final String[] ROOT_PROJECTION = {
+    public static final String[] g = {
             "root_id", "mime_types", "flags", "icon",
             "title", "summary", "document_id"
     };
 
-    public static final String[] DOC_PROJECTION = {
+    public static final String[] h = {
             "document_id", "mime_type", "_display_name",
             "last_modified", "flags", "_size", "mt_extras"
     };
 
-    private String pkg;
-    private File dataDir;
-    private File userDeDir;
-    private File androidDataDir;
-    private File obbDir;
+    public String b;
+    public File c; // data
+    public File d; // user_de
+    public File e; // android_data
+    public File f; // obb
 
-    // ===================== UTILS =====================
+    // ===================== DELETE =====================
 
-    private static boolean deleteRecursive(File file) {
+    public static boolean a(File file) {
         if (file == null || !file.exists()) return false;
 
         try {
@@ -50,38 +55,28 @@ public class MTDataFilesProvider extends DocumentsProvider {
         if (file.isDirectory()) {
             File[] list = file.listFiles();
             if (list != null) {
-                for (File f : list) {
-                    if (!deleteRecursive(f)) return false;
+                for (File x : list) {
+                    if (!a(x)) return false;
                 }
             }
         }
         return file.delete();
     }
 
-    private static String getMimeType(File file) {
+    // ===================== MIME =====================
+
+    public static String c(File file) {
         if (file.isDirectory()) {
             return "vnd.android.document/directory";
         }
         String name = file.getName();
         int dot = name.lastIndexOf('.');
         if (dot < 0) return "application/octet-stream";
-        String ext = name.substring(dot + 1).toLowerCase();
-        String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
+
+        String mime = MimeTypeMap.getSingleton()
+                .getMimeTypeFromExtension(name.substring(dot + 1).toLowerCase());
+
         return mime != null ? mime : "application/octet-stream";
-    }
-
-    private static long dirSize(File dir) {
-        if (dir == null || !dir.exists()) return 0;
-        if (dir.isFile()) return dir.length();
-
-        long size = 0;
-        File[] list = dir.listFiles();
-        if (list != null) {
-            for (File f : list) {
-                size += dirSize(f);
-            }
-        }
-        return size;
     }
 
     // ===================== INIT =====================
@@ -90,29 +85,32 @@ public class MTDataFilesProvider extends DocumentsProvider {
     public void attachInfo(Context context, ProviderInfo info) {
         super.attachInfo(context, info);
 
-        pkg = context.getPackageName();
-        dataDir = context.getFilesDir().getParentFile();
+        b = context.getPackageName();
 
-        if (dataDir != null && dataDir.getPath().startsWith("/data/user/")) {
-            userDeDir = new File("/data/user_de/" + dataDir.getPath().substring(11));
+        File parent = context.getFilesDir().getParentFile();
+        c = parent;
+
+        String path = parent.getPath();
+        if (path.startsWith("/data/user/")) {
+            d = new File("/data/user_de/" + path.substring(11));
         }
 
         File ext = context.getExternalFilesDir(null);
-        if (ext != null) androidDataDir = ext.getParentFile();
-
-        obbDir = context.getObbDir();
-    }
-
-    // ===================== PATH MAP =====================
-
-    private File resolveFile(String docId, boolean mustExist)
-            throws FileNotFoundException {
-
-        if (!docId.startsWith(pkg)) {
-            throw new FileNotFoundException(docId);
+        if (ext != null) {
+            e = ext.getParentFile();
         }
 
-        String sub = docId.substring(pkg.length());
+        f = context.getObbDir();
+    }
+
+    // ===================== PATH =====================
+
+    public File b(String docId, boolean mustExist) throws FileNotFoundException {
+        if (!docId.startsWith(b)) {
+            throw new FileNotFoundException(docId + " not found");
+        }
+
+        String sub = docId.substring(b.length());
         if (sub.startsWith("/")) sub = sub.substring(1);
         if (sub.isEmpty()) return null;
 
@@ -120,7 +118,7 @@ public class MTDataFilesProvider extends DocumentsProvider {
         String rest = "";
 
         int idx = sub.indexOf('/');
-        if (idx > 0) {
+        if (idx >= 0) {
             type = sub.substring(0, idx);
             rest = sub.substring(idx + 1);
         } else {
@@ -128,17 +126,21 @@ public class MTDataFilesProvider extends DocumentsProvider {
         }
 
         File base = null;
-        if ("data".equalsIgnoreCase(type)) base = dataDir;
-        else if ("android_data".equalsIgnoreCase(type)) base = androidDataDir;
-        else if ("android_obb".equalsIgnoreCase(type)) base = obbDir;
-        else if ("user_de_data".equalsIgnoreCase(type)) base = userDeDir;
+        if ("data".equalsIgnoreCase(type)) base = c;
+        else if ("android_data".equalsIgnoreCase(type)) base = e;
+        else if ("android_obb".equalsIgnoreCase(type)) base = f;
+        else if ("user_de_data".equalsIgnoreCase(type)) base = d;
 
         if (base == null) throw new FileNotFoundException(docId);
 
         File out = rest.isEmpty() ? base : new File(base, rest);
 
-        if (mustExist && !out.exists()) {
-            throw new FileNotFoundException(docId);
+        if (mustExist) {
+            try {
+                Os.lstat(out.getPath());
+            } catch (Exception ex) {
+                throw new FileNotFoundException(docId);
+            }
         }
         return out;
     }
@@ -147,32 +149,24 @@ public class MTDataFilesProvider extends DocumentsProvider {
 
     @Override
     public Cursor queryRoots(String[] projection) {
-        if (projection == null) projection = ROOT_PROJECTION;
-
         Context ctx = getContext();
         ApplicationInfo app = ctx.getApplicationInfo();
 
-        long used =
-                dirSize(dataDir) +
-                dirSize(userDeDir) +
-                dirSize(androidDataDir) +
-                dirSize(obbDir);
+        if (projection == null) projection = g;
 
         StatFs stat = new StatFs(Environment.getDataDirectory().getAbsolutePath());
-        long total = stat.getTotalBytes();
+        long free = stat.getAvailableBytes();
 
         String summary =
-                Formatter.formatFileSize(ctx, total)
-                        + " • "
-                        + Formatter.formatFileSize(ctx, used)
-                        + " "
-                        + ctx.getString(R.string.storage_used);
+                ctx.getString(R.string.storage_available)
+                        + ": "
+                        + Formatter.formatFileSize(ctx, free);
 
         MatrixCursor c = new MatrixCursor(projection);
         MatrixCursor.RowBuilder r = c.newRow();
 
-        r.add("root_id", pkg);
-        r.add("document_id", pkg);
+        r.add("root_id", b);
+        r.add("document_id", b);
         r.add("title", app.loadLabel(ctx.getPackageManager()));
         r.add("summary", summary);
         r.add("flags", 17);
@@ -186,43 +180,40 @@ public class MTDataFilesProvider extends DocumentsProvider {
 
     @Override
     public Cursor queryDocument(String docId, String[] projection) {
-        if (projection == null) projection = DOC_PROJECTION;
+        if (projection == null) projection = h;
 
         MatrixCursor c = new MatrixCursor(projection);
-        try {
-            addRow(c, docId, resolveFile(docId, true));
-        } catch (FileNotFoundException ignored) {}
+        d(c, docId, null);
         return c;
     }
 
     @Override
     public Cursor queryChildDocuments(String docId, String[] projection, String sortOrder) {
-        if (projection == null) projection = DOC_PROJECTION;
+        if (projection == null) projection = h;
         if (docId.endsWith("/")) docId = docId.substring(0, docId.length() - 1);
 
         MatrixCursor c = new MatrixCursor(projection);
 
-        try {
-            File f = resolveFile(docId, true);
-            if (f == null) {
-                addRow(c, docId + "/data", dataDir);
-                if (androidDataDir != null) addRow(c, docId + "/android_data", androidDataDir);
-                if (obbDir != null) addRow(c, docId + "/android_obb", obbDir);
-                if (userDeDir != null) addRow(c, docId + "/user_de_data", userDeDir);
-            } else {
-                File[] list = f.listFiles();
-                if (list != null) {
-                    for (File x : list) {
-                        addRow(c, docId + "/" + x.getName(), x);
-                    }
+        File f0 = b(docId, true);
+        if (f0 == null) {
+            d(c, docId + "/data", c);
+            if (e != null && e.exists()) d(c, docId + "/android_data", e);
+            if (f != null && f.exists()) d(c, docId + "/android_obb", f);
+            if (d != null && d.exists()) d(c, docId + "/user_de_data", d);
+        } else {
+            File[] list = f0.listFiles();
+            if (list != null) {
+                for (File x : list) {
+                    d(c, docId + "/" + x.getName(), x);
                 }
             }
-        } catch (FileNotFoundException ignored) {}
-
+        }
         return c;
     }
 
-    private void addRow(MatrixCursor c, String docId, File f) {
+    public void d(MatrixCursor c0, String docId, File f0) {
+        File f = f0 != null ? f0 : b(docId, true);
+
         if (f == null) return;
 
         int flags = 0;
@@ -231,33 +222,42 @@ public class MTDataFilesProvider extends DocumentsProvider {
             flags |= 4 | 64;
         }
 
-        MatrixCursor.RowBuilder r = c.newRow();
+        MatrixCursor.RowBuilder r = c0.newRow();
         r.add("document_id", docId);
         r.add("_display_name", f.getName());
         r.add("_size", f.length());
-        r.add("mime_type", getMimeType(f));
+        r.add("mime_type", c(f));
         r.add("last_modified", f.lastModified());
         r.add("flags", flags);
         r.add("mt_path", f.getAbsolutePath());
+
+        try {
+            StructStat st = Os.lstat(f.getPath());
+            StringBuilder sb = new StringBuilder();
+            sb.append(st.st_mode).append("|")
+              .append(st.st_uid).append("|")
+              .append(st.st_gid);
+            if ((st.st_mode & 61440) == 40960) {
+                sb.append("|").append(Os.readlink(f.getPath()));
+            }
+            r.add("mt_extras", sb.toString());
+        } catch (Exception ignored) {}
     }
 
-    // ===================== FILE OPS =====================
+    // ===================== OPS =====================
 
     @Override
-    public ParcelFileDescriptor openDocument(
-            String docId, String mode, CancellationSignal signal)
+    public ParcelFileDescriptor openDocument(String docId, String mode,
+                                             CancellationSignal signal)
             throws FileNotFoundException {
-
-        return ParcelFileDescriptor.open(
-                resolveFile(docId, false),
-                ParcelFileDescriptor.parseMode(mode)
-        );
+        return ParcelFileDescriptor.open(b(docId, false),
+                ParcelFileDescriptor.parseMode(mode));
     }
 
     @Override
     public void deleteDocument(String docId) throws FileNotFoundException {
-        File f = resolveFile(docId, true);
-        if (!deleteRecursive(f)) throw new FileNotFoundException(docId);
+        File f = b(docId, true);
+        if (!a(f)) throw new FileNotFoundException(docId);
     }
 
     @Override
