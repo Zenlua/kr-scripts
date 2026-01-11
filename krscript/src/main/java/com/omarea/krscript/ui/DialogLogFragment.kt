@@ -88,6 +88,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
                     binding?.btnExit?.apply {
                         visibility = View.VISIBLE
                         text = context?.getString(R.string.btn_exit)
+                    }
             } else {
                 dismissAllowingStateLoss()
             }
@@ -144,9 +145,13 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
 
             override fun onStart(forceStop: Runnable?) {
                 running = true
+                canceled = false
                 forceStopRunnable = forceStop
                 if (nodeInfo.interruptable && forceStop != null) {
-                    binding?.btnExit?.visibility = View.VISIBLE
+                    binding?.btnExit?.apply {
+                        visibility = View.VISIBLE
+                        text = context?.getString(R.string.btn_cancel)
+                    }
                 } else {
                     binding?.btnExit?.visibility = View.GONE
                 }
