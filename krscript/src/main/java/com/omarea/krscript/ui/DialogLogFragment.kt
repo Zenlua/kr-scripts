@@ -87,8 +87,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
                 forceStopRunnable?.run()
                     binding?.btnExit?.apply {
                         visibility = View.VISIBLE
-                        text = context?.getString(R.string.btn_cancel)
-                    }
+                        text = context?.getString(R.string.btn_exit)
             } else {
                 dismissAllowingStateLoss()
             }
