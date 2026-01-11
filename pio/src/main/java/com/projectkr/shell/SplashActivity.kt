@@ -135,12 +135,12 @@ class SplashActivity : Activity() {
     }
     // =================== REQUEST QUYỀN ===================
     private fun requestAppPermissions() {
+        saveAgreement()
         if (!hasAllFilesPermission()) {
             requestAllFilesPermission()
             return
         }
     
-        saveAgreement()
         started = true
         starting = false
         checkRootAndStart()
