@@ -208,7 +208,7 @@ class DialogLogFragment : DialogFragment() {
     class MyShellHandler(
         private val handler: IActionEventHandler,
         private val logView: TextView?,
-        private val progress: ProgressBar?
+        private val shellProgress: ProgressBar?
     ) : ShellHandlerBase() {
 
         private val context = logView?.context
@@ -273,15 +273,15 @@ class DialogLogFragment : DialogFragment() {
         override fun onProgress(current: Int, total: Int) {
             when (current) {
                 -1 -> {
-                    progress?.visibility = View.VISIBLE
-                    progress?.isIndeterminate = true
+                    this.shellProgress.visibility = View.VISIBLE
+                    this.shellProgress.isIndeterminate = true
                 }
-                total -> progress?.visibility = View.GONE
+                total -> this.shellProgress.visibility = View.GONE
                 else -> {
-                    progress?.visibility = View.VISIBLE
-                    progress?.isIndeterminate = false
-                    progress?.max = total
-                    progress?.progress = current
+                    this.shellProgress.visibility = View.VISIBLE
+                    this.shellProgress.isIndeterminate = false
+                    this.shellProgress.max = total
+                    this.shellProgress.progress = current
                 }
             }
         }
