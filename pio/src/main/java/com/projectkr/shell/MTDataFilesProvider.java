@@ -449,20 +449,26 @@ public class MTDataFilesProvider extends DocumentsProvider {
     }
 
     @Override
-    public final Cursor queryRoots(String[] strArr) {
+    public final Cursor queryRoots(String[] projection) {
         ApplicationInfo applicationInfo = getContext().getApplicationInfo();
-        String charSequence = applicationInfo.loadLabel(getContext().getPackageManager()).toString();
-        if (strArr == null) {
-            strArr = g;
+        String title = applicationInfo.loadLabel(getContext().getPackageManager()).toString();
+    
+        if (projection == null) {
+            projection = g;
         }
-        MatrixCursor matrixCursor = new MatrixCursor(strArr);
+    
+        MatrixCursor matrixCursor = new MatrixCursor(projection);
         MatrixCursor.RowBuilder newRow = matrixCursor.newRow();
-        File dataDir = getContext().getFilesDir().getParentFile();
+    
+        // --- Tính tổng và khả dụng ---
+        File dataDir = getContext().getFilesDir().getParentFile(); // /data/data
         long total = dataDir.getTotalSpace();
         long free  = dataDir.getUsableSpace();
-
+    
+        // --- Thêm root vào cursor ---
         newRow.add("root_id", this.b);
         newRow.add("document_id", this.b);
+        newRow.add("title", title);
         newRow.add(
             "summary",
             getContext().getString(R.string.storage_available)
@@ -472,9 +478,9 @@ public class MTDataFilesProvider extends DocumentsProvider {
                 + formatSizeSmart(free)
         );
         newRow.add("flags", 17);
-        newRow.add("title", charSequence);
         newRow.add("mime_types", "*/*");
         newRow.add("icon", Integer.valueOf(applicationInfo.icon));
+    
         return matrixCursor;
     }
 
