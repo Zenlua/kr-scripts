@@ -52,7 +52,7 @@ class ParamsAppChooserRender(private var actionParamInfo: ActionParamInfo, priva
             it.value
         }
 
-        val packages = pm.getInstalledPackages(PackageManager.GET_UNINSTALLED_PACKAGES).filter {
+        val packages = pm.getInstalledPackages(0).filter {
             filter == null || filter.contains(it.packageName)
         }
 
