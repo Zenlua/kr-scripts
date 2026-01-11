@@ -25,8 +25,7 @@ class SplashActivity : Activity() {
     private var hasRoot = false
 
     private val requiredPermissions = arrayOf(
-       
-android.Manifest.permission.POST_NOTIFICATIONS,
+        android.Manifest.permission.POST_NOTIFICATIONS,
         android.Manifest.permission.READ_EXTERNAL_STORAGE,
         android.Manifest.permission.WRITE_EXTERNAL_STORAGE
     )
