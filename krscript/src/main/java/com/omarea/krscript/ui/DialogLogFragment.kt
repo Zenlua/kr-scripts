@@ -89,7 +89,6 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
                         visibility = View.VISIBLE
                         text = context?.getString(R.string.btn_cancel)
                     }
-                binding?.btnHide?.visibility = View.GONE
             } else {
                 dismissAllowingStateLoss()
             }
