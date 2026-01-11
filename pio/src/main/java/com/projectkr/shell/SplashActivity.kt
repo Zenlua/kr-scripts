@@ -105,8 +105,10 @@ class SplashActivity : Activity() {
             requestAllFilesPermission()
             return
         }
+    
         saveAgreement()
         started = true
+        starting = false
         checkRootAndStart()
     }
 
@@ -125,7 +127,7 @@ class SplashActivity : Activity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
-     override fun onResume() {
+    override fun onResume() {
         super.onResume()
     
         if (hasAgreed() && hasAllFilesPermission()) {
@@ -164,7 +166,10 @@ class SplashActivity : Activity() {
     
         Thread {
             hasRoot = tryRoot()
-            mainHandler.post { startToFinish() }
+            mainHandler.post {
+                starting = false
+                startToFinish()
+            }
         }.start()
     }
 
