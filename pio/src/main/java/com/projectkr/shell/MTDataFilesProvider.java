@@ -5,12 +5,11 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.ProviderInfo;
 import android.database.Cursor;
 import android.database.MatrixCursor;
-import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
+import android.os.StatFs;
 import android.provider.DocumentsProvider;
 import android.system.Os;
 import android.text.format.Formatter;
@@ -43,7 +42,6 @@ public class MTDataFilesProvider extends DocumentsProvider {
         if (file == null || !file.exists()) return false;
 
         try {
-            // symbolic link
             if ((Os.lstat(file.getPath()).st_mode & 61440) == 40960) {
                 return file.delete();
             }
@@ -72,38 +70,17 @@ public class MTDataFilesProvider extends DocumentsProvider {
         return mime != null ? mime : "application/octet-stream";
     }
 
-    // ===================== SIZE CALC =====================
-
-    private static long getDirSize(File file) {
-        if (file == null || !file.exists()) return 0;
-
-        try {
-            // symbolic link
-            if ((Os.lstat(file.getPath()).st_mode & 61440) == 40960) {
-                return file.length();
-            }
-        } catch (Exception ignored) {}
-
-        if (file.isFile()) {
-            return file.length();
-        }
+    private static long dirSize(File dir) {
+        if (dir == null || !dir.exists()) return 0;
+        if (dir.isFile()) return dir.length();
 
         long size = 0;
-        File[] list = file.listFiles();
+        File[] list = dir.listFiles();
         if (list != null) {
             for (File f : list) {
-                size += getDirSize(f);
+                size += dirSize(f);
             }
         }
-        return size;
-    }
-
-    private long getAppUsedSize() {
-        long size = 0;
-        size += getDirSize(dataDir);
-        size += getDirSize(userDeDir);
-        size += getDirSize(androidDataDir);
-        size += getDirSize(obbDir);
         return size;
     }
 
@@ -151,7 +128,6 @@ public class MTDataFilesProvider extends DocumentsProvider {
         }
 
         File base = null;
-
         if ("data".equalsIgnoreCase(type)) base = dataDir;
         else if ("android_data".equalsIgnoreCase(type)) base = androidDataDir;
         else if ("android_obb".equalsIgnoreCase(type)) base = obbDir;
@@ -161,12 +137,8 @@ public class MTDataFilesProvider extends DocumentsProvider {
 
         File out = rest.isEmpty() ? base : new File(base, rest);
 
-        if (mustExist) {
-            try {
-                Os.lstat(out.getPath());
-            } catch (Exception e) {
-                throw new FileNotFoundException(docId);
-            }
+        if (mustExist && !out.exists()) {
+            throw new FileNotFoundException(docId);
         }
         return out;
     }
@@ -180,10 +152,22 @@ public class MTDataFilesProvider extends DocumentsProvider {
         Context ctx = getContext();
         ApplicationInfo app = ctx.getApplicationInfo();
 
-        long used = getAppUsedSize();
+        long used =
+                dirSize(dataDir) +
+                dirSize(userDeDir) +
+                dirSize(androidDataDir) +
+                dirSize(obbDir);
+
+        StatFs stat = new StatFs(Environment.getDataDirectory().getAbsolutePath());
+        long total = Build.VERSION.SDK_INT >= 18
+                ? stat.getTotalBytes()
+                : (long) stat.getBlockCount() * stat.getBlockSize();
 
         String summary =
-                Formatter.formatFileSize(ctx, used) + " "
+                Formatter.formatFileSize(ctx, total)
+                        + " • "
+                        + Formatter.formatFileSize(ctx, used)
+                        + " "
                         + ctx.getString(R.string.storage_used);
 
         MatrixCursor c = new MatrixCursor(projection);
@@ -224,12 +208,9 @@ public class MTDataFilesProvider extends DocumentsProvider {
             File f = resolveFile(docId, true);
             if (f == null) {
                 addRow(c, docId + "/data", dataDir);
-                if (androidDataDir != null)
-                    addRow(c, docId + "/android_data", androidDataDir);
-                if (obbDir != null)
-                    addRow(c, docId + "/android_obb", obbDir);
-                if (userDeDir != null)
-                    addRow(c, docId + "/user_de_data", userDeDir);
+                if (androidDataDir != null) addRow(c, docId + "/android_data", androidDataDir);
+                if (obbDir != null) addRow(c, docId + "/android_obb", obbDir);
+                if (userDeDir != null) addRow(c, docId + "/user_de_data", userDeDir);
             } else {
                 File[] list = f.listFiles();
                 if (list != null) {
@@ -266,10 +247,9 @@ public class MTDataFilesProvider extends DocumentsProvider {
 
     @Override
     public ParcelFileDescriptor openDocument(
-            String docId,
-            String mode,
-            CancellationSignal signal
-    ) throws FileNotFoundException {
+            String docId, String mode, CancellationSignal signal)
+            throws FileNotFoundException {
+
         return ParcelFileDescriptor.open(
                 resolveFile(docId, false),
                 ParcelFileDescriptor.parseMode(mode)
