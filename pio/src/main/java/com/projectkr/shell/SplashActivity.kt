@@ -6,11 +6,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.*
 import android.widget.TextView
-import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.omarea.common.shell.ShellExecutor
