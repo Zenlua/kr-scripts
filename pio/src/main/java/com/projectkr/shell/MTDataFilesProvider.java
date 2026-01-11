@@ -9,19 +9,23 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.ParcelFileDescriptor;
+import android.os.StatFs;
 import android.provider.DocumentsProvider;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.StructStat;
 import android.webkit.MimeTypeMap;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
 public class MTDataFilesProvider extends DocumentsProvider {
+
     public static final String[] g = {"root_id", "mime_types", "flags", "icon", "title", "summary", "document_id"};
     public static final String[] h = {"document_id", "mime_type", "_display_name", "last_modified", "flags", "_size", "mt_extras"};
+
     public String b;
     public File c;
     public File d;
@@ -29,55 +33,44 @@ public class MTDataFilesProvider extends DocumentsProvider {
     public File f;
 
     public static boolean a(File file) {
-        if (file == null || !file.exists()) {
-            return false;
-        }
-    
+        if (file == null || !file.exists()) return false;
+
         try {
-            // Nếu là symlink → xóa link, KHÔNG đệ quy
             if ((Os.lstat(file.getPath()).st_mode & 61440) == 40960) {
                 return file.delete();
             }
-        } catch (Exception ignored) {
-        }
-    
+        } catch (Exception ignored) {}
+
         if (file.isDirectory()) {
             File[] files = file.listFiles();
             if (files != null) {
                 for (File f : files) {
-                    if (!a(f)) {
-                        return false;
-                    }
+                    if (!a(f)) return false;
                 }
             }
         }
+
         return file.delete();
     }
 
     private static String formatSizeSmart(long bytes) {
         long gb = bytes / (1024L * 1024L * 1024L);
-        if (gb > 0) {
-            return gb + "GB";
-        }
+        if (gb > 0) return gb + "GB";
         long mb = bytes / (1024L * 1024L);
         return mb + "MB";
     }
 
     public static String c(File file) {
-        if (file.isDirectory()) {
-            return "vnd.android.document/directory";
-        }
+        if (file.isDirectory()) return "vnd.android.document/directory";
         String name = file.getName();
-        int lastIndexOf = name.lastIndexOf(46);
-        if (lastIndexOf < 0) {
-            return "application/octet-stream";
-        }
+        int lastIndexOf = name.lastIndexOf('.');
+        if (lastIndexOf < 0) return "application/octet-stream";
         String mimeTypeFromExtension = MimeTypeMap.getSingleton().getMimeTypeFromExtension(name.substring(lastIndexOf + 1).toLowerCase());
         return mimeTypeFromExtension != null ? mimeTypeFromExtension : "application/octet-stream";
     }
 
     @Override
-    public final void attachInfo(Context context, ProviderInfo providerInfo) {
+    public void attachInfo(Context context, ProviderInfo providerInfo) {
         super.attachInfo(context, providerInfo);
         this.b = context.getPackageName();
         File parentFile = context.getFilesDir().getParentFile();
@@ -87,26 +80,18 @@ public class MTDataFilesProvider extends DocumentsProvider {
             this.d = new File("/data/user_de/" + path.substring(11));
         }
         File externalFilesDir = context.getExternalFilesDir(null);
-        if (externalFilesDir != null) {
-            this.e = externalFilesDir.getParentFile();
-        }
+        if (externalFilesDir != null) this.e = externalFilesDir.getParentFile();
         this.f = context.getObbDir();
     }
 
-    public final File b(String str, boolean z) {
-        String substring;
-        if (!str.startsWith(this.b)) {
-            throw new FileNotFoundException(str.concat(" not found"));
-        }
+    public final File b(String str, boolean z) throws FileNotFoundException {
+        if (!str.startsWith(this.b)) throw new FileNotFoundException(str + " not found");
         String substring2 = str.substring(this.b.length());
-        if (substring2.startsWith("/")) {
-            substring2 = substring2.substring(1);
-        }
-        File file = null;
-        if (substring2.isEmpty()) {
-            return null;
-        }
-        int indexOf = substring2.indexOf(47);
+        if (substring2.startsWith("/")) substring2 = substring2.substring(1);
+        if (substring2.isEmpty()) return null;
+
+        String substring;
+        int indexOf = substring2.indexOf('/');
         if (indexOf == -1) {
             substring = "";
         } else {
@@ -114,135 +99,79 @@ public class MTDataFilesProvider extends DocumentsProvider {
             substring = substring2.substring(indexOf + 1);
             substring2 = substring3;
         }
-        if (substring2.equalsIgnoreCase("data")) {
-            file = new File(this.c, substring);
-        } else if (substring2.equalsIgnoreCase("android_data") && this.e != null) {
-            file = new File(this.e, substring);
-        } else if (substring2.equalsIgnoreCase("android_obb") && this.f != null) {
-            file = new File(this.f, substring);
-        } else if (substring2.equalsIgnoreCase("user_de_data") && this.d != null) {
-            file = new File(this.d, substring);
-        }
-        if (file == null) {
-            throw new FileNotFoundException(str.concat(" not found"));
-        }
+
+        File file = null;
+        if (substring2.equalsIgnoreCase("data")) file = new File(this.c, substring);
+        else if (substring2.equalsIgnoreCase("android_data") && this.e != null) file = new File(this.e, substring);
+        else if (substring2.equalsIgnoreCase("android_obb") && this.f != null) file = new File(this.f, substring);
+        else if (substring2.equalsIgnoreCase("user_de_data") && this.d != null) file = new File(this.d, substring);
+
+        if (file == null) throw new FileNotFoundException(str + " not found");
         if (z) {
             try {
                 Os.lstat(file.getPath());
             } catch (Exception unused) {
-                throw new FileNotFoundException(str.concat(" not found"));
+                throw new FileNotFoundException(str + " not found");
             }
         }
+
         return file;
     }
 
     @Override
-    public final Bundle call(String str, String str2, Bundle bundle) {
-        String str3;
-        int hashCode;
-        char c;
-        String message;
-        Bundle call = super.call(str, str2, bundle);
-        if (call != null) {
-            return call;
-        }
-        if (!str.startsWith("mt:")) {
-            return null;
-        }
+    public Bundle call(String method, String arg, Bundle extras) {
         Bundle bundle2 = new Bundle();
+        bundle2.putBoolean("result", false);
+
+        String str3 = "";
+        String message = "";
+
         try {
-            List<String> pathSegments = ((Uri) bundle.getParcelable("uri")).getPathSegments();
-            str3 = pathSegments.size() >= 4 ? pathSegments.get(3) : pathSegments.get(1);
-            hashCode = str.hashCode();
-        } catch (Exception e) {
-            bundle2.putBoolean("result", false);
-            bundle2.putString("message", e.toString());
-        }
-        if (hashCode == -1645162251) {
-            if (str.equals("mt:setPermissions")) {
-                c = 1;
-                if (c != 0) {
-                }
-                bundle2.putBoolean("result", false);
-                return bundle2;
+            Uri uri = extras != null ? extras.getParcelable("uri") : null;
+            if (uri != null) {
+                List<String> pathSegments = uri.getPathSegments();
+                str3 = pathSegments.size() >= 4 ? pathSegments.get(3) : pathSegments.get(1);
             }
-            c = 65535;
-            if (c != 0) {
-            }
-            bundle2.putBoolean("result", false);
-            return bundle2;
-        }
-        if (hashCode == 0x0cc82212) {
-            if (str.equals("mt:createSymlink")) {
-                c = 2;
-                if (c != 0) {
-                }
-                bundle2.putBoolean("result", false);
-                return bundle2;
-            }
-            c = 65535;
-            if (c != 0) {
-            }
-            bundle2.putBoolean("result", false);
-            return bundle2;
-        }
-        if (hashCode == 0x6621b52e && str.equals("mt:setLastModified")) {
-            c = 0;
-            if (c != 0) {
-                File b = b(str3, true);
-                if (b != null) {
-                    bundle2.putBoolean("result", b.setLastModified(bundle.getLong("time")));
-                    return bundle2;
-                }
-            } else {
-                if (c != 1) {
-                    if (c != 2) {
-                        bundle2.putBoolean("result", false);
-                        message = "Unsupported method: ".concat(str);
-                    } else {
-                        File b2 = b(str3, false);
-                        if (b2 != null) {
-                            try {
-                                Os.symlink(bundle.getString("path"), b2.getPath());
-                                bundle2.putBoolean("result", true);
-                            } catch (ErrnoException e2) {
-                                bundle2.putBoolean("result", false);
-                                message = e2.getMessage();
-                            }
-                            return bundle2;
-                        }
-                    }
-                    bundle2.putString("message", message);
-                    return bundle2;
-                }
+
+            if ("mt:setPermissions".equals(method)) {
                 File b3 = b(str3, true);
                 if (b3 != null) {
                     try {
-                        Os.chmod(b3.getPath(), bundle.getInt("permissions"));
+                        Os.chmod(b3.getPath(), extras.getInt("permissions"));
                         bundle2.putBoolean("result", true);
-                    } catch (ErrnoException e3) {
-                        bundle2.putBoolean("result", false);
-                        message = e3.getMessage();
+                    } catch (ErrnoException e) {
+                        message = e.getMessage();
                     }
-                    return bundle2;
                 }
+            } else if ("mt:createSymlink".equals(method)) {
+                File b2 = b(str3, false);
+                if (b2 != null) {
+                    try {
+                        Os.symlink(extras.getString("path"), b2.getPath());
+                        bundle2.putBoolean("result", true);
+                    } catch (ErrnoException e) {
+                        message = e.getMessage();
+                    }
+                }
+            } else if ("mt:setLastModified".equals(method)) {
+                File b1 = b(str3, true);
+                if (b1 != null) {
+                    bundle2.putBoolean("result", b1.setLastModified(extras.getLong("time")));
+                }
+            } else {
+                message = "Unsupported method: " + method;
             }
-            bundle2.putBoolean("result", false);
-            return bundle2;
+        } catch (Exception e) {
+            message = e.toString();
         }
-        c = 65535;
-        if (c != 0) {
-        }
-        bundle2.putBoolean("result", false);
-        return bundle2;
-        bundle2.putBoolean("result", false);
-        bundle2.putString("message", e.toString());
+
+        if (!message.isEmpty()) bundle2.putString("message", message);
+
         return bundle2;
     }
 
     @Override
-    public final String createDocument(String str, String str2, String str3) {
-        StringBuilder sb;
+    public String createDocument(String str, String str2, String str3) throws FileNotFoundException {
         File b = b(str, true);
         if (b != null) {
             File file = new File(b, str3);
@@ -253,18 +182,8 @@ public class MTDataFilesProvider extends DocumentsProvider {
             }
             try {
                 if ("vnd.android.document/directory".equals(str2) ? file.mkdir() : file.createNewFile()) {
-                    if (str.endsWith("/")) {
-                        sb = new StringBuilder();
-                        sb.append(str);
-                        sb.append(file.getName());
-                    } else {
-                        sb = new StringBuilder();
-                        sb.append(str);
-                        sb.append("/");
-                        sb.append(file.getName());
-                    }
-                    str = sb.toString();
-                    return str;
+                    if (str.endsWith("/")) return str + file.getName();
+                    else return str + "/" + file.getName();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -274,11 +193,7 @@ public class MTDataFilesProvider extends DocumentsProvider {
     }
 
     public final void d(MatrixCursor matrixCursor, String str, File file) {
-        int i;
-        String name;
-        if (file == null) {
-            file = b(str, true);
-        }
+        if (file == null) file = null;
         boolean z = false;
         if (file == null) {
             MatrixCursor.RowBuilder newRow = matrixCursor.newRow();
@@ -290,63 +205,39 @@ public class MTDataFilesProvider extends DocumentsProvider {
             newRow.add("flags", 0);
             return;
         }
-        if (file.isDirectory()) {
-            if (file.canWrite()) {
-                i = 8;
-            }
-            i = 0;
-        } else {
-            if (file.canWrite()) {
-                i = 2;
-            }
-            i = 0;
-        }
-        if (file.getParentFile().canWrite()) {
-            i = i | 4 | 64;
-        }
+
+        int i = 0;
+        if (file.isDirectory() && file.canWrite()) i = 8;
+        else if (!file.isDirectory() && file.canWrite()) i = 2;
+
+        if (file.getParentFile() != null && file.getParentFile().canWrite()) i |= 4 | 64;
+
         String path = file.getPath();
-        if (path.equals(this.c.getPath())) {
-            name = "data";
-        } else {
-            File file2 = this.e;
-            if (file2 == null || !path.equals(file2.getPath())) {
-                File file3 = this.f;
-                if (file3 == null || !path.equals(file3.getPath())) {
-                    File file4 = this.d;
-                    if (file4 == null || !path.equals(file4.getPath())) {
-                        name = file.getName();
-                        z = true;
-                    } else {
-                        name = "user_de_data";
-                    }
-                } else {
-                    name = "android_obb";
-                }
-            } else {
-                name = "android_data";
-            }
+        String name;
+        if (path.equals(this.c.getPath())) name = "data";
+        else if (this.e != null && path.equals(this.e.getPath())) name = "android_data";
+        else if (this.f != null && path.equals(this.f.getPath())) name = "android_obb";
+        else if (this.d != null && path.equals(this.d.getPath())) name = "user_de_data";
+        else {
+            name = file.getName();
+            z = true;
         }
+
         MatrixCursor.RowBuilder newRow2 = matrixCursor.newRow();
         newRow2.add("document_id", str);
         newRow2.add("_display_name", name);
-        newRow2.add("_size", Long.valueOf(file.length()));
+        newRow2.add("_size", file.length());
         newRow2.add("mime_type", c(file));
-        newRow2.add("last_modified", Long.valueOf(file.lastModified()));
-        newRow2.add("flags", Integer.valueOf(i));
+        newRow2.add("last_modified", file.lastModified());
+        newRow2.add("flags", i);
         newRow2.add("mt_path", file.getAbsolutePath());
+
         if (z) {
             try {
-                StringBuilder sb = new StringBuilder();
                 StructStat lstat = Os.lstat(path);
-                sb.append(lstat.st_mode);
-                sb.append("|");
-                sb.append(lstat.st_uid);
-                sb.append("|");
-                sb.append(lstat.st_gid);
-                if ((lstat.st_mode & 61440) == 40960) {
-                    sb.append("|");
-                    sb.append(Os.readlink(path));
-                }
+                StringBuilder sb = new StringBuilder();
+                sb.append(lstat.st_mode).append("|").append(lstat.st_uid).append("|").append(lstat.st_gid);
+                if ((lstat.st_mode & 61440) == 40960) sb.append("|").append(Os.readlink(path));
                 newRow2.add("mt_extras", sb.toString());
             } catch (Exception e) {
                 e.printStackTrace();
@@ -355,146 +246,123 @@ public class MTDataFilesProvider extends DocumentsProvider {
     }
 
     @Override
-    public final void deleteDocument(String str) {
+    public void deleteDocument(String str) throws FileNotFoundException {
         File b = b(str, true);
-        if (b == null || !a(b)) {
-            throw new FileNotFoundException("Failed to delete document ".concat(str));
-        }
+        if (b == null || !a(b)) throw new FileNotFoundException("Failed to delete document " + str);
     }
 
     @Override
-    public final String getDocumentType(String str) {
+    public String getDocumentType(String str) throws FileNotFoundException {
         File b = b(str, true);
         return b == null ? "vnd.android.document/directory" : c(b);
     }
 
     @Override
-    public final boolean isChildDocument(String str, String str2) {
+    public boolean isChildDocument(String str, String str2) {
         return str2.startsWith(str);
     }
 
     @Override
-    public final String moveDocument(String str, String str2, String str3) {
+    public String moveDocument(String str, String str2, String str3) throws FileNotFoundException {
         File b = b(str, true);
         File b2 = b(str3, true);
         if (b != null && b2 != null) {
             File file = new File(b2, b.getName());
             if (!file.exists() && b.renameTo(file)) {
-                if (str3.endsWith("/")) {
-                    return str3 + file.getName();
-                }
-                return str3 + "/" + file.getName();
+                if (str3.endsWith("/")) return str3 + file.getName();
+                else return str3 + "/" + file.getName();
             }
         }
         throw new FileNotFoundException("Filed to move document " + str + " to " + str3);
     }
 
     @Override
-    public final boolean onCreate() {
+    public boolean onCreate() {
         return true;
     }
 
     @Override
-    public final ParcelFileDescriptor openDocument(String str, String str2, CancellationSignal cancellationSignal) {
+    public ParcelFileDescriptor openDocument(String str, String str2, CancellationSignal cancellationSignal) throws FileNotFoundException {
         File b = b(str, false);
-        if (b != null) {
-            return ParcelFileDescriptor.open(b, ParcelFileDescriptor.parseMode(str2));
-        }
-        throw new FileNotFoundException(str.concat(" not found"));
+        if (b != null) return ParcelFileDescriptor.open(b, ParcelFileDescriptor.parseMode(str2));
+        throw new FileNotFoundException(str + " not found");
     }
 
     @Override
-    public final Cursor queryChildDocuments(String str, String[] strArr, String str2) {
-        if (str.endsWith("/")) {
-            str = str.substring(0, str.length() - 1);
-        }
-        if (strArr == null) {
-            strArr = h;
-        }
+    public Cursor queryChildDocuments(String str, String[] strArr, String str2) {
+        if (str.endsWith("/")) str = str.substring(0, str.length() - 1);
+        if (strArr == null) strArr = h;
+
         MatrixCursor matrixCursor = new MatrixCursor(strArr);
-        File b = b(str, true);
+        File b = null;
+        try {
+            b = b(str, true);
+        } catch (FileNotFoundException ignored) {}
+
         if (b == null) {
-            d(matrixCursor, str.concat("/data"), this.c);
-            File file = this.e;
-            if (file != null && file.exists()) {
-                d(matrixCursor, str.concat("/android_data"), this.e);
-            }
-            File file2 = this.f;
-            if (file2 != null && file2.exists()) {
-                d(matrixCursor, str.concat("/android_obb"), this.f);
-            }
-            File file3 = this.d;
-            if (file3 != null && file3.exists()) {
-                d(matrixCursor, str.concat("/user_de_data"), this.d);
-            }
+            d(matrixCursor, str + "/data", this.c);
+            if (this.e != null && this.e.exists()) d(matrixCursor, str + "/android_data", this.e);
+            if (this.f != null && this.f.exists()) d(matrixCursor, str + "/android_obb", this.f);
+            if (this.d != null && this.d.exists()) d(matrixCursor, str + "/user_de_data", this.d);
         } else {
             File[] listFiles = b.listFiles();
             if (listFiles != null) {
-                for (File file4 : listFiles) {
-                    d(matrixCursor, str + "/" + file4.getName(), file4);
-                }
+                for (File file : listFiles) d(matrixCursor, str + "/" + file.getName(), file);
             }
         }
+
         return matrixCursor;
     }
 
     @Override
-    public final Cursor queryDocument(String str, String[] strArr) {
-        if (strArr == null) {
-            strArr = h;
-        }
+    public Cursor queryDocument(String str, String[] strArr) {
+        if (strArr == null) strArr = h;
         MatrixCursor matrixCursor = new MatrixCursor(strArr);
         d(matrixCursor, str, null);
         return matrixCursor;
     }
 
     @Override
-    public final Cursor queryRoots(String[] projection) {
+    public Cursor queryRoots(String[] strArr) {
         ApplicationInfo applicationInfo = getContext().getApplicationInfo();
-        String title = applicationInfo.loadLabel(getContext().getPackageManager()).toString();
-    
-        if (projection == null) {
-            projection = g;
-        }
-    
-        MatrixCursor matrixCursor = new MatrixCursor(projection);
+        String label = applicationInfo.loadLabel(getContext().getPackageManager()).toString();
+        if (strArr == null) strArr = g;
+
+        MatrixCursor matrixCursor = new MatrixCursor(strArr);
         MatrixCursor.RowBuilder newRow = matrixCursor.newRow();
-    
-        // --- Tính tổng và khả dụng ---
-        File dataDir = getContext().getFilesDir().getParentFile(); // /data/data
-        long total = dataDir.getTotalSpace();
-        long free  = dataDir.getUsableSpace();
-    
-        // --- Thêm root vào cursor ---
         newRow.add("root_id", this.b);
         newRow.add("document_id", this.b);
-        newRow.add("title", title);
-        newRow.add(
-            "summary",
-            getContext().getString(R.string.storage_available)
-                + ": "
-                + formatSizeSmart(total)
-                + " / "
-                + formatSizeSmart(free)
-        );
+
+        // Lấy dung lượng
+        long total = 0, free = 0;
+        if (this.c != null && this.c.exists()) {
+            try {
+                android.os.StatFs statFs = new android.os.StatFs(this.c.getPath());
+                total = statFs.getTotalBytes();
+                free = statFs.getAvailableBytes();
+            } catch (Exception ignored) {}
+        }
+
+        String availableSummary = getContext().getString(R.string.storage_available) + ": " + formatSizeSmart(total) + " / " + formatSizeSmart(free);
+
+        newRow.add("summary", availableSummary);
         newRow.add("flags", 17);
+        newRow.add("title", label);
         newRow.add("mime_types", "*/*");
-        newRow.add("icon", Integer.valueOf(applicationInfo.icon));
-    
+        newRow.add("icon", applicationInfo.icon);
         return matrixCursor;
     }
 
     @Override
-    public final void removeDocument(String str, String str2) {
+    public void removeDocument(String str, String str2) throws FileNotFoundException {
         deleteDocument(str);
     }
 
     @Override
-    public final String renameDocument(String str, String str2) {
+    public String renameDocument(String str, String str2) throws FileNotFoundException {
         File b = b(str, true);
-        if (b == null || !b.renameTo(new File(b.getParentFile(), str2))) {
+        if (b == null || !b.renameTo(new File(b.getParentFile(), str2)))
             throw new FileNotFoundException("Failed to rename document " + str + " to " + str2);
-        }
-        return str.substring(0, str.lastIndexOf(47, str.length() - 2)) + "/" + str2;
+        return str.substring(0, str.lastIndexOf('/', str.length() - 2)) + "/" + str2;
     }
 }
