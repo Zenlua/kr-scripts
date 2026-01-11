@@ -9,10 +9,12 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.omarea.common.shell.ShellExecutor
 import com.omarea.common.ui.DialogHelper
+import com.omarea.krscript.executor.ScriptEnvironmen
 import com.projectkr.shell.databinding.ActivitySplashBinding
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.util.HashMap
+import android.widget.TextView
 
 class SplashActivity : Activity() {
 
@@ -46,7 +48,7 @@ class SplashActivity : Activity() {
         Handler(Looper.getMainLooper()).postDelayed({
             val blink = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.blink)
             binding.startLogoXml.startAnimation(blink)
-        }, 1000)
+        }, 1500)
 
         updateThemeStyle()
 
@@ -107,19 +109,25 @@ class SplashActivity : Activity() {
     // =================== LƯU TRẠNG THÁI ===================
     private fun saveAgreement() {
         val config = KrScriptConfig().init(this)
-        config.put("agreed_permissions", true)  // dùng API thực tế của KrScriptConfig
+        config.setBoolean("agreed_permissions", true)  // dùng API thực tế của KrScriptConfig
         config.save(this)
     }
 
     private fun hasAgreed(): Boolean {
         val config = KrScriptConfig().init(this)
-        return (config.get("agreed_permissions", false) as? Boolean) ?: false
+        return (config.getBoolean("agreed_permissions", false) as? Boolean) ?: false
     }
 
     // =================== GIAO DIỆN ===================
     private fun updateThemeStyle() {
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+
         window.statusBarColor = getColor(R.color.splash_bg_color)
         window.navigationBarColor = getColor(R.color.splash_bg_color)
+
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+        controller.isAppearanceLightStatusBars = false
+        controller.isAppearanceLightNavigationBars = false
     }
 
     // =================== ROOT ===================
