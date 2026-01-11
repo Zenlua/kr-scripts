@@ -17,18 +17,19 @@ import com.projectkr.shell.databinding.ActivitySplashBinding
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.util.*
+import android.Manifest
+import android.net.Uri
+import android.provider.Settings
 
 class SplashActivity : Activity() {
 
     private lateinit var binding: ActivitySplashBinding
     private val mainHandler = Handler(Looper.getMainLooper())
-    private var hasRoot = false
 
-    private val requiredPermissions = arrayOf(
-        android.Manifest.permission.POST_NOTIFICATIONS,
-        android.Manifest.permission.READ_EXTERNAL_STORAGE,
-        android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-    )
+    @Volatile private var hasRoot = false
+    @Volatile private var started = false
+    @Volatile private var starting = false
+
     private val REQUEST_CODE_PERMISSIONS = 1001
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,7 +51,12 @@ class SplashActivity : Activity() {
 
         applyTheme()
 
-        if (!hasAgreed()) showAgreementDialog() else checkRootAndStart()
+        if (!hasAgreed()) {
+            showAgreementDialog()
+        } else {
+            started = true
+            checkRootAndStart()
+        }
     }
 
     // =================== DIALOG ĐIỀU KHOẢN ===================
@@ -59,32 +65,72 @@ class SplashActivity : Activity() {
             this,
             getString(R.string.permission_dialog_title),
             getString(R.string.permission_dialog_message),
-            { requestPermissions() }, // Đồng ý
+            { requestAppPermissions() }, // Đồng ý
             { finish() } // Hủy
         )
     }
 
-    // =================== REQUEST QUYỀN ===================
-    private fun requestPermissions() {
-        val toRequest = requiredPermissions.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }
-        if (toRequest.isNotEmpty()) {
-            ActivityCompat.requestPermissions(this, toRequest.toTypedArray(), REQUEST_CODE_PERMISSIONS)
+    private fun hasAllFilesPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Environment.isExternalStorageManager()
         } else {
-            saveAgreement()
-            checkRootAndStart()
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    private fun requestAllFilesPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            startActivity(
+                Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                    data = Uri.parse("package:$packageName")
+                }
+            )
+        } else {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ),
+                REQUEST_CODE_PERMISSIONS
+            )
+        }
+    }
+    // =================== REQUEST QUYỀN ===================
+    private fun requestAppPermissions() {
+        if (!hasAllFilesPermission()) {
+            requestAllFilesPermission()
+            return
+        }
+        saveAgreement()
+        started = true
+        checkRootAndStart()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
                 saveAgreement()
+                started = true
                 checkRootAndStart()
             } else finish()
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!started && hasAgreed() && hasAllFilesPermission()) {
+            started = true
+            checkRootAndStart()
+        }
     }
 
     // =================== LƯU TRẠNG THÁI ===================
@@ -109,7 +155,11 @@ class SplashActivity : Activity() {
     }
 
     // =================== ROOT ===================
+    @Synchronized
     private fun checkRootAndStart() {
+        if (!started || starting) return
+        starting = true
+    
         Thread {
             hasRoot = tryRoot()
             mainHandler.post { startToFinish() }
