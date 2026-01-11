@@ -132,7 +132,10 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
                 running = false
                 onExit.run()
                 binding?.btnHide?.visibility = View.GONE
-                binding?.btnExit?.visibility = View.VISIBLE
+                binding?.btnExit?.apply {
+                    visibility = View.VISIBLE
+                    text = context?.getString(R.string.btn_exit) 
+                }
                 binding?.actionProgress?.visibility = View.GONE
                 isCancelable = true
             }
