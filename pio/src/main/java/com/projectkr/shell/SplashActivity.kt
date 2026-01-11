@@ -20,6 +20,8 @@ import java.util.*
 import android.Manifest
 import android.net.Uri
 import android.provider.Settings
+import java.io.File
+import java.util.Locale
 
 class SplashActivity : Activity() {
 
@@ -33,6 +35,7 @@ class SplashActivity : Activity() {
     private val REQUEST_CODE_PERMISSIONS = 1001
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        applyLanguageFromFile()
         super.onCreate(savedInstanceState)
 
         if (ScriptEnvironmen.isInited()) {
@@ -56,6 +59,35 @@ class SplashActivity : Activity() {
         } else {
             started = true
             checkRootAndStart()
+        }
+    }
+
+    private fun applyLanguageFromFile() {
+        try {
+            val langFile = File(filesDir, "kr-script/language")
+            if (!langFile.exists()) return
+    
+            val lang = langFile.readText().trim()
+            if (lang.isEmpty()) return   // file trống → dùng mặc định
+    
+            val locale = when {
+                lang.contains("-") -> {
+                    val parts = lang.split("-")
+                    Locale(parts[0], parts[1])
+                }
+                else -> Locale(lang)
+            }
+    
+            Locale.setDefault(locale)
+    
+            val config = Configuration(resources.configuration)
+            config.setLocale(locale)
+    
+            @Suppress("DEPRECATION")
+            resources.updateConfiguration(config, resources.displayMetrics)
+    
+        } catch (_: Exception) {
+            // lỗi thì bỏ qua, dùng ngôn ngữ mặc định
         }
     }
 
@@ -130,12 +162,22 @@ class SplashActivity : Activity() {
     override fun onResume() {
         super.onResume()
     
+        Toast.makeText(
+            this,
+            "onResume: agreed=${hasAgreed()} | allFiles=${hasAllFilesPermission()}",
+            Toast.LENGTH_SHORT
+        ).show()
+    
         if (hasAgreed() && hasAllFilesPermission()) {
+            Toast.makeText(this, "Tiếp tục khởi động app", Toast.LENGTH_SHORT).show()
+    
             started = true
             starting = false
             checkRootAndStart()
+        } else {
+            Toast.makeText(this, "Chưa đủ điều kiện để tiếp tục", Toast.LENGTH_SHORT).show()
         }
-    }
+}
 
     // =================== LƯU TRẠNG THÁI ===================
     private fun saveAgreement() {
