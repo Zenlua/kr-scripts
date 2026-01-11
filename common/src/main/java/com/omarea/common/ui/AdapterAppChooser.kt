@@ -10,6 +10,7 @@ import com.omarea.common.R
 import kotlinx.coroutines.*
 import java.util.*
 import java.util.Locale.getDefault
+import java.text.Collator
 
 class AdapterAppChooser(
     private val context: Context,
@@ -36,7 +37,9 @@ class AdapterAppChooser(
     private val adapterScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     init {
-        filterApps.sortBy { !it.selected }
+    val collator = Collator.getInstance(Locale.getDefault()) // Hoặc Locale("vi", "VN") nếu muốn chuẩn tiếng Việt
+    filterApps.sortWith(compareBy<AppInfo> { !it.selected }
+        .thenComparator { a, b -> collator.compare(a.appName, b.appName) })
     }
 
     override fun getCount() = filterApps.size
