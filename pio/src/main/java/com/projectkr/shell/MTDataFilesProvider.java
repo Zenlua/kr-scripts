@@ -196,7 +196,7 @@ public class MTDataFilesProvider extends DocumentsProvider {
 
         File f0 = b(docId, true);
         if (f0 == null) {
-            d(c, docId + "/data", c);
+            d(c, docId + "/data", null);
             if (e != null && e.exists()) d(c, docId + "/android_data", e);
             if (f != null && f.exists()) d(c, docId + "/android_obb", f);
             if (d != null && d.exists()) d(c, docId + "/user_de_data", d);
