@@ -125,10 +125,12 @@ class SplashActivity : Activity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
-    override fun onResume() {
+     override fun onResume() {
         super.onResume()
-        if (!started && hasAgreed() && hasAllFilesPermission()) {
+    
+        if (hasAgreed() && hasAllFilesPermission()) {
             started = true
+            starting = false
             checkRootAndStart()
         }
     }
