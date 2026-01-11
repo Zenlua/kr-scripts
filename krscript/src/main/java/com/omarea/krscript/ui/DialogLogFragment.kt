@@ -5,12 +5,10 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.DialogInterface
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.Message
 import android.text.SpannableString
-import android.text.SpannableStringBuilder
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -19,7 +17,6 @@ import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.fragment.app.DialogFragment
 import com.omarea.common.ui.DialogHelper
 import com.omarea.krscript.R
 import com.omarea.krscript.databinding.KrDialogLogBinding
@@ -27,14 +24,12 @@ import com.omarea.krscript.executor.ShellExecutor
 import com.omarea.krscript.model.RunnableNode
 import com.omarea.krscript.model.ShellHandlerBase
 
-class DialogLogFragment : DialogFragment() {
+class DialogLogFragment : androidx.fragment.app.DialogFragment() {
 
     private var binding: KrDialogLogBinding? = null
-
     private var running = false
     private var canceled = false
-    private var uiVisible = false
-
+    private var uiVisible = true
     private var nodeInfo: RunnableNode? = null
     private lateinit var onExit: Runnable
     private lateinit var script: String
@@ -46,69 +41,40 @@ class DialogLogFragment : DialogFragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        binding = KrDialogLogBinding.inflate(inflater, container, false)
-        return binding!!.root
+    ): View? {
+        binding = KrDialogLogBinding.inflate(layoutInflater, container, false)
+        return binding?.root
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return Dialog(
-            requireActivity(),
-            if (themeResId != 0) themeResId else R.style.kr_full_screen_dialog_light
-        )
+        return Dialog(requireActivity(), if (themeResId != 0) themeResId else R.style.kr_full_screen_dialog_light)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        uiVisible = true
-
         activity?.let {
-            dialog?.window?.let { win ->
-                DialogHelper.setWindowBlurBg(win, it)
+            dialog?.window?.let { window ->
+                DialogHelper.setWindowBlurBg(window, it)
             }
         }
+    }
 
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
         nodeInfo?.let { node ->
             if (node.reloadPage) {
                 binding?.btnHide?.visibility = View.GONE
             }
-
-            val handler = openExecutor(node)
-            ShellExecutor().execute(
-                activity,
-                node,
-                script,
-                onExit,
-                params,
-                handler
-            )
+            openExecutor(node)?.let { shellHandler ->
+                ShellExecutor().execute(activity, node, script, onExit, params, shellHandler)
+            }
         } ?: dismissAllowingStateLoss()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        dialog?.setOnKeyListener { _, keyCode, event ->
-            if (!uiVisible || !running) return@setOnKeyListener false
-            event.action == KeyEvent.ACTION_DOWN &&
-                    (keyCode == KeyEvent.KEYCODE_VOLUME_UP ||
-                     keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
-        }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        binding = null
-    }
-
-    override fun onDismiss(dialog: DialogInterface) {
-        super.onDismiss(dialog)
-        uiVisible = false
-        onDismissRunnable?.run()
-        onDismissRunnable = null
     }
 
     private fun openExecutor(nodeInfo: RunnableNode): ShellHandlerBase {
         var forceStopRunnable: Runnable? = null
+        canceled = false
+        uiVisible = true
 
         binding?.btnHide?.setOnClickListener {
             uiVisible = false
@@ -128,195 +94,171 @@ class DialogLogFragment : DialogFragment() {
 
         binding?.btnCopy?.setOnClickListener {
             try {
-                val cm = requireContext()
-                    .getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                cm.setPrimaryClip(
-                    ClipData.newPlainText(
-                        "log",
-                        binding?.shellOutput?.text.toString()
-                    )
-                )
-                Toast.makeText(context, R.string.copy_success, Toast.LENGTH_SHORT).show()
-            } catch (_: Exception) {
-                Toast.makeText(context, R.string.copy_fail, Toast.LENGTH_SHORT).show()
+                val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText("text", binding?.shellOutput?.text.toString())
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(context, getString(R.string.copy_success), Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, getString(R.string.copy_fail), Toast.LENGTH_SHORT).show()
             }
         }
 
         if (nodeInfo.interruptable) {
-            binding?.btnExit?.visibility = View.VISIBLE
             binding?.btnHide?.visibility = View.VISIBLE
+            binding?.btnExit?.visibility = View.VISIBLE
         } else {
-            binding?.btnExit?.visibility = View.GONE
             binding?.btnHide?.visibility = View.GONE
+            binding?.btnExit?.visibility = View.GONE
         }
 
-        binding?.title?.apply {
-            if (nodeInfo.title.isNotEmpty()) text = nodeInfo.title
-            else visibility = View.GONE
+        if (nodeInfo.title.isNotEmpty()) {
+            binding?.title?.text = nodeInfo.title
+        } else {
+            binding?.title?.visibility = View.GONE
         }
 
-        binding?.desc?.apply {
-            if (nodeInfo.desc.isNotEmpty()) text = nodeInfo.desc
-            else visibility = View.GONE
+        if (nodeInfo.desc.isNotEmpty()) {
+            binding?.desc?.text = nodeInfo.desc
+        } else {
+            binding?.desc?.visibility = View.GONE
         }
 
         binding?.actionProgress?.isIndeterminate = true
 
-        return MyShellHandler(
-            object : IActionEventHandler {
-                override fun onStart(forceStop: Runnable?) {
-                    running = true
-                    canceled = false
-                    forceStopRunnable = forceStop
-                    binding?.btnExit?.apply {
-                        visibility = View.VISIBLE
-                        text = context?.getString(R.string.btn_cancel)
-                    }
-                    binding?.actionProgress?.visibility = View.VISIBLE
-                }
+        return MyShellHandler(object : IActionEventHandler {
+            override fun onCompleted() {
+                running = false
+                onExit.run()
+                binding?.btnHide?.visibility = View.GONE
+                binding?.btnExit?.visibility = View.VISIBLE
+                binding?.actionProgress?.visibility = View.GONE
+                isCancelable = true
+            }
 
-                override fun onCompleted() {
-                    running = false
-                    onExit.run()
-                    binding?.btnExit?.apply {
-                        visibility = View.VISIBLE
-                        text = context?.getString(R.string.btn_exit)
-                    }
-                    binding?.btnHide?.visibility = View.GONE
-                    binding?.actionProgress?.visibility = View.GONE
-                    isCancelable = true
+            override fun onSuccess() {
+                if (nodeInfo.autoOff) {
+                    dismissAllowingStateLoss()
                 }
+            }
 
-                override fun onSuccess() {
-                    if (nodeInfo.autoOff) dismissAllowingStateLoss()
+            override fun onStart(forceStop: Runnable?) {
+                running = true
+                forceStopRunnable = forceStop
+                if (nodeInfo.interruptable && forceStop != null) {
+                    binding?.btnExit?.visibility = View.VISIBLE
+                } else {
+                    binding?.btnExit?.visibility = View.GONE
                 }
-            },
-            binding?.shellOutput,
-            binding?.actionProgress
-        )
+            }
+
+        }, binding?.shellOutput, binding?.actionProgress)
     }
 
+    @FunctionalInterface
     interface IActionEventHandler {
         fun onStart(forceStop: Runnable?)
-        fun onCompleted()
         fun onSuccess()
+        fun onCompleted()
     }
 
     class MyShellHandler(
-        private val handler: IActionEventHandler,
-        private val logView: TextView?,
-        private val progress: ProgressBar?
+        private var actionEventHandler: IActionEventHandler,
+        private var logView: TextView?,
+        private var shellProgress: ProgressBar?
     ) : ShellHandlerBase() {
 
         private val context = logView?.context
-
-        private fun getColor(resId: Int): Int =
-            if (Build.VERSION.SDK_INT >= 23)
-                context!!.getColor(resId)
-            else
-                context!!.resources.getColor(resId)
-
         private val errorColor = getColor(R.color.kr_shell_log_error)
         private val basicColor = getColor(R.color.kr_shell_log_basic)
         private val scriptColor = getColor(R.color.kr_shell_log_script)
         private val endColor = getColor(R.color.kr_shell_log_end)
-
         private var hasError = false
 
-        private val logBuffer = SpannableStringBuilder()
-        @Volatile
-        private var flushing = false
-
-        override fun handleMessage(msg: Message) {
-            when (msg.what) {
-                EVENT_START -> onStart(msg.obj)
-                EVENT_REDE -> onReader(msg.obj)
-                EVENT_READ_ERROR -> onError(msg.obj)
-                EVENT_WRITE -> onWrite(msg.obj)
-                EVENT_EXIT -> onExit(msg.obj)
+        private fun getColor(resId: Int): Int {
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                context!!.getColor(resId)
+            } else {
+                context!!.resources.getColor(resId)
             }
         }
 
-        override fun onStart(msg: Any?) {}
-
-        override fun updateLog(msg: SpannableString) {
-            appendBuffered(msg)
+        override fun handleMessage(msg: Message) {
+            when (msg.what) {
+                EVENT_EXIT -> onExit(msg.obj)
+                EVENT_START -> onStart(msg.obj)
+                EVENT_REDE -> onReaderMsg(msg.obj)
+                EVENT_READ_ERROR -> onError(msg.obj)
+                EVENT_WRITE -> onWrite(msg.obj)
+            }
         }
 
-        override fun onReader(msg: Any) {
-            updateColored(msg, basicColor)
-        }
-
-        override fun onWrite(msg: Any) {
-            updateColored(msg, scriptColor)
-        }
-
+        override fun onReader(msg: Any) = updateLog(msg, basicColor)
+        override fun onWrite(msg: Any) = updateLog(msg, scriptColor)
         override fun onError(msg: Any) {
             hasError = true
-            updateColored(msg, errorColor)
+            updateLog(msg, errorColor)
         }
 
-        override fun onStart(forceStop: Runnable?) {
-            handler.onStart(forceStop)
-            logView?.text = ""
-            progress?.visibility = View.VISIBLE
-            progress?.isIndeterminate = true
-        }
+        override fun onStart(forceStop: Runnable?) = actionEventHandler.onStart(forceStop)
 
-        override fun onExit(msg: Any?) {
-            updateColored(context?.getString(R.string.kr_shell_completed), endColor)
-            handler.onCompleted()
-            if (!hasError) handler.onSuccess()
-            progress?.visibility = View.GONE
-        }
-
-        // 🔹 ProgressBar cập nhật trực tiếp, giống code cũ
         override fun onProgress(current: Int, total: Int) {
-            progress?.post {
-                when (current) {
-                    -1 -> {
-                        progress.visibility = View.VISIBLE
-                        progress.isIndeterminate = true
+            shellProgress?.post {
+                when {
+                    current < 0 -> {
+                        shellProgress?.visibility = View.VISIBLE
+                        shellProgress?.isIndeterminate = true
                     }
-                    total -> progress.visibility = View.GONE
+                    current >= total -> shellProgress?.visibility = View.GONE
                     else -> {
-                        progress.visibility = View.VISIBLE
-                        progress.isIndeterminate = false
-                        progress.max = total
-                        progress.progress = current
+                        shellProgress?.visibility = View.VISIBLE
+                        shellProgress?.isIndeterminate = false
+                        shellProgress?.max = total
+                        shellProgress?.progress = current
                     }
                 }
             }
         }
 
-        private fun updateColored(msg: Any?, color: Int) {
-            val text = SpannableString(msg?.toString() ?: "").apply {
-                setSpan(
-                    android.text.style.ForegroundColorSpan(color),
-                    0,
-                    length,
-                    SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
-            }
-            appendBuffered(text)
+        override fun onStart(msg: Any?) {
+            logView?.text = ""
         }
 
-        private fun appendBuffered(text: SpannableString) {
-            synchronized(logBuffer) { logBuffer.append(text) }
-            if (!flushing) {
-                flushing = true
-                logView?.postDelayed({
-                    val out: SpannableStringBuilder
-                    synchronized(logBuffer) {
-                        out = SpannableStringBuilder(logBuffer)
-                        logBuffer.clear()
-                    }
-                    logView.append(out)
-                    (logView.parent as? ScrollView)?.fullScroll(ScrollView.FOCUS_DOWN)
-                    flushing = false
-                }, 80)
+        override fun onExit(msg: Any?) {
+            updateLog(context?.getString(R.string.kr_shell_completed), endColor)
+            actionEventHandler.onCompleted()
+            if (!hasError) actionEventHandler.onSuccess()
+        }
+
+        override fun updateLog(msg: SpannableString?) {
+            msg?.let {
+                logView?.post {
+                    logView?.append(it)
+                    (logView?.parent as? ScrollView)?.fullScroll(ScrollView.FOCUS_DOWN)
+                }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        dialog?.setOnKeyListener { _, keyCode, event ->
+            if (!uiVisible || !running) return@setOnKeyListener false
+            event.action == KeyEvent.ACTION_DOWN &&
+                    (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
+        }
+    }
+
+    private fun closeView() {
+        try {
+            dismissAllowingStateLoss()
+        } catch (ex: Exception) {
+        }
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
+        onDismissRunnable?.run()
+        onDismissRunnable = null
     }
 
     companion object {
@@ -328,16 +270,14 @@ class DialogLogFragment : DialogFragment() {
             params: HashMap<String, String>?,
             darkMode: Boolean = false
         ): DialogLogFragment {
-            return DialogLogFragment().apply {
-                this.nodeInfo = nodeInfo
-                this.onExit = onExit
-                this.script = script
-                this.params = params
-                this.themeResId =
-                    if (darkMode) R.style.kr_full_screen_dialog_dark
-                    else R.style.kr_full_screen_dialog_light
-                this.onDismissRunnable = onDismiss
-            }
+            val fragment = DialogLogFragment()
+            fragment.nodeInfo = nodeInfo
+            fragment.onExit = onExit
+            fragment.script = script
+            fragment.params = params
+            fragment.themeResId = if (darkMode) R.style.kr_full_screen_dialog_dark else R.style.kr_full_screen_dialog_light
+            fragment.onDismissRunnable = onDismiss
+            return fragment
         }
     }
 }
