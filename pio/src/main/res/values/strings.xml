@@ -57,4 +57,13 @@
     <string name="power_reboot_cmd">sync; svc power reboot || reboot;</string>
     <string name="power_recovery_cmd">sync; svc power reboot recovery || reboot recovery</string>
     <string name="power_shutdown_cmd">sync; svc power shutdown || reboot -p;</string>
+
+    <string name="permission_dialog_title">Điều khoản sử dụng</string>
+    <string name="permission_dialog_message">
+        Ứng dụng này yêu cầu các quyền:
+        - Thông báo
+        - Truy cập tệp tin
+        - Danh sách các ứng dụng
+        Vui lòng đồng ý để tiếp tục.
+    </string>
 </resources>
