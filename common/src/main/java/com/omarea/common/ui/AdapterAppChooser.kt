@@ -36,7 +36,7 @@ class AdapterAppChooser(
     private val adapterScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     init {
-        filterApps.sortBy { !it.selected }
+    filterApps.sortWith(compareBy<AppInfo> { !it.selected }.thenBy { it.appName.lowercase(Locale.getDefault()) })
     }
 
     override fun getCount() = filterApps.size
