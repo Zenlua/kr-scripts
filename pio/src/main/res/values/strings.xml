@@ -60,13 +60,6 @@
 
     <string name="permission_dialog_title">Application Terms of Use</string>
     <string name="permission_dialog_message">
-        Request the following permissions:
-        - Notification
-        - Access all files
-        - List of applications
-        - Root (if permitted)
-        - Create shortcut
-        - Data network access
-        I agree to continue using the application.
-    </string>
+Request the following permissions:\n\n• Notification\n• Access all files\n• List of applications\n• Root (if permitted)\n• Create shortcut\n• Data network access\n\nI agree to continue using the application.
+</string>
 </resources>
