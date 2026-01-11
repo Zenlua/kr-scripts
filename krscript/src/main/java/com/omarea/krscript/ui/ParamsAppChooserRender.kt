@@ -10,6 +10,7 @@ import com.omarea.common.ui.AdapterAppChooser
 import com.omarea.common.ui.DialogAppChooser
 import com.omarea.krscript.R
 import com.omarea.krscript.model.ActionParamInfo
+import java.util.Locale
 
 class ParamsAppChooserRender(private var actionParamInfo: ActionParamInfo, private var context: FragmentActivity) : DialogAppChooser.Callback {
     private val systemUiVisibility = context.window?.decorView?.systemUiVisibility
