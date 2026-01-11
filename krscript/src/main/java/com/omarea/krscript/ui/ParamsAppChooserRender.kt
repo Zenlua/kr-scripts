@@ -104,7 +104,8 @@ class ParamsAppChooserRender(private var actionParamInfo: ActionParamInfo, priva
     // 设置界面显示和元素赋值
     private fun setTextView() {
         packages = ArrayList(loadPackages(actionParamInfo.type == "packages"))
-
+        packages.sortWith(compareBy { it.appName.lowercase(Locale.getDefault()) })
+               
         packages.run {
             val labels = map { it.appName }.toTypedArray()
             val values = map { it.packageName }.toTypedArray()
