@@ -111,16 +111,15 @@ class SplashActivity : Activity() {
     }
 
     // =================== LƯU TRẠNG THÁI ===================
-    private fun saveAgreement() {
-        val config = KrScriptConfig().init(this)
-        config.put("agreed_permissions", true)  // dùng API thực tế của KrScriptConfig
-        config.save(this)
-    }
+ private fun saveAgreement() {
+    val sp = getSharedPreferences("kr-script-config", Context.MODE_PRIVATE)
+    sp.edit().putBoolean("agreed_permissions", true).apply()
+}
 
-    private fun hasAgreed(): Boolean {
-        val config = KrScriptConfig().init(this)
-        return (config.get("agreed_permissions", false) as? Boolean) ?: false
-    }
+private fun hasAgreed(): Boolean {
+    val sp = getSharedPreferences("kr-script-config", Context.MODE_PRIVATE)
+    return sp.getBoolean("agreed_permissions", false)
+}
 
     // =================== GIAO DIỆN ===================
     private fun updateThemeStyle() {
