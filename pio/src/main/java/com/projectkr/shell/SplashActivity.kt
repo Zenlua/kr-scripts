@@ -5,20 +5,18 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.*
+import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.omarea.common.shell.ShellExecutor
 import com.omarea.common.ui.DialogHelper
 import com.omarea.krscript.executor.ScriptEnvironmen
 import com.projectkr.shell.databinding.ActivitySplashBinding
 import java.io.BufferedReader
 import java.io.DataOutputStream
-import java.util.HashMap
-import android.widget.TextView
-import java.util.Locale
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsControllerCompat
-import android.widget.Button
+import java.util.*
 
 class SplashActivity : Activity() {
 
@@ -26,20 +24,16 @@ class SplashActivity : Activity() {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var hasRoot = false
 
-    // Các quyền cần cấp
     private val requiredPermissions = arrayOf(
         android.Manifest.permission.READ_EXTERNAL_STORAGE,
         android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
         android.Manifest.permission.POST_NOTIFICATIONS
     )
-
-    // Request code khi dùng ActivityCompat
     private val REQUEST_CODE_PERMISSIONS = 1001
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Nếu app đã init, bỏ qua splash
         if (ScriptEnvironmen.isInited()) {
             if (isTaskRoot) gotoHome()
             return
@@ -49,19 +43,14 @@ class SplashActivity : Activity() {
         setContentView(binding.root)
 
         // Hiệu ứng logo
-        Handler(Looper.getMainLooper()).postDelayed({
+        mainHandler.postDelayed({
             val blink = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.blink)
             binding.startLogoXml.startAnimation(blink)
         }, 1500)
 
-        updateThemeStyle()
+        applyTheme()
 
-        // Kiểm tra lần đầu: nếu chưa đồng ý quyền, show dialog, ngược lại chạy tiếp
-        if (!hasAgreed()) {
-            showAgreementDialog()
-        } else {
-            checkRootAndStart()
-        }
+        if (!hasAgreed()) showAgreementDialog() else checkRootAndStart()
     }
 
     // =================== DIALOG ĐIỀU KHOẢN ===================
@@ -70,12 +59,8 @@ class SplashActivity : Activity() {
             this,
             getString(R.string.permission_dialog_title),
             getString(R.string.permission_dialog_message),
-            { // Đồng ý
-                requestPermissions()
-            },
-            { // Hủy → thoát app
-                finish()
-            }
+            { requestPermissions() }, // Đồng ý
+            { finish() } // Hủy
         )
     }
 
@@ -83,116 +68,96 @@ class SplashActivity : Activity() {
     private fun requestPermissions() {
         val toRequest = requiredPermissions.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }.toTypedArray()
-
+        }
         if (toRequest.isNotEmpty()) {
-            ActivityCompat.requestPermissions(this, toRequest, REQUEST_CODE_PERMISSIONS)
+            ActivityCompat.requestPermissions(this, toRequest.toTypedArray(), REQUEST_CODE_PERMISSIONS)
         } else {
             saveAgreement()
             checkRootAndStart()
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
-            val allGranted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
-            if (allGranted) {
+            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
                 saveAgreement()
                 checkRootAndStart()
-            } else {
-                finish()
-            }
+            } else finish()
         }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
     // =================== LƯU TRẠNG THÁI ===================
- private fun saveAgreement() {
-    val sp = getSharedPreferences("kr-script-config", Context.MODE_PRIVATE)
-    sp.edit().putBoolean("agreed_permissions", true).apply()
-}
+    private fun saveAgreement() {
+        getSharedPreferences("kr-script-config", Context.MODE_PRIVATE)
+            .edit().putBoolean("agreed_permissions", true).apply()
+    }
 
-private fun hasAgreed(): Boolean {
-    val sp = getSharedPreferences("kr-script-config", Context.MODE_PRIVATE)
-    return sp.getBoolean("agreed_permissions", false)
-}
+    private fun hasAgreed() = getSharedPreferences("kr-script-config", Context.MODE_PRIVATE)
+        .getBoolean("agreed_permissions", false)
 
     // =================== GIAO DIỆN ===================
-    private fun updateThemeStyle() {
+    private fun applyTheme() {
         WindowCompat.setDecorFitsSystemWindows(window, true)
-
         window.statusBarColor = getColor(R.color.splash_bg_color)
         window.navigationBarColor = getColor(R.color.splash_bg_color)
 
-        val controller = WindowInsetsControllerCompat(window, window.decorView)
-        controller.isAppearanceLightStatusBars = false
-        controller.isAppearanceLightNavigationBars = false
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = false
+            isAppearanceLightNavigationBars = false
+        }
     }
 
     // =================== ROOT ===================
     private fun checkRootAndStart() {
         Thread {
-            hasRoot = requestRootOnce()
+            hasRoot = tryRoot()
             mainHandler.post { startToFinish() }
         }.start()
     }
 
-    private fun requestRootOnce(): Boolean {
-        return try {
-            val p = Runtime.getRuntime().exec("su")
-            p.outputStream.write("exit\n".toByteArray())
-            p.outputStream.flush()
-            p.waitFor() == 0
-        } catch (_: Exception) {
-            false
-        }
-    }
+    private fun tryRoot(): Boolean = try {
+        Runtime.getRuntime().exec("su").apply {
+            outputStream.write("exit\n".toByteArray())
+            outputStream.flush()
+        }.waitFor() == 0
+    } catch (_: Exception) { false }
 
     // =================== START ===================
     private fun startToFinish() {
         binding.startStateText.text = getString(R.string.pop_started)
-
         val config = KrScriptConfig().init(this)
+
         if (config.beforeStartSh.isNotEmpty()) {
-            BeforeStartThread(
-                this,
-                config,
-                hasRoot,
-                UpdateLogViewHandler(binding.startStateText) { gotoHome() }
-            ).start()
+            BeforeStartThread(this, config, hasRoot, UpdateLogHandler(binding.startStateText) { gotoHome() }).start()
         } else {
             gotoHome()
         }
     }
 
     private fun gotoHome() {
-        val target = if (intent?.getBooleanExtra("JumpActionPage", false) == true) {
+        val target = if (intent?.getBooleanExtra("JumpActionPage", false) == true)
             Intent(this, ActionPage::class.java).apply { putExtras(intent!!) }
-        } else {
-            Intent(this, MainActivity::class.java)
-        }
+        else Intent(this, MainActivity::class.java)
+
         startActivity(target)
         finish()
     }
 
     // =================== LOG HANDLER ===================
-    private class UpdateLogViewHandler(
+    private class UpdateLogHandler(
         private val logView: TextView,
         private val onExit: Runnable
     ) {
         private val handler = Handler(Looper.getMainLooper())
-        private val rows = ArrayList<String>()
+        private val rows = LinkedList<String>()
         private var ignored = false
 
         fun onLogOutput(log: String) {
             handler.post {
                 synchronized(rows) {
                     if (rows.size > 6) {
-                        rows.removeAt(0)
+                        rows.removeFirst()
                         ignored = true
                     }
                     rows.add(log)
@@ -201,9 +166,7 @@ private fun hasAgreed(): Boolean {
             }
         }
 
-        fun onExit() {
-            handler.post { onExit.run() }
-        }
+        fun onExit() = handler.post { onExit.run() }
     }
 
     // =================== SHELL THREAD ===================
@@ -211,32 +174,19 @@ private fun hasAgreed(): Boolean {
         private val context: Context,
         private val config: KrScriptConfig,
         private val hasRoot: Boolean,
-        private val logHandler: UpdateLogViewHandler
+        private val logHandler: UpdateLogHandler
     ) : Thread() {
-
-        private val params: HashMap<String?, String?>? = config.variables
+        private val params = config.variables
 
         override fun run() {
             try {
-                val process =
-                    if (hasRoot) ShellExecutor.getSuperUserRuntime()
-                    else ShellExecutor.getRuntime()
-
-                if (process != null) {
-                    val os = DataOutputStream(process.outputStream)
-
-                    ScriptEnvironmen.executeShell(
-                        context,
-                        os,
-                        config.beforeStartSh,
-                        params,
-                        null,
-                        "pio-splash"
-                    )
-
-                    StreamReadThread(process.inputStream.bufferedReader(), logHandler).start()
-                    StreamReadThread(process.errorStream.bufferedReader(), logHandler).start()
-                    process.waitFor()
+                val process = if (hasRoot) ShellExecutor.getSuperUserRuntime() else ShellExecutor.getRuntime()
+                process?.let {
+                    val os = DataOutputStream(it.outputStream)
+                    ScriptEnvironmen.executeShell(context, os, config.beforeStartSh, params, null, "pio-splash")
+                    StreamReaderThread(it.inputStream.bufferedReader(), logHandler).start()
+                    StreamReaderThread(it.errorStream.bufferedReader(), logHandler).start()
+                    it.waitFor()
                 }
             } catch (_: Exception) {
             } finally {
@@ -245,15 +195,12 @@ private fun hasAgreed(): Boolean {
         }
     }
 
-    private class StreamReadThread(
+    private class StreamReaderThread(
         private val reader: BufferedReader,
-        private val logHandler: UpdateLogViewHandler
+        private val logHandler: UpdateLogHandler
     ) : Thread() {
         override fun run() {
-            while (true) {
-                val line = reader.readLine() ?: break
-                logHandler.onLogOutput(line)
-            }
+            reader.forEachLine { logHandler.onLogOutput(it) }
         }
     }
 }
