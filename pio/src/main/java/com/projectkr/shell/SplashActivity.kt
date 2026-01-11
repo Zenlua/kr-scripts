@@ -15,6 +15,10 @@ import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.util.HashMap
 import android.widget.TextView
+import java.util.Locale
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import android.widget.Button
 
 class SplashActivity : Activity() {
 
