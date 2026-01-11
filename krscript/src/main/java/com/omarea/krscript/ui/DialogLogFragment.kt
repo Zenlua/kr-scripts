@@ -208,8 +208,7 @@ class DialogLogFragment : DialogFragment() {
     class MyShellHandler(
         private val handler: IActionEventHandler,
         private val logView: TextView?,
-        private val shellProgress: ProgressBar?
-    ) : ShellHandlerBase() {
+        private val shellProgress: ProgressBar) : ShellHandlerBase() {
 
         private val context = logView?.context
 
