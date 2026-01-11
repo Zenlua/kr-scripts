@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.*
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
@@ -16,14 +17,11 @@ import com.omarea.krscript.executor.ScriptEnvironmen
 import com.projectkr.shell.databinding.ActivitySplashBinding
 import java.io.BufferedReader
 import java.io.DataOutputStream
+import java.io.File
 import java.util.*
 import android.Manifest
 import android.net.Uri
 import android.provider.Settings
-import java.io.File
-import java.util.Locale
-import android.content.res.Configuration
-import android.widget.Toast
 
 class SplashActivity : Activity() {
 
@@ -48,72 +46,74 @@ class SplashActivity : Activity() {
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Hiệu ứng logo
         mainHandler.postDelayed({
-            val blink = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.blink)
-            binding.startLogoXml.startAnimation(blink)
+            binding.startLogoXml.startAnimation(
+                android.view.animation.AnimationUtils.loadAnimation(this, R.anim.blink)
+            )
         }, 1500)
 
         applyTheme()
 
         if (!hasAgreed()) {
             showAgreementDialog()
-        } else {
-            started = true
-            checkRootAndStart()
         }
     }
 
+    // =================== LANGUAGE ===================
     private fun applyLanguageFromFile() {
         try {
-            val langFile = File(filesDir, "kr-script/language")
-            if (!langFile.exists()) return
-    
-            val lang = langFile.readText().trim()
-            if (lang.isEmpty()) return   // file trống → dùng mặc định
-    
-            val locale = when {
-                lang.contains("-") -> {
-                    val parts = lang.split("-")
-                    Locale(parts[0], parts[1])
-                }
-                else -> Locale(lang)
-            }
-    
+            val file = File(filesDir, "kr-script/language")
+            if (!file.exists()) return
+
+            val lang = file.readText().trim()
+            if (lang.isEmpty()) return
+
+            val locale = if (lang.contains("-")) {
+                val p = lang.split("-")
+                Locale(p[0], p[1])
+            } else Locale(lang)
+
             Locale.setDefault(locale)
-    
+
             val config = Configuration(resources.configuration)
             config.setLocale(locale)
-    
+
             @Suppress("DEPRECATION")
             resources.updateConfiguration(config, resources.displayMetrics)
-    
-        } catch (_: Exception) {
-            // lỗi thì bỏ qua, dùng ngôn ngữ mặc định
-        }
+        } catch (_: Exception) {}
     }
 
-    // =================== DIALOG ĐIỀU KHOẢN ===================
+    // =================== AGREEMENT ===================
     private fun showAgreementDialog() {
         DialogHelper.warning(
             this,
             getString(R.string.permission_dialog_title),
             getString(R.string.permission_dialog_message),
-            { requestAppPermissions() }, // Đồng ý
-            { finish() } // Hủy
+            { requestAppPermissions() },
+            { finish() }
         )
     }
 
-    private fun hasAllFilesPermission(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+    private fun saveAgreement() {
+        getSharedPreferences("kr-script-config", MODE_PRIVATE)
+            .edit()
+            .putBoolean("agreed_permissions", true)
+            .apply()
+    }
+
+    private fun hasAgreed(): Boolean =
+        getSharedPreferences("kr-script-config", MODE_PRIVATE)
+            .getBoolean("agreed_permissions", false)
+
+    // =================== PERMISSION ===================
+    private fun hasAllFilesPermission(): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
             Environment.isExternalStorageManager()
-        } else {
+        else
             ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.READ_EXTERNAL_STORAGE
             ) == PackageManager.PERMISSION_GRANTED
-        }
-    }
 
     private fun requestAllFilesPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -133,17 +133,27 @@ class SplashActivity : Activity() {
             )
         }
     }
-    // =================== REQUEST QUYỀN ===================
+
     private fun requestAppPermissions() {
         saveAgreement()
+
         if (!hasAllFilesPermission()) {
             requestAllFilesPermission()
             return
         }
-    
+
         started = true
-        starting = false
         checkRootAndStart()
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        if (hasAgreed()) {
+            started = true
+            starting = false
+            checkRootAndStart()
+        }
     }
 
     override fun onRequestPermissionsResult(
@@ -153,7 +163,6 @@ class SplashActivity : Activity() {
     ) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-                saveAgreement()
                 started = true
                 checkRootAndStart()
             } else finish()
@@ -161,36 +170,7 @@ class SplashActivity : Activity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
-    override fun onResume() {
-        super.onResume()
-    
-        Toast.makeText(
-            this,
-            "onResume: agreed=${hasAgreed()} | allFiles=${hasAllFilesPermission()}",
-            Toast.LENGTH_SHORT
-        ).show()
-    
-        if (hasAgreed() && hasAllFilesPermission()) {
-            Toast.makeText(this, "Tiếp tục khởi động app", Toast.LENGTH_SHORT).show()
-    
-            started = true
-            starting = false
-            checkRootAndStart()
-        } else {
-            Toast.makeText(this, "Chưa đủ điều kiện để tiếp tục", Toast.LENGTH_SHORT).show()
-        }
-}
-
-    // =================== LƯU TRẠNG THÁI ===================
-    private fun saveAgreement() {
-        getSharedPreferences("kr-script-config", Context.MODE_PRIVATE)
-            .edit().putBoolean("agreed_permissions", true).apply()
-    }
-
-    private fun hasAgreed() = getSharedPreferences("kr-script-config", Context.MODE_PRIVATE)
-        .getBoolean("agreed_permissions", false)
-
-    // =================== GIAO DIỆN ===================
+    // =================== UI ===================
     private fun applyTheme() {
         WindowCompat.setDecorFitsSystemWindows(window, true)
         window.statusBarColor = getColor(R.color.splash_bg_color)
@@ -207,7 +187,7 @@ class SplashActivity : Activity() {
     private fun checkRootAndStart() {
         if (!started || starting) return
         starting = true
-    
+
         Thread {
             hasRoot = tryRoot()
             mainHandler.post {
@@ -230,39 +210,39 @@ class SplashActivity : Activity() {
         val config = KrScriptConfig().init(this)
 
         if (config.beforeStartSh.isNotEmpty()) {
-            BeforeStartThread(this, config, hasRoot, UpdateLogHandler(binding.startStateText) { gotoHome() }).start()
-        } else {
-            gotoHome()
-        }
+            BeforeStartThread(this, config, hasRoot,
+                UpdateLogHandler(binding.startStateText) { gotoHome() }
+            ).start()
+        } else gotoHome()
     }
 
     private fun gotoHome() {
-        val target = if (intent?.getBooleanExtra("JumpActionPage", false) == true)
-            Intent(this, ActionPage::class.java).apply { putExtras(intent!!) }
-        else Intent(this, MainActivity::class.java)
-
-        startActivity(target)
+        startActivity(
+            if (intent?.getBooleanExtra("JumpActionPage", false) == true)
+                Intent(this, ActionPage::class.java).apply { putExtras(intent!!) }
+            else Intent(this, MainActivity::class.java)
+        )
         finish()
     }
 
-    // =================== LOG HANDLER ===================
+    // =================== LOG ===================
     private class UpdateLogHandler(
-        private val logView: TextView,
+        private val view: TextView,
         private val onExit: Runnable
     ) {
         private val handler = Handler(Looper.getMainLooper())
         private val rows = LinkedList<String>()
         private var ignored = false
 
-        fun onLogOutput(log: String) {
+        fun onLogOutput(line: String) {
             handler.post {
                 synchronized(rows) {
                     if (rows.size > 6) {
                         rows.removeFirst()
                         ignored = true
                     }
-                    rows.add(log)
-                    logView.text = rows.joinToString("\n", if (ignored) "……\n" else "")
+                    rows.add(line)
+                    view.text = rows.joinToString("\n", if (ignored) "……\n" else "")
                 }
             }
         }
@@ -270,26 +250,32 @@ class SplashActivity : Activity() {
         fun onExit() = handler.post { onExit.run() }
     }
 
-    // =================== SHELL THREAD ===================
     private class BeforeStartThread(
         private val context: Context,
         private val config: KrScriptConfig,
         private val hasRoot: Boolean,
         private val logHandler: UpdateLogHandler
     ) : Thread() {
-        private val params = config.variables
 
         override fun run() {
             try {
-                val process = if (hasRoot) ShellExecutor.getSuperUserRuntime() else ShellExecutor.getRuntime()
+                val process = if (hasRoot)
+                    ShellExecutor.getSuperUserRuntime()
+                else ShellExecutor.getRuntime()
+
                 process?.let {
                     val os = DataOutputStream(it.outputStream)
-                    ScriptEnvironmen.executeShell(context, os, config.beforeStartSh, params, null, "pio-splash")
+                    ScriptEnvironmen.executeShell(
+                        context, os,
+                        config.beforeStartSh,
+                        config.variables,
+                        null,
+                        "pio-splash"
+                    )
                     StreamReaderThread(it.inputStream.bufferedReader(), logHandler).start()
                     StreamReaderThread(it.errorStream.bufferedReader(), logHandler).start()
                     it.waitFor()
                 }
-            } catch (_: Exception) {
             } finally {
                 logHandler.onExit()
             }
