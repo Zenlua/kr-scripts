@@ -113,13 +113,13 @@ class SplashActivity : Activity() {
     // =================== LƯU TRẠNG THÁI ===================
     private fun saveAgreement() {
         val config = KrScriptConfig().init(this)
-        config.setBoolean("agreed_permissions", true)  // dùng API thực tế của KrScriptConfig
+        config.put("agreed_permissions", true)  // dùng API thực tế của KrScriptConfig
         config.save(this)
     }
 
     private fun hasAgreed(): Boolean {
         val config = KrScriptConfig().init(this)
-        return (config.getBoolean("agreed_permissions", false) as? Boolean) ?: false
+        return (config.get("agreed_permissions", false) as? Boolean) ?: false
     }
 
     // =================== GIAO DIỆN ===================
