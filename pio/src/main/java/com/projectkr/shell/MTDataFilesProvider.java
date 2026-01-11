@@ -187,29 +187,46 @@ public class MTDataFilesProvider extends DocumentsProvider {
         return c;
     }
 
-    @Override
-    public Cursor queryChildDocuments(String docId, String[] projection, String sortOrder) {
-        if (projection == null) projection = h;
-        if (docId.endsWith("/")) docId = docId.substring(0, docId.length() - 1);
+@Override
+public Cursor queryChildDocuments(String docId, String[] projection, String sortOrder) {
+    if (projection == null) projection = DOC_PROJECTION;
+    if (docId.endsWith("/")) {
+        docId = docId.substring(0, docId.length() - 1);
+    }
 
-        MatrixCursor c = new MatrixCursor(projection);
+    MatrixCursor c = new MatrixCursor(projection);
 
-        File f0 = b(docId, true);
-        if (f0 == null) {
-            d(c, docId + "/data", null);
-            if (e != null && e.exists()) d(c, docId + "/android_data", e);
-            if (f != null && f.exists()) d(c, docId + "/android_obb", f);
-            if (d != null && d.exists()) d(c, docId + "/user_de_data", d);
-        } else {
-            File[] list = f0.listFiles();
-            if (list != null) {
-                for (File x : list) {
-                    d(c, docId + "/" + x.getName(), x);
-                }
+    File f0;
+    try {
+        f0 = b(docId, true);
+    } catch (FileNotFoundException e) {
+        f0 = null;
+    }
+
+    if (f0 == null) {
+        // ROOT LEVEL
+        d(c, docId + "/data", null);
+
+        if (androidDataDir != null && androidDataDir.exists()) {
+            d(c, docId + "/android_data", androidDataDir);
+        }
+        if (obbDir != null && obbDir.exists()) {
+            d(c, docId + "/android_obb", obbDir);
+        }
+        if (userDeDir != null && userDeDir.exists()) {
+            d(c, docId + "/user_de_data", userDeDir);
+        }
+    } else {
+        // NORMAL DIRECTORY
+        File[] list = f0.listFiles();
+        if (list != null) {
+            for (File x : list) {
+                d(c, docId + "/" + x.getName(), x);
             }
         }
-        return c;
     }
+    return c;
+}
 
     public void d(MatrixCursor c0, String docId, File f0) {
         File f = f0 != null ? f0 : b(docId, true);
