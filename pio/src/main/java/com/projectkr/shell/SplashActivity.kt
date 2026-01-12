@@ -11,6 +11,7 @@ import android.os.Environment
 import android.provider.Settings
 import android.view.animation.AnimationUtils
 import android.text.method.ScrollingMovementMethod
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
