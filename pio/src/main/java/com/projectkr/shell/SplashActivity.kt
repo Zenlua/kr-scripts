@@ -25,7 +25,8 @@ import com.projectkr.shell.databinding.ActivitySplashBinding
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.File
-import java.util.*
+import java.util.Locale
+import android.os.Handler
 
 class SplashActivity : AppCompatActivity() {
 
