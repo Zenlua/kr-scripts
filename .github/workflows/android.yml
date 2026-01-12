@@ -29,7 +29,7 @@ jobs:
       - name: Build Release APK
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease --daemon --parallel -x lint -x test
+          ./gradlew assembleRelease --daemon -x lint -x test
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
