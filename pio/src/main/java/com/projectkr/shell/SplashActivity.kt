@@ -49,8 +49,6 @@ class SplashActivity : ComponentActivity() {
             return
         }
 
-        applyTheme()
-
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -59,6 +57,8 @@ class SplashActivity : ComponentActivity() {
                 android.view.animation.AnimationUtils.loadAnimation(this, R.anim.blink)
             )
         }, 1500)
+
+        applyTheme()
 
         if (!hasAgreed()) {
             showAgreementDialog()
