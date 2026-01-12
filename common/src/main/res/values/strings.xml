@@ -8,4 +8,7 @@
     <string name="help_title">Instructions</string>
     <string name="confirm_message">Reminder message</string>
     <string name="confirm_title">Reminder title</string>
+    <string name="btn_execute"/>
+    <string name="btn_cancel"/>
+    <string name="btn_confirm"/>
 </resources>
