@@ -194,15 +194,26 @@ class SplashActivity : AppCompatActivity() {
 
     // =================== RUN SHELL + LOG ===================
     private fun runBeforeStartSh(config: KrScriptConfig, hasRoot: Boolean) {
+        // Coroutine IO
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val process = if (hasRoot) ShellExecutor.getSuperUserRuntime() else ShellExecutor.getRuntime()
                 process?.let {
                     DataOutputStream(it.outputStream).use { os ->
-                        ScriptEnvironmen.executeShell(this@SplashActivity, os, config.beforeStartSh, config.variables, null, "pio-splash")
+                        ScriptEnvironmen.executeShell(
+                            this@SplashActivity,
+                            os,
+                            config.beforeStartSh,
+                            config.variables,
+                            null,
+                            "pio-splash"
+                        )
                     }
-                    launch { readAsync(it.inputStream.bufferedReader()) }
-                    launch { readAsync(it.errorStream.bufferedReader()) }
+    
+                    // Đọc stdout và stderr bằng coroutine con
+                    launch { readStreamAsync(it.inputStream.bufferedReader()) }
+                    launch { readStreamAsync(it.errorStream.bufferedReader()) }
+    
                     it.waitFor()
                 }
             } finally {
@@ -211,23 +222,31 @@ class SplashActivity : AppCompatActivity() {
         }
     }
     
-    private suspend fun readAsync(reader: BufferedReader) {
-        val buffer = mutableListOf<String>()
-        var lastUpdate = System.currentTimeMillis()
-        reader.forEachLine { line ->
-            buffer.add(line)
-            val now = System.currentTimeMillis()
-            if (buffer.size >= 5 || now - lastUpdate >= 50) {
-                withContext(Dispatchers.Main) { updateLogText(buffer) }
-                buffer.clear()
-                lastUpdate = now
-            }
-        }
-        if (buffer.isNotEmpty()) withContext(Dispatchers.Main) { updateLogText(buffer) }
+    // Chuyển readAsync thành NORMAL function, không suspend
+    private fun readStreamAsync(reader: BufferedReader) {
+        Thread {
+            try {
+                val buffer = mutableListOf<String>()
+                var lastUpdate = System.currentTimeMillis()
+                reader.forEachLine { line ->
+                    buffer.add(line)
+                    val now = System.currentTimeMillis()
+                    if (buffer.size >= 5 || now - lastUpdate >= 50) {
+                        updateLogText(buffer)
+                        buffer.clear()
+                        lastUpdate = now
+                    }
+                }
+                if (buffer.isNotEmpty()) updateLogText(buffer)
+            } catch (_: Exception) {}
+        }.start()
     }
     
+    // Cập nhật UI bằng runOnUiThread
     private fun updateLogText(lines: List<String>) {
-        val current = binding.startStateText.text.toString().lines().takeLast(5)
-        binding.startStateText.text = (current + lines).joinToString("\n")
+        runOnUiThread {
+            val current = binding.startStateText.text.toString().lines().takeLast(5)
+            binding.startStateText.text = (current + lines).joinToString("\n")
+        }
     }
 }
