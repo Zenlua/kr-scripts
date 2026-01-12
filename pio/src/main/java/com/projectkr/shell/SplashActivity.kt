@@ -28,7 +28,6 @@ import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.File
-import java.util.Locale
 import android.os.Handler
 
 class SplashActivity : AppCompatActivity() {
@@ -60,20 +59,6 @@ class SplashActivity : AppCompatActivity() {
 
         applyTheme()
     }
-
-    // =================== LANGUAGE ===================
-    override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(applyLanguageFromFile(newBase))
-    }
-
-    private fun applyLanguageFromFile(base: Context): Context = runCatching {
-        File(base.filesDir, "kr-script/language").takeIf { it.exists() }?.readText()?.trim()?.takeIf { it.isNotEmpty() }
-            ?.let { lang ->
-                val locale = lang.split("-").let { if (it.size == 2) Locale(it[0], it[1]) else Locale(lang) }
-                Locale.setDefault(locale)
-                base.createConfigurationContext(Configuration(base.resources.configuration).apply { setLocale(locale) })
-            } ?: base
-    }.getOrElse { base }
 
     // =================== AGREEMENT ===================
     private fun showAgreementDialog() {
