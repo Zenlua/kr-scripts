@@ -1,6 +1,5 @@
 package com.projectkr.shell
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,6 +9,7 @@ import android.os.*
 import android.provider.Settings
 import android.view.animation.AnimationUtils
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
@@ -29,7 +29,6 @@ import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
-import androidx.lifecycle.lifecycleScope
 
 class SplashActivity : AppCompatActivity() {
 
@@ -43,6 +42,7 @@ class SplashActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Nếu đã init và là task root -> chuyển sang Home
         if (ScriptEnvironmen.isInited() && isTaskRoot) {
             gotoHome()
             return
@@ -66,24 +66,24 @@ class SplashActivity : AppCompatActivity() {
     }
 
     private fun applyLanguageFromFile(base: Context): Context {
-    return try {
-        val file = File(base.filesDir, "kr-script/language")
-        if (!file.exists()) base
-        else {
-            val lang = file.readText().trim()
-            if (lang.isEmpty()) base
+        return try {
+            val file = File(base.filesDir, "kr-script/language")
+            if (!file.exists()) base
             else {
-                val locale = lang.split("-").let { if (it.size == 2) Locale(it[0], it[1]) else Locale(lang) }
-                Locale.setDefault(locale)
-                val config = Configuration(base.resources.configuration)
-                config.setLocale(locale)
-                base.createConfigurationContext(config)
+                val lang = file.readText().trim()
+                if (lang.isEmpty()) base
+                else {
+                    val locale = lang.split("-").let { if (it.size == 2) Locale(it[0], it[1]) else Locale(lang) }
+                    Locale.setDefault(locale)
+                    val config = Configuration(base.resources.configuration)
+                    config.setLocale(locale)
+                    base.createConfigurationContext(config)
+                }
             }
+        } catch (_: Exception) {
+            base
         }
-    } catch (_: Exception) {
-        base
     }
-}
 
     // =================== AGREEMENT ===================
     private fun showAgreementDialog() {
@@ -212,7 +212,7 @@ class SplashActivity : AppCompatActivity() {
                 synchronized(rows) {
                     if (rows.size >= 6) rows.removeFirst()
                     rows.addLast(line)
-                    view.text = if (rows.size >= 6) "……\n${rows.joinToString("\n")}" else rows.joinToString("\n")
+                    view.text = rows.joinToString("\n").let { if (rows.size >= 6) "……\n$it" else it }
                 }
             }
         }
