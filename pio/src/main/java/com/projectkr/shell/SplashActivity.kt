@@ -7,28 +7,26 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.*
 import android.widget.TextView
-import android.view.animation.AnimationUtils
-import android.net.Uri
-import android.provider.Settings
-import android.Manifest
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.lifecycleScope
 import com.omarea.common.shell.ShellExecutor
-import com.omarea.common.shell.KeepShellPublic
+import com.omarea.common.shell.KeepShellPublic;
 import com.omarea.common.ui.DialogHelper
 import com.omarea.krscript.executor.ScriptEnvironmen
 import com.projectkr.shell.databinding.ActivitySplashBinding
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.File
-import java.lang.ref.WeakReference
 import java.util.*
+import android.Manifest
+import android.net.Uri
+import android.provider.Settings
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
@@ -131,8 +129,8 @@ class SplashActivity : Activity() {
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(
-                    android.Manifest.permission.READ_EXTERNAL_STORAGE,
-                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
                 ),
                 REQUEST_CODE_PERMISSIONS
             )
@@ -146,8 +144,7 @@ class SplashActivity : Activity() {
         } else {
             started = true
             checkRootAndStart()
-        }
-    
+    }
 
     override fun attachBaseContext(newBase: Context) {
         val ctx = applyLanguageFromFile(newBase)
@@ -228,31 +225,30 @@ class SplashActivity : Activity() {
     }
 
     // =================== LOG ===================
-private class UpdateLogHandler(
-    view: TextView,
-    private val onExit: Runnable
-) {
-    private val viewRef = WeakReference(view)
-    private val rows = ArrayDeque<String>()
+    private class UpdateLogHandler(
+        private val view: TextView,
+        private val onExit: Runnable
+    ) {
+        private val handler = Handler(Looper.getMainLooper())
+        private val rows = ArrayDeque<String>()
+        private var ignored = false
 
-    fun onLogOutput(line: String) {
-        viewRef.get()?.post {
-            synchronized(rows) {
-                if (rows.size >= 6) {
-                    rows.removeFirst()
-                    viewRef.get()?.text = "……\n" + rows.joinToString("\n") + "\n$line"
-                } else {
-                    rows.addLast(line)
-                    viewRef.get()?.text = rows.joinToString("\n")
+        fun onLogOutput(line: String) {
+            handler.post {
+                synchronized(rows) {
+                    if (rows.size >= 6) {
+                        rows.removeFirst()
+                        view.text = "……\n" + rows.joinToString("\n") + "\n$line"
+                    } else {
+                        rows.addLast(line)
+                        view.text = rows.joinToString("\n")
+                    }
                 }
             }
         }
-    }
 
-    fun onExit() {
-        viewRef.get()?.post { onExit.run() }
+        fun onExit() = handler.post { onExit.run() }
     }
-}
 
     private class BeforeStartThread(
         private val context: Context,
@@ -291,23 +287,24 @@ private class UpdateLogHandler(
         }
     }
 
-private fun readAsync(reader: BufferedReader, logHandler: UpdateLogHandler) {
-    lifecycleScope.launch(Dispatchers.IO) {
-        try {
-            val buffer = mutableListOf<String>()
-            var lastUpdate = System.currentTimeMillis()
-            reader.forEachLine { line ->
-                buffer.add(line)
-                val now = System.currentTimeMillis()
-                if (buffer.size >= 5 || now - lastUpdate >= 50) {
-                    logHandler.onLogOutput(buffer.joinToString("\n"))
-                    buffer.clear()
-                    lastUpdate = now
+companion object {
+    private fun readAsync(reader: BufferedReader, logHandler: UpdateLogHandler) =
+        thread(isDaemon = true) {
+            try {
+                val buffer = mutableListOf<String>()
+                var lastUpdate = System.currentTimeMillis()
+                reader.forEachLine { line ->
+                    buffer.add(line)
+                    val now = System.currentTimeMillis()
+                    if (buffer.size >= 5 || now - lastUpdate >= 50) { // 50ms throttle
+                        logHandler.onLogOutput(buffer.joinToString("\n"))
+                        buffer.clear()
+                        lastUpdate = now
+                    }
                 }
-            }
-            if (buffer.isNotEmpty()) logHandler.onLogOutput(buffer.joinToString("\n"))
-        } catch (_: Exception) {}
+                if (buffer.isNotEmpty()) logHandler.onLogOutput(buffer.joinToString("\n"))
+            } catch (_: Exception) {}
+        }
     }
-}
 
 }
