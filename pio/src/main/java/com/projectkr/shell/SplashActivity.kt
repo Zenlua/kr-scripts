@@ -225,20 +225,11 @@ class SplashActivity : AppCompatActivity() {
     // Chuyển readAsync thành NORMAL function, không suspend
     private fun readStreamAsync(reader: BufferedReader) {
         Thread {
-            try {
-                val buffer = mutableListOf<String>()
-                var lastUpdate = System.currentTimeMillis()
-                reader.forEachLine { line ->
-                    buffer.add(line)
-                    val now = System.currentTimeMillis()
-                    if (buffer.size >= 5 || now - lastUpdate >= 50) {
-                        updateLogText(buffer)
-                        buffer.clear()
-                        lastUpdate = now
-                    }
+            reader.forEachLine { line ->
+                runOnUiThread {
+                    binding.startStateText.append(line + "\n")
                 }
-                if (buffer.isNotEmpty()) updateLogText(buffer)
-            } catch (_: Exception) {}
+            }
         }.start()
     }
     
