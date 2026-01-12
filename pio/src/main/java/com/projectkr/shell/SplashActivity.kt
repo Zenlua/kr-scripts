@@ -5,29 +5,30 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.net.Uri
 import android.os.*
-import android.provider.Settings
-import android.view.animation.AnimationUtils
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.lifecycleScope
-import com.omarea.common.shell.KeepShellPublic
 import com.omarea.common.shell.ShellExecutor
+import com.omarea.common.shell.KeepShellPublic;
 import com.omarea.common.ui.DialogHelper
 import com.omarea.krscript.executor.ScriptEnvironmen
 import com.projectkr.shell.databinding.ActivitySplashBinding
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.File
-import java.lang.ref.WeakReference
 import java.util.*
+import android.Manifest
+import android.net.Uri
+import android.provider.Settings
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 class SplashActivity : Activity() {
 
@@ -51,7 +52,6 @@ class SplashActivity : Activity() {
 
         if (!hasAgreed()) showAgreementDialog()
 
-        // Blink animation
         binding.startLogoXml.postDelayed({
             binding.startLogoXml.startAnimation(
                 AnimationUtils.loadAnimation(this, R.anim.blink)
@@ -62,36 +62,31 @@ class SplashActivity : Activity() {
     }
 
     // =================== LANGUAGE ===================
-    override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(applyLanguageFromFile(newBase))
+    private fun applyLanguageFromFile(base: Context): Context {
+        return try {
+            val file = File(base.filesDir, "kr-script/language")
+            if (!file.exists()) return base
+
+            val lang = file.readText().trim()
+            if (lang.isEmpty()) return base
+
+            val locale = if (lang.contains("-")) {
+                val p = lang.split("-")
+                Locale(p[0], p[1])
+            } else Locale(lang)
+
+            Locale.setDefault(locale)
+
+            val config = Configuration(base.resources.configuration)
+            config.setLocale(locale)
+
+            base.createConfigurationContext(config)
+        } catch (_: Exception) {
+            base
+        }
     }
 
-    private fun applyLanguageFromFile(base: Context): Context = try {
-        val file = File(base.filesDir, "kr-script/language")
-        if (!file.exists()) return base
-
-        val lang = file.readText().trim()
-        if (lang.isEmpty()) return base
-
-        val locale = if (lang.contains("-")) {
-            val p = lang.split("-")
-            Locale(p[0], p[1])
-        } else Locale(lang)
-
-        Locale.setDefault(locale)
-        val config = Configuration(base.resources.configuration).apply { setLocale(locale) }
-        base.createConfigurationContext(config)
-    } catch (_: Exception) { base }
-
     // =================== AGREEMENT ===================
-    private fun hasAgreed(): Boolean =
-        getSharedPreferences("kr-script-config", MODE_PRIVATE)
-            .getBoolean("agreed_permissions", false)
-
-    private fun saveAgreement() =
-        getSharedPreferences("kr-script-config", MODE_PRIVATE)
-            .edit().putBoolean("agreed_permissions", true).apply()
-
     private fun showAgreementDialog() {
         DialogHelper.warning(
             this,
@@ -102,18 +97,33 @@ class SplashActivity : Activity() {
         ).setCancelable(false)
     }
 
-    // =================== PERMISSIONS ===================
+    private fun saveAgreement() {
+        getSharedPreferences("kr-script-config", MODE_PRIVATE)
+            .edit()
+            .putBoolean("agreed_permissions", true)
+            .apply()
+    }
+
+    private fun hasAgreed(): Boolean =
+        getSharedPreferences("kr-script-config", MODE_PRIVATE)
+            .getBoolean("agreed_permissions", false)
+
+    // =================== PERMISSION ===================
     private fun hasAllFilesPermission(): Boolean =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
             Environment.isExternalStorageManager()
-        else ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE) ==
-                PackageManager.PERMISSION_GRANTED
+        else
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
 
     private fun requestAllFilesPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             startActivity(
-                Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-                    .apply { data = Uri.parse("package:$packageName") }
+                Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                    data = Uri.parse("package:$packageName")
+                }
             )
         } else {
             ActivityCompat.requestPermissions(
@@ -135,6 +145,11 @@ class SplashActivity : Activity() {
             started = true
             checkRootAndStart()
         }
+    
+
+    override fun attachBaseContext(newBase: Context) {
+        val ctx = applyLanguageFromFile(newBase)
+        super.attachBaseContext(ctx)
     }
 
     override fun onResume() {
@@ -163,7 +178,7 @@ class SplashActivity : Activity() {
         val color = getColor(R.color.splash_bg_color)
         window.statusBarColor = color
         window.navigationBarColor = color
-
+    
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = false
             isAppearanceLightNavigationBars = false
@@ -175,7 +190,7 @@ class SplashActivity : Activity() {
     private fun checkRootAndStart() {
         if (!started || starting) return
         starting = true
-
+    
         lifecycleScope.launch(Dispatchers.IO) {
             hasRoot = KeepShellPublic.checkRoot()
             withContext(Dispatchers.Main) {
@@ -185,35 +200,20 @@ class SplashActivity : Activity() {
         }
     }
 
+    private fun tryRoot(): Boolean {
+        return KeepShellPublic.checkRoot()
+    }
+
     // =================== START ===================
     private fun startToFinish() {
         binding.startStateText.text = getString(R.string.pop_started)
         val config = KrScriptConfig().init(this)
+
         if (config.beforeStartSh.isNotEmpty()) {
-            lifecycleScope.launch(Dispatchers.IO) {
-                executeBeforeStart(config)
-            }
+            BeforeStartThread(this, config, hasRoot,
+                UpdateLogHandler(binding.startStateText) { gotoHome() }
+            ).start()
         } else gotoHome()
-    }
-
-    private suspend fun executeBeforeStart(config: KrScriptConfig) {
-        val process = if (hasRoot) ShellExecutor.getSuperUserRuntime()
-        else ShellExecutor.getRuntime()
-
-        process?.use {
-            DataOutputStream(it.outputStream).use { os ->
-                ScriptEnvironmen.executeShell(
-                    this@SplashActivity, os,
-                    config.beforeStartSh,
-                    config.variables,
-                    null,
-                    "pio-splash"
-                )
-            }
-            readAsync(it.inputStream.bufferedReader(), UpdateLogHandler(binding.startStateText) { gotoHome() })
-            readAsync(it.errorStream.bufferedReader(), UpdateLogHandler(binding.startStateText) { gotoHome() })
-            it.waitFor()
-        }
     }
 
     private fun gotoHome() {
@@ -226,43 +226,86 @@ class SplashActivity : Activity() {
     }
 
     // =================== LOG ===================
-    private class UpdateLogHandler(view: TextView, private val onExit: Runnable) {
-        private val viewRef = WeakReference(view)
-        private val rows = ArrayDeque<String>()
+private class UpdateLogHandler(
+    view: TextView,
+    private val onExit: Runnable
+) {
+    private val viewRef = WeakReference(view)
+    private val rows = ArrayDeque<String>()
 
-        fun onLogOutput(line: String) {
-            viewRef.get()?.post {
-                synchronized(rows) {
-                    if (rows.size >= 6) {
-                        rows.removeFirst()
-                        viewRef.get()?.text = "……\n" + rows.joinToString("\n") + "\n$line"
-                    } else {
-                        rows.addLast(line)
-                        viewRef.get()?.text = rows.joinToString("\n")
-                    }
+    fun onLogOutput(line: String) {
+        viewRef.get()?.post {
+            synchronized(rows) {
+                if (rows.size >= 6) {
+                    rows.removeFirst()
+                    viewRef.get()?.text = "……\n" + rows.joinToString("\n") + "\n$line"
+                } else {
+                    rows.addLast(line)
+                    viewRef.get()?.text = rows.joinToString("\n")
                 }
             }
         }
-
-        fun onExit() { viewRef.get()?.post { onExit.run() } }
     }
 
-    private fun readAsync(reader: BufferedReader, logHandler: UpdateLogHandler) {
-        lifecycleScope.launch(Dispatchers.IO) {
+    fun onExit() {
+        viewRef.get()?.post { onExit.run() }
+    }
+}
+
+    private class BeforeStartThread(
+        private val context: Context,
+        private val config: KrScriptConfig,
+        private val hasRoot: Boolean,
+        private val logHandler: UpdateLogHandler
+    ) : Thread() {
+
+        init {
+            isDaemon = true
+        }
+
+        override fun run() {
             try {
-                val buffer = mutableListOf<String>()
-                var lastUpdate = System.currentTimeMillis()
-                reader.forEachLine { line ->
-                    buffer.add(line)
-                    val now = System.currentTimeMillis()
-                    if (buffer.size >= 5 || now - lastUpdate >= 50) {
-                        logHandler.onLogOutput(buffer.joinToString("\n"))
-                        buffer.clear()
-                        lastUpdate = now
+                val process = if (hasRoot)
+                    ShellExecutor.getSuperUserRuntime()
+                else ShellExecutor.getRuntime()
+
+                process?.let {
+                    DataOutputStream(it.outputStream).use { os ->
+                        ScriptEnvironmen.executeShell(
+                            context, os,
+                            config.beforeStartSh,
+                            config.variables,
+                            null,
+                            "pio-splash"
+                        )
                     }
+                                        SplashActivity.readAsync(it.inputStream.bufferedReader(), logHandler)
+                    SplashActivity.readAsync(it.errorStream.bufferedReader(), logHandler)
+                    it.waitFor()
                 }
-                if (buffer.isNotEmpty()) logHandler.onLogOutput(buffer.joinToString("\n"))
-            } catch (_: Exception) {}
+            } finally {
+                logHandler.onExit()
+            }
         }
     }
+
+private fun readAsync(reader: BufferedReader, logHandler: UpdateLogHandler) {
+    lifecycleScope.launch(Dispatchers.IO) {
+        try {
+            val buffer = mutableListOf<String>()
+            var lastUpdate = System.currentTimeMillis()
+            reader.forEachLine { line ->
+                buffer.add(line)
+                val now = System.currentTimeMillis()
+                if (buffer.size >= 5 || now - lastUpdate >= 50) {
+                    logHandler.onLogOutput(buffer.joinToString("\n"))
+                    buffer.clear()
+                    lastUpdate = now
+                }
+            }
+            if (buffer.isNotEmpty()) logHandler.onLogOutput(buffer.joinToString("\n"))
+        } catch (_: Exception) {}
+    }
+}
+
 }
