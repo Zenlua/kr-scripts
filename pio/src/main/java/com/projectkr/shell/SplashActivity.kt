@@ -45,10 +45,11 @@ class SplashActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         if (ScriptEnvironmen.isInited()) {
-            applyTheme()
             if (isTaskRoot) gotoHome()
             return
         }
+
+        applyTheme()
 
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
