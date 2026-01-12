@@ -47,7 +47,7 @@ class SplashActivity : AppCompatActivity() {
             return
         }
 
-         if (!hasAgreed()) showAgreementDialog()
+        if (!hasAgreed()) showAgreementDialog()
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -222,22 +222,25 @@ class SplashActivity : AppCompatActivity() {
     }
     
     // Chuyển readAsync thành NORMAL function, không suspend
+    private val rows = mutableListOf<String>()
+    private var ignored = false
+    private val maxLines = 4
+    
     private fun readStreamAsync(reader: BufferedReader) {
         Thread {
             reader.forEachLine { line ->
                 runOnUiThread {
-                    binding.startStateText.append(line + "\n")
+                    synchronized(rows) {
+                        if (rows.size >= maxLines) {
+                            rows.removeAt(0)
+                            ignored = true
+                        }
+                        rows.add(line)
+                        binding.startStateText.text =
+                            rows.joinToString("\n", if (ignored) "……\n" else "")
+                    }
                 }
             }
         }.start()
-    }
-    
-    // Cập nhật UI bằng runOnUiThread
-    private fun updateLogText(lines: List<String>) {
-        runOnUiThread {
-            val current = binding.startStateText.text.toString().lines()
-            val allLines = (current + lines).takeLast(4) // Luôn giữ 4 dòng cuối cùng
-            binding.startStateText.text = allLines.joinToString("\n")
-        }
     }
 }
