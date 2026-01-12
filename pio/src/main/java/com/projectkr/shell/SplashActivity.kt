@@ -66,7 +66,6 @@ class SplashActivity : AppCompatActivity() {
         runCatching {
             val langFile = File(filesDir, "kr-script/language")
             if (!langFile.exists() || langFile.readText().trim().isEmpty()) return
-    
             val lang = langFile.readText().trim()
             val locale = if (lang.contains("-") || lang.contains("_")) {
                 val (language, country) = lang.split("-", "_", limit = 2)
