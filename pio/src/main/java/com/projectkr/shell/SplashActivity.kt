@@ -22,23 +22,24 @@ import java.util.*
 import android.Manifest
 import android.net.Uri
 import android.provider.Settings
+import androidx.activity.ComponentActivity
 
-class SplashActivity : Activity() {
+class SplashActivity : ComponentActivity() {
 
     private lateinit var binding: ActivitySplashBinding
     private val mainHandler = Handler(Looper.getMainLooper())
 
-    @Volatile private var hasRoot = false
-    @Volatile private var started = false
-    @Volatile private var starting = false
+    private var hasRoot = false
+    private var started = false
+    private var starting = false
 
     private val REQUEST_CODE_PERMISSIONS = 1001
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        applyLanguageFromFile()
         super.onCreate(savedInstanceState)
 
         if (ScriptEnvironmen.isInited()) {
+            applyTheme()
             if (isTaskRoot) gotoHome()
             return
         }
@@ -52,35 +53,34 @@ class SplashActivity : Activity() {
             )
         }, 1500)
 
-        applyTheme()
-
         if (!hasAgreed()) {
             showAgreementDialog()
         }
     }
 
     // =================== LANGUAGE ===================
-    private fun applyLanguageFromFile() {
-        try {
-            val file = File(filesDir, "kr-script/language")
-            if (!file.exists()) return
-
+    private fun applyLanguageFromFile(base: Context): Context {
+        return try {
+            val file = File(base.filesDir, "kr-script/language")
+            if (!file.exists()) return base
+    
             val lang = file.readText().trim()
-            if (lang.isEmpty()) return
-
+            if (lang.isEmpty()) return base
+    
             val locale = if (lang.contains("-")) {
                 val p = lang.split("-")
                 Locale(p[0], p[1])
             } else Locale(lang)
-
+    
             Locale.setDefault(locale)
-
-            val config = Configuration(resources.configuration)
+    
+            val config = Configuration(base.resources.configuration)
             config.setLocale(locale)
-
-            @Suppress("DEPRECATION")
-            resources.updateConfiguration(config, resources.displayMetrics)
-        } catch (_: Exception) {}
+    
+            base.createConfigurationContext(config)
+        } catch (_: Exception) {
+            base
+        }
     }
 
     // =================== AGREEMENT ===================
@@ -146,12 +146,15 @@ class SplashActivity : Activity() {
         checkRootAndStart()
     }
 
+    override fun attachBaseContext(newBase: Context) {
+        val ctx = applyLanguageFromFile(newBase)
+        super.attachBaseContext(ctx)
+    }
+
     override fun onResume() {
         super.onResume()
-
-        if (hasAgreed()) {
+        if (hasAgreed() && !started) {
             started = true
-            starting = false
             checkRootAndStart()
         }
     }
@@ -188,21 +191,25 @@ class SplashActivity : Activity() {
         if (!started || starting) return
         starting = true
 
-        Thread {
+        lifecycleScope.launch(Dispatchers.IO) {
             hasRoot = tryRoot()
-            mainHandler.post {
+            withContext(Dispatchers.Main) {
                 starting = false
                 startToFinish()
             }
-        }.start()
+        }
     }
 
     private fun tryRoot(): Boolean = try {
-        Runtime.getRuntime().exec("su").apply {
-            outputStream.write("exit\n".toByteArray())
-            outputStream.flush()
-        }.waitFor() == 0
-    } catch (_: Exception) { false }
+        val p = Runtime.getRuntime().exec("su")
+        p.outputStream.use {
+            it.write("exit\n".toByteArray())
+            it.flush()
+        }
+        p.waitFor(3, TimeUnit.SECONDS) && p.exitValue() == 0
+    } catch (_: Exception) {
+        false
+    }
 
     // =================== START ===================
     private fun startToFinish() {
@@ -231,18 +238,19 @@ class SplashActivity : Activity() {
         private val onExit: Runnable
     ) {
         private val handler = Handler(Looper.getMainLooper())
-        private val rows = LinkedList<String>()
+        private val rows = ArrayDeque<String>()
         private var ignored = false
 
         fun onLogOutput(line: String) {
             handler.post {
                 synchronized(rows) {
-                    if (rows.size > 6) {
+                    if (rows.size >= 6) {
                         rows.removeFirst()
-                        ignored = true
+                        view.text = "……\n" + rows.joinToString("\n") + "\n$line"
+                    } else {
+                        rows.addLast(line)
+                        view.text = rows.joinToString("\n")
                     }
-                    rows.add(line)
-                    view.text = rows.joinToString("\n", if (ignored) "……\n" else "")
                 }
             }
         }
@@ -256,6 +264,10 @@ class SplashActivity : Activity() {
         private val hasRoot: Boolean,
         private val logHandler: UpdateLogHandler
     ) : Thread() {
+    
+        init {
+            isDaemon = true
+        }
 
         override fun run() {
             try {
@@ -264,16 +276,17 @@ class SplashActivity : Activity() {
                 else ShellExecutor.getRuntime()
 
                 process?.let {
-                    val os = DataOutputStream(it.outputStream)
-                    ScriptEnvironmen.executeShell(
-                        context, os,
-                        config.beforeStartSh,
-                        config.variables,
-                        null,
-                        "pio-splash"
-                    )
-                    StreamReaderThread(it.inputStream.bufferedReader(), logHandler).start()
-                    StreamReaderThread(it.errorStream.bufferedReader(), logHandler).start()
+                    DataOutputStream(it.outputStream).use { os ->
+                        ScriptEnvironmen.executeShell(
+                            context, os,
+                            config.beforeStartSh,
+                            config.variables,
+                            null,
+                            "pio-splash"
+                        )
+                    }
+                    readAsync(it.inputStream.bufferedReader(), logHandler)
+                    readAsync(it.errorStream.bufferedReader(), logHandler)
                     it.waitFor()
                 }
             } finally {
@@ -282,12 +295,21 @@ class SplashActivity : Activity() {
         }
     }
 
-    private class StreamReaderThread(
-        private val reader: BufferedReader,
-        private val logHandler: UpdateLogHandler
-    ) : Thread() {
-        override fun run() {
-            reader.forEachLine { logHandler.onLogOutput(it) }
-        }
+private fun readAsync(reader: BufferedReader, logHandler: UpdateLogHandler) =
+    thread(isDaemon = true) {
+        try {
+            val buffer = mutableListOf<String>()
+            var lastUpdate = System.currentTimeMillis()
+            reader.forEachLine { line ->
+                buffer.add(line)
+                val now = System.currentTimeMillis()
+                if (buffer.size >= 5 || now - lastUpdate >= 50) { // 50ms throttle
+                    logHandler.onLogOutput(buffer.joinToString("\n"))
+                    buffer.clear()
+                    lastUpdate = now
+                }
+            }
+            if (buffer.isNotEmpty()) logHandler.onLogOutput(buffer.joinToString("\n"))
+        } catch (_: Exception) {}
     }
 }
