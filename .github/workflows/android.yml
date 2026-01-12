@@ -59,7 +59,7 @@ jobs:
       - name: Build Debug APK
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --daemon --parallel -x lint -x test
+          ./gradlew assembleDebug --daemon --parallel -Xlint:deprecation -x lint -x test
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
