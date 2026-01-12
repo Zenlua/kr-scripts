@@ -20,11 +20,11 @@ import androidx.lifecycle.lifecycleScope
 import com.omarea.common.shell.KeepShellPublic
 import com.omarea.common.shell.ShellExecutor
 import com.omarea.common.ui.DialogHelper
+import com.omarea.krscript.executor.ScriptEnvironmen
+import com.projectkr.shell.databinding.ActivitySplashBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.omarea.krscript.executor.ScriptEnvironmen
-import com.projectkr.shell.databinding.ActivitySplashBinding
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.File
