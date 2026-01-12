@@ -264,24 +264,6 @@ class SplashActivity : ComponentActivity() {
         fun onExit() = handler.post { onExit.run() }
     }
 
-    private fun readAsync(reader: BufferedReader, logHandler: UpdateLogHandler) =
-        thread(isDaemon = true) {
-            try {
-                val buffer = mutableListOf<String>()
-                var lastUpdate = System.currentTimeMillis()
-                reader.forEachLine { line ->
-                    buffer.add(line)
-                    val now = System.currentTimeMillis()
-                    if (buffer.size >= 5 || now - lastUpdate >= 50) { // 50ms throttle
-                        logHandler.onLogOutput(buffer.joinToString("\n"))
-                        buffer.clear()
-                        lastUpdate = now
-                    }
-                }
-                if (buffer.isNotEmpty()) logHandler.onLogOutput(buffer.joinToString("\n"))
-            } catch (_: Exception) {}
-        }
-
     private class BeforeStartThread(
         private val context: Context,
         private val config: KrScriptConfig,
@@ -309,8 +291,8 @@ class SplashActivity : ComponentActivity() {
                             "pio-splash"
                         )
                     }
-                    readAsync(it.inputStream.bufferedReader(), logHandler)
-                    readAsync(it.errorStream.bufferedReader(), logHandler)
+                                        SplashActivity.readAsync(it.inputStream.bufferedReader(), logHandler)
+                    SplashActivity.readAsync(it.errorStream.bufferedReader(), logHandler)
                     it.waitFor()
                 }
             } finally {
@@ -318,4 +300,25 @@ class SplashActivity : ComponentActivity() {
             }
         }
     }
+
+companion object {
+    private fun readAsync(reader: BufferedReader, logHandler: UpdateLogHandler) =
+        thread(isDaemon = true) {
+            try {
+                val buffer = mutableListOf<String>()
+                var lastUpdate = System.currentTimeMillis()
+                reader.forEachLine { line ->
+                    buffer.add(line)
+                    val now = System.currentTimeMillis()
+                    if (buffer.size >= 5 || now - lastUpdate >= 50) { // 50ms throttle
+                        logHandler.onLogOutput(buffer.joinToString("\n"))
+                        buffer.clear()
+                        lastUpdate = now
+                    }
+                }
+                if (buffer.isNotEmpty()) logHandler.onLogOutput(buffer.joinToString("\n"))
+            } catch (_: Exception) {}
+        }
+    }
+
 }
