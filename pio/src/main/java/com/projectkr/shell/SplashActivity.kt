@@ -5,12 +5,12 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.net.Uri
-import android.os.*
+import android.os.Build
+import android.os.Bundle
+import android.os.Environment
 import android.provider.Settings
 import android.view.animation.AnimationUtils
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -27,8 +27,6 @@ import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.File
 import java.util.*
-import java.util.concurrent.TimeUnit
-import kotlin.concurrent.thread
 
 class SplashActivity : AppCompatActivity() {
 
@@ -53,6 +51,7 @@ class SplashActivity : AppCompatActivity() {
 
         if (!hasAgreed()) showAgreementDialog()
 
+        // Animation logo
         binding.startLogoXml.postDelayed({
             binding.startLogoXml.startAnimation(AnimationUtils.loadAnimation(this, R.anim.blink))
         }, 1500)
@@ -65,25 +64,14 @@ class SplashActivity : AppCompatActivity() {
         super.attachBaseContext(applyLanguageFromFile(newBase))
     }
 
-    private fun applyLanguageFromFile(base: Context): Context {
-        return try {
-            val file = File(base.filesDir, "kr-script/language")
-            if (!file.exists()) base
-            else {
-                val lang = file.readText().trim()
-                if (lang.isEmpty()) base
-                else {
-                    val locale = lang.split("-").let { if (it.size == 2) Locale(it[0], it[1]) else Locale(lang) }
-                    Locale.setDefault(locale)
-                    val config = Configuration(base.resources.configuration)
-                    config.setLocale(locale)
-                    base.createConfigurationContext(config)
-                }
-            }
-        } catch (_: Exception) {
-            base
-        }
-    }
+    private fun applyLanguageFromFile(base: Context): Context = runCatching {
+        File(base.filesDir, "kr-script/language").takeIf { it.exists() }?.readText()?.trim()?.takeIf { it.isNotEmpty() }
+            ?.let { lang ->
+                val locale = lang.split("-").let { if (it.size == 2) Locale(it[0], it[1]) else Locale(lang) }
+                Locale.setDefault(locale)
+                base.createConfigurationContext(Configuration(base.resources.configuration).apply { setLocale(locale) })
+            } ?: base
+    }.getOrElse { base }
 
     // =================== AGREEMENT ===================
     private fun showAgreementDialog() {
@@ -120,6 +108,7 @@ class SplashActivity : AppCompatActivity() {
                 data = Uri.parse("package:$packageName")
             })
         } else {
+            // Legacy permission
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE),
@@ -189,7 +178,7 @@ class SplashActivity : AppCompatActivity() {
         val config = KrScriptConfig().init(this)
 
         if (config.beforeStartSh.isNotEmpty()) {
-            BeforeStartThread(this, config, hasRoot, UpdateLogHandler(binding.startStateText) { gotoHome() }).start()
+            runBeforeStartSh(config, hasRoot)
         } else gotoHome()
     }
 
@@ -202,63 +191,42 @@ class SplashActivity : AppCompatActivity() {
         finish()
     }
 
-    // =================== LOG ===================
-    private class UpdateLogHandler(private val view: TextView, private val onExit: Runnable) {
-        private val handler = Handler(Looper.getMainLooper())
-        private val rows = ArrayDeque<String>()
-
-        fun onLogOutput(line: String) {
-            handler.post {
-                synchronized(rows) {
-                    if (rows.size >= 6) rows.removeFirst()
-                    rows.addLast(line)
-                    view.text = rows.joinToString("\n").let { if (rows.size >= 6) "……\n$it" else it }
-                }
-            }
-        }
-
-        fun onExit() = handler.post { onExit.run() }
-    }
-
-    private class BeforeStartThread(
-        private val context: Context,
-        private val config: KrScriptConfig,
-        private val hasRoot: Boolean,
-        private val logHandler: UpdateLogHandler
-    ) : Thread() {
-        init { isDaemon = true }
-
-        override fun run() {
+    // =================== RUN SHELL + LOG ===================
+    private fun runBeforeStartSh(config: KrScriptConfig, hasRoot: Boolean) {
+        lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val process = if (hasRoot) ShellExecutor.getSuperUserRuntime() else ShellExecutor.getRuntime()
                 process?.let {
                     DataOutputStream(it.outputStream).use { os ->
-                        ScriptEnvironmen.executeShell(context, os, config.beforeStartSh, config.variables, null, "pio-splash")
+                        ScriptEnvironmen.executeShell(this@SplashActivity, os, config.beforeStartSh, config.variables, null, "pio-splash")
                     }
-                    readAsync(it.inputStream.bufferedReader(), logHandler)
-                    readAsync(it.errorStream.bufferedReader(), logHandler)
+                    launch { readAsync(it.inputStream.bufferedReader()) }
+                    launch { readAsync(it.errorStream.bufferedReader()) }
                     it.waitFor()
                 }
-            } finally { logHandler.onExit() }
+            } finally {
+                withContext(Dispatchers.Main) { gotoHome() }
+            }
         }
     }
 
-    companion object {
-        private fun readAsync(reader: BufferedReader, logHandler: UpdateLogHandler) = thread(isDaemon = true) {
-            try {
-                val buffer = mutableListOf<String>()
-                var lastUpdate = System.currentTimeMillis()
-                reader.forEachLine { line ->
-                    buffer.add(line)
-                    val now = System.currentTimeMillis()
-                    if (buffer.size >= 5 || now - lastUpdate >= 50) {
-                        logHandler.onLogOutput(buffer.joinToString("\n"))
-                        buffer.clear()
-                        lastUpdate = now
-                    }
-                }
-                if (buffer.isNotEmpty()) logHandler.onLogOutput(buffer.joinToString("\n"))
-            } catch (_: Exception) {}
+    private suspend fun readAsync(reader: BufferedReader) {
+        val buffer = mutableListOf<String>()
+        var lastUpdate = System.currentTimeMillis()
+        reader.forEachLine { line ->
+            buffer.add(line)
+            val now = System.currentTimeMillis()
+            if (buffer.size >= 5 || now - lastUpdate >= 50) {
+                updateLogText(buffer)
+                buffer.clear()
+                lastUpdate = now
+            }
         }
+        if (buffer.isNotEmpty()) updateLogText(buffer)
+    }
+
+    private suspend fun updateLogText(lines: List<String>) = withContext(Dispatchers.Main) {
+        val current = binding.startStateText.text.toString().lines().takeLast(5)
+        binding.startStateText.text = (current + lines).joinToString("\n")
     }
 }
