@@ -29,6 +29,8 @@ import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
+import androidx.activity.ComponentActivity
+import androidx.lifecycle.lifecycleScope
 
 class SplashActivity : Activity() {
 
@@ -64,20 +66,25 @@ class SplashActivity : Activity() {
         super.attachBaseContext(applyLanguageFromFile(newBase))
     }
 
-    private fun applyLanguageFromFile(base: Context): Context = try {
+    private fun applyLanguageFromFile(base: Context): Context {
+    return try {
         val file = File(base.filesDir, "kr-script/language")
-        if (!file.exists()) return base
-
-        val lang = file.readText().trim()
-        if (lang.isEmpty()) return base
-
-        val locale = lang.split("-").let { if (it.size == 2) Locale(it[0], it[1]) else Locale(lang) }
-        Locale.setDefault(locale)
-
-        val config = Configuration(base.resources.configuration)
-        config.setLocale(locale)
-        base.createConfigurationContext(config)
-    } catch (_: Exception) { base }
+        if (!file.exists()) base
+        else {
+            val lang = file.readText().trim()
+            if (lang.isEmpty()) base
+            else {
+                val locale = lang.split("-").let { if (it.size == 2) Locale(it[0], it[1]) else Locale(lang) }
+                Locale.setDefault(locale)
+                val config = Configuration(base.resources.configuration)
+                config.setLocale(locale)
+                base.createConfigurationContext(config)
+            }
+        }
+    } catch (_: Exception) {
+        base
+    }
+}
 
     // =================== AGREEMENT ===================
     private fun showAgreementDialog() {
