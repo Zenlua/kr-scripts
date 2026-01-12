@@ -153,7 +153,7 @@ class SplashActivity : Activity() {
             started = true
             starting = false
             checkRootAndStart()
-        }
+        } else finish()
     }
 
     override fun onRequestPermissionsResult(
