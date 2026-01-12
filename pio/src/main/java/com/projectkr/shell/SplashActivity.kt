@@ -11,6 +11,7 @@ import android.os.Environment
 import android.provider.Settings
 import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -209,7 +210,7 @@ class SplashActivity : AppCompatActivity() {
             }
         }
     }
-
+    
     private suspend fun readAsync(reader: BufferedReader) {
         val buffer = mutableListOf<String>()
         var lastUpdate = System.currentTimeMillis()
@@ -217,15 +218,15 @@ class SplashActivity : AppCompatActivity() {
             buffer.add(line)
             val now = System.currentTimeMillis()
             if (buffer.size >= 5 || now - lastUpdate >= 50) {
-                updateLogText(buffer)
+                withContext(Dispatchers.Main) { updateLogText(buffer) }
                 buffer.clear()
                 lastUpdate = now
             }
         }
-        if (buffer.isNotEmpty()) updateLogText(buffer)
+        if (buffer.isNotEmpty()) withContext(Dispatchers.Main) { updateLogText(buffer) }
     }
-
-    private suspend fun updateLogText(lines: List<String>) = withContext(Dispatchers.Main) {
+    
+    private fun updateLogText(lines: List<String>) {
         val current = binding.startStateText.text.toString().lines().takeLast(5)
         binding.startStateText.text = (current + lines).joinToString("\n")
     }
