@@ -29,6 +29,7 @@ import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.File
 import android.os.Handler
+import java.util.Locale
 
 class SplashActivity : AppCompatActivity() {
 
@@ -40,6 +41,7 @@ class SplashActivity : AppCompatActivity() {
     private var starting = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        applyAppLanguage()
         super.onCreate(savedInstanceState)
 
         // Nếu đã init và là task root -> chuyển sang Home
@@ -58,6 +60,26 @@ class SplashActivity : AppCompatActivity() {
         }, 1500)
 
         applyTheme()
+    }
+
+    private fun applyAppLanguage() {
+        runCatching {
+            val langFile = File(filesDir, "kr-script/language")
+            if (!langFile.exists()) return
+            val lang = langFile.readText().trim()
+            if (lang.isEmpty()) return
+            val parts = lang.split("-")
+            val locale = if (parts.size == 2)
+                Locale(parts[0], parts[1])
+            else
+                Locale(lang)
+            if (Locale.getDefault() == locale) return
+            Locale.setDefault(locale)
+            val config = Configuration(resources.configuration)
+            config.setLocale(locale)
+            @Suppress("DEPRECATION")
+            resources.updateConfiguration(config, resources.displayMetrics)
+        }
     }
 
     // =================== AGREEMENT ===================
@@ -195,11 +217,11 @@ class SplashActivity : AppCompatActivity() {
                             "pio-splash"
                         )
                     }
-    
+
                     // Đọc stdout và stderr bằng coroutine con
                     launch { readStreamAsync(it.inputStream.bufferedReader()) }
                     launch { readStreamAsync(it.errorStream.bufferedReader()) }
-    
+
                     it.waitFor()
                 }
             } finally {
@@ -207,13 +229,13 @@ class SplashActivity : AppCompatActivity() {
             }
         }
     }
-    
+
     // Buffer lưu 4 dòng cuối
     private val rows = mutableListOf<String>()
     private var ignored = false
     private val maxLines = 4
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
-    
+
     private fun readStreamAsync(reader: BufferedReader) {
         Thread {
             reader.forEachLine { line ->
@@ -221,7 +243,7 @@ class SplashActivity : AppCompatActivity() {
             }
         }.start()
     }
-    
+
     private fun onLogOutput(log: String) {
         handler.post {
             synchronized(rows) {
@@ -230,7 +252,7 @@ class SplashActivity : AppCompatActivity() {
                     ignored = true
                 }
                 rows.add(log)
-    
+
                 binding.startStateText.text = rows.joinToString("\n", if (ignored) "……\n" else "")
             }
         }
