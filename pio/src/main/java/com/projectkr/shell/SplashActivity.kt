@@ -47,10 +47,9 @@ class SplashActivity : AppCompatActivity() {
             return
         }
 
+         if (!hasAgreed()) showAgreementDialog()
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        if (!hasAgreed()) showAgreementDialog()
 
         // Animation logo
         binding.startLogoXml.postDelayed({
