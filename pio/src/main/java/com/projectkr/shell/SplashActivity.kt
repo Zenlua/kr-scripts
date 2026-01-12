@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
 import android.view.animation.AnimationUtils
+import android.text.method.ScrollingMovementMethod
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -223,21 +224,25 @@ class SplashActivity : AppCompatActivity() {
     
     // Chuyển readAsync thành NORMAL function, không suspend
     private val rows = mutableListOf<String>()
-    private var ignored = false
     private val maxLines = 4
     
     private fun readStreamAsync(reader: BufferedReader) {
+        binding.startStateText.movementMethod = android.text.method.ScrollingMovementMethod.getInstance()
+    
         Thread {
             reader.forEachLine { line ->
                 runOnUiThread {
-                    synchronized(rows) {
-                        if (rows.size >= maxLines) {
-                            rows.removeAt(0)
-                            ignored = true
+                    rows.add(line)
+                    while (rows.size > maxLines) {
+                        rows.removeAt(0)
+                    }
+                    binding.startStateText.text = rows.joinToString("\n")
+    
+                    binding.startStateText.post {
+                        val scrollAmount = binding.startStateText.layout?.getLineTop(binding.startStateText.lineCount) ?: 0
+                        if (scrollAmount > binding.startStateText.height) {
+                            binding.startStateText.scrollTo(0, scrollAmount - binding.startStateText.height)
                         }
-                        rows.add(line)
-                        binding.startStateText.text =
-                            rows.joinToString("\n", if (ignored) "……\n" else "")
                     }
                 }
             }
