@@ -4,101 +4,64 @@ import android.app.Application
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
+import android.util.Log
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 class PIO : Application() {
 
     override fun attachBaseContext(base: Context) {
-        log(base, "attachBaseContext() CALLED")
-        val ctx = applyLanguagePre33(base)
-        super.attachBaseContext(ctx)
+        Log.d("LANG", "Application.attachBaseContext")
+        super.attachBaseContext(wrapContext(base))
     }
 
     override fun onCreate() {
         super.onCreate()
-        log(this, "onCreate() CALLED sdk=${Build.VERSION.SDK_INT}")
-        applyLanguage33Plus()
+        Log.d("LANG", "Application.onCreate sdk=${Build.VERSION.SDK_INT}")
     }
 
-    // Android 21 → 32
-    private fun applyLanguagePre33(base: Context): Context {
-        val tag = readLanguageTag(base)
-        log(base, "applyLanguagePre33 tag=$tag")
+    companion object {
 
-        if (tag == null) {
-            log(base, "NO language file → use system locale")
-            return base
-        }
+        private const val TAG = "LANG"
 
-        val locale = Locale.forLanguageTag(tag)
-        Locale.setDefault(locale)
+        /**
+         * Áp dụng locale từ:
+         * /data/data/com.projectkr.shell/files/kr-script/language
+         */
+        fun wrapContext(base: Context): Context {
+            val file = File(base.filesDir, "kr-script/language")
+            if (!file.exists()) {
+                Log.d(TAG, "language file not found")
+                return base
+            }
 
-        val config = Configuration(base.resources.configuration)
-        config.setLocale(locale)
+            val tag = file.readText().trim()
+            if (tag.isEmpty()) {
+                Log.d(TAG, "language file empty")
+                return base
+            }
 
-        log(base, "setLocale (pre33) = ${locale.toLanguageTag()}")
-        return base.createConfigurationContext(config)
-    }
+            Log.d(TAG, "language tag=$tag")
 
-    // Android 33+
-    private fun applyLanguage33Plus() {
-        if (Build.VERSION.SDK_INT < 33) {
-            log(this, "SDK < 33 → skip AppCompatDelegate")
-            return
-        }
+            val locale = if (tag.contains("-")) {
+                val sp = tag.split("-")
+                if (sp.size == 2) Locale(sp[0], sp[1]) else Locale(sp[0])
+            } else {
+                Locale(tag)
+            }
 
-        val tag = readLanguageTag(this)
-        log(this, "applyLanguage33Plus tag=$tag")
+            Locale.setDefault(locale)
 
-        if (tag == null) {
-            log(this, "NO language file → keep system locale")
-            return
-        }
+            val config = Configuration(base.resources.configuration)
+            config.setLocale(locale)
 
-        val locales = LocaleListCompat.forLanguageTags(tag)
-        AppCompatDelegate.setApplicationLocales(locales)
-
-        log(this, "AppCompatDelegate.setApplicationLocales($tag)")
-    }
-
-    // ==== FILE HELPERS ====
-
-    private fun readLanguageTag(ctx: Context): String? {
-        val dir = File(ctx.filesDir, "kr-script")
-        val file = File(dir, "language")
-
-        log(ctx, "language file path=${file.absolutePath}")
-
-        if (!file.exists()) {
-            log(ctx, "language file NOT FOUND")
-            return null
-        }
-
-        val content = file.readText().trim()
-        log(ctx, "language file content='$content'")
-
-        return content.ifEmpty {
-            log(ctx, "language file EMPTY")
-            null
-        }
-    }
-
-    private fun log(ctx: Context, msg: String) {
-        try {
-            val dir = File(ctx.filesDir, "kr-script")
-            if (!dir.exists()) dir.mkdirs()
-
-            val logFile = File(dir, "language.log")
-            val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
-                .format(Date())
-
-            logFile.appendText("[$time] $msg\n")
-        } catch (_: Throwable) {
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                base.createConfigurationContext(config)
+            } else {
+                @Suppress("DEPRECATION")
+                base.resources.updateConfiguration(config, base.resources.displayMetrics)
+                base
+            }
         }
     }
 }
