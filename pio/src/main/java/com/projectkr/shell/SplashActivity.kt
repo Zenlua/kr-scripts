@@ -245,8 +245,9 @@ class SplashActivity : AppCompatActivity() {
     // Cập nhật UI bằng runOnUiThread
     private fun updateLogText(lines: List<String>) {
         runOnUiThread {
-            val current = binding.startStateText.text.toString().lines().takeLast(5)
-            binding.startStateText.text = (current + lines).joinToString("\n")
+            val current = binding.startStateText.text.toString().lines()
+            val allLines = (current + lines).takeLast(4) // Luôn giữ 4 dòng cuối cùng
+            binding.startStateText.text = allLines.joinToString("\n")
         }
     }
 }
