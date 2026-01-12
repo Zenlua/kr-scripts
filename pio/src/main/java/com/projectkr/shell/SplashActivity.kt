@@ -223,29 +223,28 @@ class SplashActivity : AppCompatActivity() {
     }
     
     // Chuyển readAsync thành NORMAL function, không suspend
-    private val rows = mutableListOf<String>()
+    private val rows = ArrayDeque<String>()
     private val maxLines = 4
-    
+
     private fun readStreamAsync(reader: BufferedReader) {
-        binding.startStateText.movementMethod = android.text.method.ScrollingMovementMethod.getInstance()
-    
-        Thread {
+        binding.startStateText.movementMethod = ScrollingMovementMethod.getInstance()
+        lifecycleScope.launch(Dispatchers.IO) {
             reader.forEachLine { line ->
-                runOnUiThread {
-                    rows.add(line)
-                    while (rows.size > maxLines) {
-                        rows.removeAt(0)
-                    }
+                rows.addLast(line)
+                if (rows.size > maxLines) rows.removeFirst()
+                withContext(Dispatchers.Main) {
                     binding.startStateText.text = rows.joinToString("\n")
-    
-                    binding.startStateText.post {
-                        val scrollAmount = binding.startStateText.layout?.getLineTop(binding.startStateText.lineCount) ?: 0
-                        if (scrollAmount > binding.startStateText.height) {
-                            binding.startStateText.scrollTo(0, scrollAmount - binding.startStateText.height)
-                        }
-                    }
+                    binding.startStateText.scrollToBottom()
                 }
             }
-        }.start()
+        }
+    }
+    
+    // Hàm extension để scroll xuống cuối TextView gọn hơn
+    private fun TextView.scrollToBottom() {
+        post {
+            val scrollAmount = layout?.getLineTop(lineCount) ?: 0
+            if (scrollAmount > height) scrollTo(0, scrollAmount - height)
+        }
     }
 }
