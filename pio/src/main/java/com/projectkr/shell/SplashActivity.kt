@@ -29,7 +29,6 @@ import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
-import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 
 class SplashActivity : Activity() {
