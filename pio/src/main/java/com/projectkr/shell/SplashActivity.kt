@@ -7,32 +7,30 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.*
 import android.widget.TextView
+import android.view.animation.AnimationUtils
+import android.net.Uri
+import android.provider.Settings
+import android.Manifest
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
 import com.omarea.common.shell.ShellExecutor
-import com.omarea.common.shell.KeepShellPublic;
+import com.omarea.common.shell.KeepShellPublic
 import com.omarea.common.ui.DialogHelper
 import com.omarea.krscript.executor.ScriptEnvironmen
 import com.projectkr.shell.databinding.ActivitySplashBinding
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.File
+import java.lang.ref.WeakReference
 import java.util.*
-import android.Manifest
-import android.net.Uri
-import android.provider.Settings
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class SplashActivity : Activity() {
 
