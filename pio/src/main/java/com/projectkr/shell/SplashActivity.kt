@@ -10,7 +10,6 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
 import android.view.animation.AnimationUtils
-import android.text.method.ScrollingMovementMethod
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -23,9 +22,6 @@ import com.omarea.common.shell.ShellExecutor
 import com.omarea.common.ui.DialogHelper
 import com.omarea.krscript.executor.ScriptEnvironmen
 import com.projectkr.shell.databinding.ActivitySplashBinding
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.File
@@ -224,30 +220,30 @@ class SplashActivity : AppCompatActivity() {
     }
     
     // Buffer lưu 4 dòng cuối
-    private val rows = ArrayDeque<String>()
+    private val rows = mutableListOf<String>()
+    private var ignored = false
     private val maxLines = 4
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
     
     private fun readStreamAsync(reader: BufferedReader) {
-        binding.startStateText.movementMethod = ScrollingMovementMethod.getInstance()
-    
-        lifecycleScope.launch(Dispatchers.IO) {
+        Thread {
             reader.forEachLine { line ->
-                rows.addLast(line)
-                if (rows.size > maxLines) rows.removeFirst()
-    
-                withContext(Dispatchers.Main) {
-                    binding.startStateText.text = rows.joinToString("\n")
-                    binding.startStateText.scrollToBottom()
-                }
+                onLogOutput(line)
             }
-        }
+        }.start()
     }
     
-    // Extension function gọn để scroll xuống cuối
-    private fun TextView.scrollToBottom() {
-        post {
-            val scrollAmount = layout?.getLineTop(lineCount) ?: 0
-            if (scrollAmount > height) scrollTo(0, scrollAmount - height)
+    private fun onLogOutput(log: String) {
+        handler.post {
+            synchronized(rows) {
+                if (rows.size >= maxLines) {
+                    rows.removeAt(0)
+                    ignored = true
+                }
+                rows.add(log)
+    
+                binding.startStateText.text = rows.joinToString("\n", if (ignored) "……\n" else "")
+            }
         }
     }
 }
