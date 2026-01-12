@@ -223,16 +223,18 @@ class SplashActivity : AppCompatActivity() {
         }
     }
     
-    // Chuyển readAsync thành NORMAL function, không suspend
+    // Buffer lưu 4 dòng cuối
     private val rows = ArrayDeque<String>()
     private val maxLines = 4
-
+    
     private fun readStreamAsync(reader: BufferedReader) {
         binding.startStateText.movementMethod = ScrollingMovementMethod.getInstance()
+    
         lifecycleScope.launch(Dispatchers.IO) {
             reader.forEachLine { line ->
                 rows.addLast(line)
                 if (rows.size > maxLines) rows.removeFirst()
+    
                 withContext(Dispatchers.Main) {
                     binding.startStateText.text = rows.joinToString("\n")
                     binding.startStateText.scrollToBottom()
@@ -241,7 +243,7 @@ class SplashActivity : AppCompatActivity() {
         }
     }
     
-    // Hàm extension để scroll xuống cuối TextView gọn hơn
+    // Extension function gọn để scroll xuống cuối
     private fun TextView.scrollToBottom() {
         post {
             val scrollAmount = layout?.getLineTop(lineCount) ?: 0
