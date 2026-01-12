@@ -71,5 +71,16 @@
             echo '@string/error_root'
         </set>
     </action>
+    <action>
+        <title>Change language</title>
+        <param name="test" title="language">
+            <option value="en-US">English</option>
+            <option value="vi-VN">Việt Nam</option>
+        </param>
+        <set>
+            echo "Restart to apply the language"
+            echo "$test" > kr-script/language
+        </set>
+    </action>
     </group>
 </page>
