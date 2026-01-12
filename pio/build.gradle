@@ -40,6 +40,7 @@ dependencies {
     implementation project(':common') // 添加依赖模块
     implementation project(':krscript') // 添加依赖模块
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+    implementation "androidx.activity:activity-ktx:1.7.2"
 
 }
 repositories {
