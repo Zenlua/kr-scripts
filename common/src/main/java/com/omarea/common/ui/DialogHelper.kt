@@ -16,6 +16,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import com.omarea.common.R
+import com.omarea.krscript.R
 import androidx.core.graphics.drawable.toDrawable
 import android.os.Build
 import android.view.WindowInsetsController
