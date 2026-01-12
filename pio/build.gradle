@@ -15,7 +15,7 @@ android {
         checkReleaseBuilds false
     }
     defaultConfig {
-        resourceConfigurations += ['zh']
+        resourceConfigurations += ['zh', 'vi']
         minSdkVersion 24
         targetSdkVersion 28
         versionCode 202111141
