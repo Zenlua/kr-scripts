@@ -7,67 +7,98 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 class PIO : Application() {
 
     override fun attachBaseContext(base: Context) {
-        // API 21–32: apply locale trước khi tạo Resources
-        val ctx = if (Build.VERSION.SDK_INT < 33) {
-            applyLanguageLegacy(base)
-        } else {
-            base
-        }
+        log(base, "attachBaseContext() CALLED")
+        val ctx = applyLanguagePre33(base)
         super.attachBaseContext(ctx)
     }
 
     override fun onCreate() {
         super.onCreate()
+        log(this, "onCreate() CALLED sdk=${Build.VERSION.SDK_INT}")
+        applyLanguage33Plus()
+    }
 
-        // API 33–36: dùng AppCompat locale
-        if (Build.VERSION.SDK_INT >= 33) {
-            applyLanguageModern()
+    // Android 21 → 32
+    private fun applyLanguagePre33(base: Context): Context {
+        val tag = readLanguageTag(base)
+        log(base, "applyLanguagePre33 tag=$tag")
+
+        if (tag == null) {
+            log(base, "NO language file → use system locale")
+            return base
         }
+
+        val locale = Locale.forLanguageTag(tag)
+        Locale.setDefault(locale)
+
+        val config = Configuration(base.resources.configuration)
+        config.setLocale(locale)
+
+        log(base, "setLocale (pre33) = ${locale.toLanguageTag()}")
+        return base.createConfigurationContext(config)
     }
 
-    /**
-     * Android 5 → 12L (API 21–32)
-     */
-    private fun applyLanguageLegacy(base: Context): Context {
-        return runCatching {
-            val tag = readLanguageTag(base) ?: return base
-
-            val locale = Locale.forLanguageTag(tag)
-            Locale.setDefault(locale)
-
-            val config = Configuration(base.resources.configuration)
-            config.setLocale(locale)
-
-            base.createConfigurationContext(config)
-        }.getOrElse { base }
-    }
-
-    /**
-     * Android 13+ (API 33–36)
-     */
-    private fun applyLanguageModern() {
-        runCatching {
-            val tag = readLanguageTag(this) ?: return
-            AppCompatDelegate.setApplicationLocales(
-                LocaleListCompat.forLanguageTags(tag)
-            )
+    // Android 33+
+    private fun applyLanguage33Plus() {
+        if (Build.VERSION.SDK_INT < 33) {
+            log(this, "SDK < 33 → skip AppCompatDelegate")
+            return
         }
+
+        val tag = readLanguageTag(this)
+        log(this, "applyLanguage33Plus tag=$tag")
+
+        if (tag == null) {
+            log(this, "NO language file → keep system locale")
+            return
+        }
+
+        val locales = LocaleListCompat.forLanguageTags(tag)
+        AppCompatDelegate.setApplicationLocales(locales)
+
+        log(this, "AppCompatDelegate.setApplicationLocales($tag)")
     }
 
-    /**
-     * Read language from: /data/data/xxx/files/kr-script/language
-     * Example: vi | vi-VN | zh-CN | en
-     */
+    // ==== FILE HELPERS ====
+
     private fun readLanguageTag(ctx: Context): String? {
-        val file = File(ctx.filesDir, "kr-script/language")
-        if (!file.exists()) return null
+        val dir = File(ctx.filesDir, "kr-script")
+        val file = File(dir, "language")
 
-        val tag = file.readText().trim()
-        return tag.ifEmpty { null }
+        log(ctx, "language file path=${file.absolutePath}")
+
+        if (!file.exists()) {
+            log(ctx, "language file NOT FOUND")
+            return null
+        }
+
+        val content = file.readText().trim()
+        log(ctx, "language file content='$content'")
+
+        return content.ifEmpty {
+            log(ctx, "language file EMPTY")
+            null
+        }
+    }
+
+    private fun log(ctx: Context, msg: String) {
+        try {
+            val dir = File(ctx.filesDir, "kr-script")
+            if (!dir.exists()) dir.mkdirs()
+
+            val logFile = File(dir, "language.log")
+            val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
+                .format(Date())
+
+            logFile.appendText("[$time] $msg\n")
+        } catch (_: Throwable) {
+        }
     }
 }
