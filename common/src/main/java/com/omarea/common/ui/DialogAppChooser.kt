@@ -11,6 +11,7 @@ import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.Filterable
 import com.omarea.common.R
+import com.omarea.krscript.R
 
 class DialogAppChooser(
     darkMode: Boolean,
