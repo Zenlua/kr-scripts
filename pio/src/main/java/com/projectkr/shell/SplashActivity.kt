@@ -22,7 +22,6 @@ import java.util.*
 import android.Manifest
 import android.net.Uri
 import android.provider.Settings
-import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,23 +29,28 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
-class SplashActivity : ComponentActivity() {
+class SplashActivity : Activity() {
 
     private lateinit var binding: ActivitySplashBinding
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val REQUEST_CODE_PERMISSIONS = 1001
 
     private var hasRoot = false
     private var started = false
     private var starting = false
 
-    private val REQUEST_CODE_PERMISSIONS = 1001
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         if (ScriptEnvironmen.isInited()) {
-            if (isTaskRoot) gotoHome()
+            if (isTaskRoot) {
+                gotoHome()
+            }
             return
+        }
+
+        if (!hasAgreed()) {
+            showAgreementDialog()
         }
 
         binding = ActivitySplashBinding.inflate(layoutInflater)
@@ -59,10 +63,6 @@ class SplashActivity : ComponentActivity() {
         }, 1500)
 
         applyTheme()
-
-        if (!hasAgreed()) {
-            showAgreementDialog()
-        }
     }
 
     // =================== LANGUAGE ===================
@@ -70,20 +70,20 @@ class SplashActivity : ComponentActivity() {
         return try {
             val file = File(base.filesDir, "kr-script/language")
             if (!file.exists()) return base
-    
+
             val lang = file.readText().trim()
             if (lang.isEmpty()) return base
-    
+
             val locale = if (lang.contains("-")) {
                 val p = lang.split("-")
                 Locale(p[0], p[1])
             } else Locale(lang)
-    
+
             Locale.setDefault(locale)
-    
+
             val config = Configuration(base.resources.configuration)
             config.setLocale(locale)
-    
+
             base.createConfigurationContext(config)
         } catch (_: Exception) {
             base
@@ -183,9 +183,10 @@ class SplashActivity : ComponentActivity() {
     // =================== UI ===================
     private fun applyTheme() {
         WindowCompat.setDecorFitsSystemWindows(window, true)
-        window.statusBarColor = getColor(R.color.splash_bg_color)
-        window.navigationBarColor = getColor(R.color.splash_bg_color)
-
+        val color = getColor(R.color.splash_bg_color)
+        window.statusBarColor = color
+        window.navigationBarColor = color
+    
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = false
             isAppearanceLightNavigationBars = false
@@ -271,7 +272,7 @@ class SplashActivity : ComponentActivity() {
         private val hasRoot: Boolean,
         private val logHandler: UpdateLogHandler
     ) : Thread() {
-    
+
         init {
             isDaemon = true
         }
