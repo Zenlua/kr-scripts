@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import androidx.lifecycle.lifecycleScope
 
-class SplashActivity : Activity() {
+class SplashActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySplashBinding
     private val REQUEST_CODE_PERMISSIONS = 1001
