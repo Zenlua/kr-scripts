@@ -91,7 +91,10 @@ class SplashActivity : Activity() {
             getString(R.string.permission_dialog_message),
             { requestAppPermissions() },
             { finish() }
-        )
+        ).apply {
+            setCancelable(false)
+            setCanceledOnTouchOutside(false)
+        }
     }
 
     private fun saveAgreement() {
@@ -153,7 +156,7 @@ class SplashActivity : Activity() {
             started = true
             starting = false
             checkRootAndStart()
-        } else finish()
+        }
     }
 
     override fun onRequestPermissionsResult(
