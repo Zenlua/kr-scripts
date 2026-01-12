@@ -2,58 +2,44 @@ package com.projectkr.shell
 
 import android.app.Application
 import android.content.Context
-import android.content.res.Configuration
-import android.util.Log
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 
 class PIO : Application() {
 
-    override fun attachBaseContext(base: Context) {
-        super.attachBaseContext(applyLang(base))
+    companion object {
+        private const val PREFS_NAME = "app_settings"
+        private const val KEY_LANGUAGE = "language"
+
+        // Mặc định là English
+        var currentLanguage: String = "en"
+            private set
+
+        // Gọi sớm để áp dụng ngôn ngữ đã lưu (hoặc mặc định English)
+        fun applySavedLanguage(context: Context) {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val savedLang = prefs.getString(KEY_LANGUAGE, "en") ?: "en"
+            setLanguage(context, savedLang)
+        }
+
+        // Hàm thay đổi ngôn ngữ (ví dụ: "en" hoặc "vi")
+        fun setLanguage(context: Context, languageCode: String) {
+            currentLanguage = languageCode
+
+            // Lưu vào SharedPreferences
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putString(KEY_LANGUAGE, languageCode)
+                .apply()
+
+            // Áp dụng locale mới (cách tốt nhất 2025+)
+            val appLocale = LocaleListCompat.forLanguageTags(languageCode)
+            AppCompatDelegate.setApplicationLocales(appLocale)
+        }
     }
 
-    private fun applyLang(base: Context): Context {
-        val dir = File(base.filesDir, "kr-script")
-        val langFile = File(dir, "language")
-        val logFile = File(dir, "language.log")
-
-        fun log(msg: String) {
-            val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
-                .format(Date())
-            logFile.appendText("[$time] $msg\n")
-            Log.d("PIO-LANG", msg)
-        }
-
-        if (!langFile.exists()) {
-            log("language file not found")
-            return base
-        }
-
-        val tag = langFile.readText().trim()
-        log("language content='$tag'")
-
-        if (tag.isEmpty()) {
-            log("language file empty")
-            return base
-        }
-
-        val parts = tag.replace('_', '-').split('-')
-        val locale = if (parts.size >= 2)
-            Locale(parts[0], parts[1])
-        else
-            Locale(parts[0])
-
-        Locale.setDefault(locale)
-        log("set Locale = $locale")
-
-        val config = Configuration(base.resources.configuration)
-        config.setLocale(locale)
-        log("apply Configuration.setLocale")
-
-        return base.createConfigurationContext(config)
-            .also { log("createConfigurationContext DONE") }
+    override fun onCreate() {
+        super.onCreate()
+        applySavedLanguage(this)
     }
 }
