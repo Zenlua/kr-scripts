@@ -227,10 +227,6 @@ class SplashActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-            } finally {
-                withContext(Dispatchers.Main) {
-                    onFinished()
-                }
             }
         }
     }
