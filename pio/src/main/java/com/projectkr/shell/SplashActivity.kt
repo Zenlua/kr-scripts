@@ -40,11 +40,15 @@ class SplashActivity : AppCompatActivity() {
     private var started = false
     private var starting = false
 
+    private val handler = Handler(mainLooper)
+    private val rows = mutableListOf<String>()
+    private val maxLines = 4
+    private var ignored = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         applyAppLanguage()
         super.onCreate(savedInstanceState)
 
-        // Nếu đã init và là task root -> chuyển sang Home
         if (ScriptEnvironmen.isInited() && isTaskRoot) {
             gotoHome()
             return
@@ -65,18 +69,15 @@ class SplashActivity : AppCompatActivity() {
     private fun applyAppLanguage() {
         runCatching {
             val langFile = File(filesDir, "kr-script/language")
-            if (!langFile.exists() || langFile.readText().trim().isEmpty()) return
             val lang = langFile.readText().trim()
-            val locale = if (lang.contains("-") || lang.contains("_")) {
-                val (language, country) = lang.split("-", "_", limit = 2)
-                Locale(language.lowercase(), country.uppercase())
-            } else {
-                Locale(lang.lowercase())
-            }
+            if (lang.isEmpty()) return
+            val locale = Locale.Builder().setLanguageTag(lang.replace("_", "-")).build()
             if (Locale.getDefault() == locale) return
+
             Locale.setDefault(locale)
-            val config = Configuration(resources.configuration)
-            config.setLocale(locale)
+            val config = Configuration(resources.configuration).apply {
+                setLocale(locale)
+            }
             @Suppress("DEPRECATION")
             resources.updateConfiguration(config, resources.displayMetrics)
         }
@@ -117,7 +118,6 @@ class SplashActivity : AppCompatActivity() {
                 data = Uri.parse("package:$packageName")
             })
         } else {
-            // Legacy permission
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE),
@@ -193,16 +193,16 @@ class SplashActivity : AppCompatActivity() {
     private fun startToFinish() {
         binding.startStateText.text = getString(R.string.pop_started)
         val config = KrScriptConfig().init(this)
-    
+
         if (config.beforeStartSh.isNotEmpty()) {
-            runBeforeStartSh(config, hasRoot) { success ->
+            runBeforeStartSh(config, hasRoot) {
                 gotoHome()
             }
         } else {
             gotoHome()
         }
     }
-    
+
     private fun runBeforeStartSh(
         config: KrScriptConfig,
         hasRoot: Boolean,
@@ -213,8 +213,8 @@ class SplashActivity : AppCompatActivity() {
                 val process = if (hasRoot) ShellExecutor.getSuperUserRuntime() 
                               else ShellExecutor.getRuntime()
                               ?: return@launch
-    
-                process.let { p ->
+
+                process.use { p ->
                     DataOutputStream(p.outputStream).use { os ->
                         ScriptEnvironmen.executeShell(
                             this@SplashActivity, os, config.beforeStartSh,
@@ -235,17 +235,9 @@ class SplashActivity : AppCompatActivity() {
         }
     }
 
-    // Buffer lưu 4 dòng cuối
-    private val rows = mutableListOf<String>()
-    private var ignored = false
-    private val maxLines = 4
-    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
-
     private fun readStreamAsync(reader: BufferedReader) {
         Thread {
-            reader.forEachLine { line ->
-                onLogOutput(line)
-            }
+            reader.forEachLine { onLogOutput(it) }
         }.start()
     }
 
