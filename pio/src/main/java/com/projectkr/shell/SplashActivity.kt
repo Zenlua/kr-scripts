@@ -181,17 +181,6 @@ class SplashActivity : AppCompatActivity() {
         }
     }
 
-    // =================== START ===================
-    private fun startToFinish() {
-        binding.startStateText.text = getString(R.string.pop_started)
-        val config = KrScriptConfig().init(this)
-
-        if (config.beforeStartSh.isNotEmpty()) {
-            runBeforeStartSh(config, hasRoot)
-            gotoHome()
-        } else gotoHome()
-    }
-
     private fun gotoHome() {
         startActivity(
             if (intent?.getBooleanExtra("JumpActionPage", false) == true)
@@ -201,29 +190,54 @@ class SplashActivity : AppCompatActivity() {
         finish()
     }
 
-    // =================== RUN SHELL + LOG ===================
-    private fun runBeforeStartSh(config: KrScriptConfig, hasRoot: Boolean) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val process = if (hasRoot) ShellExecutor.getSuperUserRuntime() else ShellExecutor.getRuntime()
-                process?.let {
-                    DataOutputStream(it.outputStream).use { os ->
-                        ScriptEnvironmen.executeShell(
-                            this@SplashActivity,
-                            os,
-                            config.beforeStartSh,
-                            config.variables,
-                            null,
-                            "pio-splash"
-                        )
-                    }
-                    launch { readStreamAsync(it.inputStream.bufferedReader()) }
-                    launch { readStreamAsync(it.errorStream.bufferedReader()) }
-                    it.waitFor()
-                }
-            } finally {
-                withContext(Dispatchers.Main) { gotoHome() }
+    private fun startToFinish() {
+        binding.startStateText.text = getString(R.string.pop_started)
+        val config = KrScriptConfig().init(this)
+    
+        lifecycleScope.launch {
+            if (config.beforeStartSh.isNotEmpty()) {
+                // Chờ script chạy xong (hoặc lỗi)
+                runBeforeStartSh(config, hasRoot)
             }
+            gotoHome()
+        }
+    }
+    
+    private suspend fun runBeforeStartSh(
+        config: KrScriptConfig,
+        hasRoot: Boolean
+    ) = withContext(Dispatchers.IO) {
+        try {
+            val process = if (hasRoot) {
+                ShellExecutor.getSuperUserRuntime()
+            } else {
+                ShellExecutor.getRuntime()
+            } ?: run {
+                println("Unable to initialize shell process")
+                return@withContext
+            }
+    
+            process.let { p ->
+                DataOutputStream(p.outputStream).use { os ->
+                    ScriptEnvironmen.executeShell(
+                        this@SplashActivity,
+                        os,
+                        config.beforeStartSh,
+                        config.variables,
+                        null,
+                        "pio-splash"
+                    )
+                }
+    
+                // Đọc output & error không block
+                launch { readStreamAsync(p.inputStream.bufferedReader()) }
+                launch { readStreamAsync(p.errorStream.bufferedReader()) }
+    
+                // Chờ script hoàn thành
+                p.waitFor()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
