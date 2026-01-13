@@ -1,5 +1,6 @@
 package com.projectkr.shell
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -11,7 +12,6 @@ import android.os.Environment
 import android.provider.Settings
 import android.view.animation.AnimationUtils
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
@@ -25,16 +25,21 @@ import com.projectkr.shell.databinding.ActivitySplashBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.Job
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.File
 import android.os.Handler
 import java.util.Locale
 
-class SplashActivity : AppCompatActivity() {
+class SplashActivity : Activity() {
 
     private lateinit var binding: ActivitySplashBinding
     private val REQUEST_CODE_PERMISSIONS = 1001
+    private val activityScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private var hasRoot = false
     private var started = false
@@ -45,10 +50,8 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // Nếu đã init và là task root -> chuyển sang Home
-        if (ScriptEnvironmen.isInited()) {
-            if (isTaskRoot) {
-                gotoHome()
-            }
+        if (ScriptEnvironmen.isInited() && isTaskRoot) {
+            gotoHome()
             return
         }
 
@@ -119,7 +122,6 @@ class SplashActivity : AppCompatActivity() {
                 data = Uri.parse("package:$packageName")
             })
         } else {
-            // Legacy permission
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE),
@@ -171,17 +173,17 @@ class SplashActivity : AppCompatActivity() {
     // =================== ROOT ===================
     @Synchronized
     private fun checkRootAndStart() {
-        if (!started || starting) return
-        starting = true
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            hasRoot = KeepShellPublic.checkRoot()
-            withContext(Dispatchers.Main) {
-                starting = false
-                startToFinish()
+            if (!started || starting) return
+            starting = true
+    
+            activityScope.launch(Dispatchers.IO) {
+                hasRoot = KeepShellPublic.checkRoot()
+                withContext(Dispatchers.Main) {
+                    starting = false
+                    startToFinish()
+                }
             }
         }
-    }
 
     // =================== START ===================
     private fun startToFinish() {
@@ -205,7 +207,7 @@ class SplashActivity : AppCompatActivity() {
     // =================== RUN SHELL + LOG ===================
     private fun runBeforeStartSh(config: KrScriptConfig, hasRoot: Boolean) {
         // Coroutine IO
-        lifecycleScope.launch(Dispatchers.IO) {
+        activityScope.launch(Dispatchers.IO) {
             try {
                 val process = if (hasRoot) ShellExecutor.getSuperUserRuntime() else ShellExecutor.getRuntime()
                 process?.let {
@@ -230,6 +232,11 @@ class SplashActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) { gotoHome() }
             }
         }
+    }
+
+    override fun onDestroy() {
+        activityScope.cancel()
+        super.onDestroy()
     }
 
     // Buffer lưu 4 dòng cuối
