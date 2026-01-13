@@ -1,5 +1,6 @@
 package com.projectkr.shell
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -192,11 +193,18 @@ class SplashActivity : AppCompatActivity() {
     }
 
     private fun gotoHome() {
-        startActivity(
-            if (intent?.getBooleanExtra("JumpActionPage", false) == true)
-                Intent(this, ActionPage::class.java).apply { putExtras(intent!!) }
-            else Intent(this, MainActivity::class.java)
-        )
+        val targetIntent = if (intent?.getBooleanExtra("JumpActionPage", false) == true) {
+            Intent(this, ActionPage::class.java).apply { putExtras(intent ?: Intent()) }
+        } else {
+            Intent(this, MainActivity::class.java)
+        }
+        startActivity(targetIntent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, android.R.anim.fade_in, 0)
+        } else {
+            @Suppress("DEPRECATION")
+            overridePendingTransition(android.R.anim.fade_in, 0)
+        }
         finish()
     }
 
