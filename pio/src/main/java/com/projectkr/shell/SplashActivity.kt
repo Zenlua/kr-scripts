@@ -62,9 +62,9 @@ class SplashActivity : AppCompatActivity() {
 
     private fun applyAppLanguage() {
         runCatching {
-            val lang = File(filesDir, "kr-script/language").takeIf { it.exists() }?.readText()?.trim().takeIf { it.isNotEmpty() } ?: return
+            val langFile = File(filesDir, "kr-script/language")
+            val lang = langFile.takeIf { it.exists() }?.readText()?.trim()?.takeIf { it.isNotEmpty() } ?: return
             val locale = Locale.forLanguageTag(lang.replace("_", "-"))
-    
             if (Locale.getDefault() != locale) {
                 Locale.setDefault(locale)
                 val config = Configuration(resources.configuration).apply { setLocale(locale) }
