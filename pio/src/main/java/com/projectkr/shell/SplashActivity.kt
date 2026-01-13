@@ -222,7 +222,7 @@ class SplashActivity : AppCompatActivity() {
                     it.waitFor()
                 }
             } finally {
-                withContext(Dispatchers.Main) { onComplete() }
+                withContext(Dispatchers.Main) { gotoHome() }
             }
         }
     }
