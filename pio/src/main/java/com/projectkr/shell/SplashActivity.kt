@@ -44,16 +44,17 @@ class SplashActivity : AppCompatActivity() {
         applyAppLanguage()
         super.onCreate(savedInstanceState)
 
-        binding = ActivitySplashBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
         // Nếu đã init và là task root -> chuyển sang Home
-        if (ScriptEnvironmen.isInited() && isTaskRoot) {
-            gotoHome()
+        if (ScriptEnvironmen.isInited()) {
+            if (isTaskRoot) {
+                gotoHome()
+            }
             return
         }
 
         if (!hasAgreed()) showAgreementDialog()
+        binding = ActivitySplashBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         // Animation logo
         binding.startLogoXml.postDelayed({
