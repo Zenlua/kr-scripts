@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
 import android.provider.Settings
 import android.view.animation.AnimationUtils
 import android.widget.TextView
@@ -22,13 +23,13 @@ import com.omarea.common.shell.ShellExecutor
 import com.omarea.common.ui.DialogHelper
 import com.omarea.krscript.executor.ScriptEnvironmen
 import com.projectkr.shell.databinding.ActivitySplashBinding
+import com.projectkr.shell.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.File
-import android.os.Handler
 import java.util.Locale
 
 class SplashActivity : AppCompatActivity() {
@@ -55,7 +56,9 @@ class SplashActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // Animation logo
-        binding.startLogoXml.startAnimation(AnimationUtils.loadAnimation(this, R.anim.blink))
+        binding.startLogoXml.postDelayed({
+            binding.startLogoXml.startAnimation(AnimationUtils.loadAnimation(this, R.anim.blink))
+        }, 1500)
 
         applyTheme()
     }
@@ -152,7 +155,7 @@ class SplashActivity : AppCompatActivity() {
     // =================== UI ===================
     private fun applyTheme() {
         WindowCompat.setDecorFitsSystemWindows(window, true)
-        val color = getColor(R.color.splash_bg_color)
+        val color = ContextCompat.getColor(this, R.color.splash_bg_color)
         window.statusBarColor = color
         window.navigationBarColor = color
 
