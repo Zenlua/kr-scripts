@@ -155,6 +155,11 @@ class SplashActivity : AppCompatActivity() {
 
     // =================== UI ===================
     private fun applyTheme() {
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        val color = getColor(R.color.splash_bg_color)
+        window.statusBarColor = color
+        window.navigationBarColor = color
+
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = false
             isAppearanceLightNavigationBars = false
@@ -183,6 +188,7 @@ class SplashActivity : AppCompatActivity() {
 
         if (config.beforeStartSh.isNotEmpty()) {
             runBeforeStartSh(config, hasRoot)
+            gotoHome()
         } else gotoHome()
     }
 
@@ -197,7 +203,6 @@ class SplashActivity : AppCompatActivity() {
 
     // =================== RUN SHELL + LOG ===================
     private fun runBeforeStartSh(config: KrScriptConfig, hasRoot: Boolean) {
-        // Coroutine IO
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val process = if (hasRoot) ShellExecutor.getSuperUserRuntime() else ShellExecutor.getRuntime()
@@ -212,15 +217,12 @@ class SplashActivity : AppCompatActivity() {
                             "pio-splash"
                         )
                     }
-
-                    // Đọc stdout và stderr bằng coroutine con
                     launch { readStreamAsync(it.inputStream.bufferedReader()) }
                     launch { readStreamAsync(it.errorStream.bufferedReader()) }
-
                     it.waitFor()
                 }
             } finally {
-                withContext(Dispatchers.Main) { gotoHome() }
+                withContext(Dispatchers.Main) { onComplete() }
             }
         }
     }
@@ -247,7 +249,6 @@ class SplashActivity : AppCompatActivity() {
                     ignored = true
                 }
                 rows.add(log)
-
                 binding.startStateText.text = rows.joinToString("\n", if (ignored) "……\n" else "")
             }
         }
