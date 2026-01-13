@@ -1,4 +1,5 @@
 #!/system/bin/sh
+
 if [ ! -f $START_DIR/busybox_installed ]; then
     chmod 777 $TOOLKIT
     for vv in $(busybox --list); do
@@ -8,5 +9,6 @@ if [ ! -f $START_DIR/busybox_installed ]; then
         fi
     done
     echo > $START_DIR/busybox_installed
-    sleep 2
 fi
+
+sleep 1
