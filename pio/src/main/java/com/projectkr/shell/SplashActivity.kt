@@ -62,21 +62,19 @@ class SplashActivity : AppCompatActivity() {
 
     private fun applyAppLanguage() {
         runCatching {
-            val langFile = File(filesDir, "kr-script/language")
-            if (!langFile.exists() || langFile.readText().trim().isEmpty()) return
-            val lang = langFile.readText().trim()
-            val locale = if (lang.contains("-") || lang.contains("_")) {
-                val (language, country) = lang.split("-", "_", limit = 2)
-                Locale(language.lowercase(), country.uppercase())
-            } else {
-                Locale(lang.lowercase())
+            val lang = File(filesDir, "kr-script/language").takeIf { it.exists() }?.readText()?.trim().takeIf { it.isNotEmpty() } ?: return
+            val locale = Locale.forLanguageTag(lang.replace("_", "-"))
+    
+            if (Locale.getDefault() != locale) {
+                Locale.setDefault(locale)
+                val config = Configuration(resources.configuration).apply { setLocale(locale) }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    resources.updateConfiguration(config, resources.displayMetrics)
+                } else {
+                    @Suppress("DEPRECATION")
+                    resources.updateConfiguration(config, resources.displayMetrics)
+                }
             }
-            if (Locale.getDefault() == locale) return
-            Locale.setDefault(locale)
-            val config = Configuration(resources.configuration)
-            config.setLocale(locale)
-            @Suppress("DEPRECATION")
-            resources.updateConfiguration(config, resources.displayMetrics)
         }
     }
 
