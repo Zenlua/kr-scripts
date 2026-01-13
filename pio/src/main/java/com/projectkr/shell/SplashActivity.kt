@@ -194,50 +194,44 @@ class SplashActivity : AppCompatActivity() {
         binding.startStateText.text = getString(R.string.pop_started)
         val config = KrScriptConfig().init(this)
     
-        lifecycleScope.launch {
-            if (config.beforeStartSh.isNotEmpty()) {
-                // Chờ script chạy xong (hoặc lỗi)
-                runBeforeStartSh(config, hasRoot)
+        if (config.beforeStartSh.isNotEmpty()) {
+            runBeforeStartSh(config, hasRoot) { success ->
+                gotoHome()
             }
+        } else {
             gotoHome()
         }
     }
     
-    private suspend fun runBeforeStartSh(
+    private fun runBeforeStartSh(
         config: KrScriptConfig,
-        hasRoot: Boolean
-    ) = withContext(Dispatchers.IO) {
-        try {
-            val process = if (hasRoot) {
-                ShellExecutor.getSuperUserRuntime()
-            } else {
-                ShellExecutor.getRuntime()
-            } ?: run {
-                println("Unable to initialize shell process")
-                return@withContext
-            }
+        hasRoot: Boolean,
+        onFinished: () -> Unit
+    ) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val process = if (hasRoot) ShellExecutor.getSuperUserRuntime() 
+                              else ShellExecutor.getRuntime()
+                              ?: return@launch
     
-            process.let { p ->
-                DataOutputStream(p.outputStream).use { os ->
-                    ScriptEnvironmen.executeShell(
-                        this@SplashActivity,
-                        os,
-                        config.beforeStartSh,
-                        config.variables,
-                        null,
-                        "pio-splash"
-                    )
+                process.let { p ->
+                    DataOutputStream(p.outputStream).use { os ->
+                        ScriptEnvironmen.executeShell(
+                            this@SplashActivity, os, config.beforeStartSh,
+                            config.variables, null, "pio-splash"
+                        )
+                    }
+                    launch { readStreamAsync(p.inputStream.bufferedReader()) }
+                    launch { readStreamAsync(p.errorStream.bufferedReader()) }
+                    p.waitFor()
                 }
-    
-                // Đọc output & error không block
-                launch { readStreamAsync(p.inputStream.bufferedReader()) }
-                launch { readStreamAsync(p.errorStream.bufferedReader()) }
-    
-                // Chờ script hoàn thành
-                p.waitFor()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                withContext(Dispatchers.Main) {
+                    onFinished()
+                }
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
 
