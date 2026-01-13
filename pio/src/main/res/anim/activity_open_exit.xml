@@ -3,12 +3,12 @@
     android:shareInterpolator="false"
     android:zAdjustment="bottom">
     <translate
-        android:duration="@android:integer/config_mediumAnimTime"
+        android:duration="@android:integer/config_ShortAnimationTime"
         android:fromXDelta="0%p"
         android:interpolator="@android:anim/accelerate_decelerate_interpolator"
         android:toXDelta="-100%p"></translate>
     <scale
-        android:duration="@android:integer/config_mediumAnimTime"
+        android:duration="@android:integer/config_ShortAnimationTime"
         android:fromXScale="1"
         android:fromYScale="1"
         android:pivotX="0%"
@@ -16,7 +16,7 @@
         android:toXScale="0.5"
         android:toYScale="0.5" />
     <alpha
-        android:duration="@android:integer/config_longAnimTime"
+        android:duration="@android:integer/config_mediumAnimTime"
         android:fromAlpha="1"
         android:toAlpha="0" />
 </set>
