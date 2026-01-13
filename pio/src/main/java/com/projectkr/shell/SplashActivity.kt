@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
 import android.provider.Settings
 import android.view.animation.AnimationUtils
 import android.widget.TextView
@@ -22,13 +23,13 @@ import com.omarea.common.shell.ShellExecutor
 import com.omarea.common.ui.DialogHelper
 import com.omarea.krscript.executor.ScriptEnvironmen
 import com.projectkr.shell.databinding.ActivitySplashBinding
+import com.projectkr.shell.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.File
-import android.os.Handler
 import java.util.Locale
 
 class SplashActivity : AppCompatActivity() {
@@ -65,20 +66,18 @@ class SplashActivity : AppCompatActivity() {
     private fun applyAppLanguage() {
         runCatching {
             val langFile = File(filesDir, "kr-script/language")
-            if (!langFile.exists() || langFile.readText().trim().isEmpty()) return
-            val lang = langFile.readText().trim()
-            val locale = if (lang.contains("-") || lang.contains("_")) {
-                val (language, country) = lang.split("-", "_", limit = 2)
-                Locale(language.lowercase(), country.uppercase())
-            } else {
-                Locale(lang.lowercase())
+            val lang = langFile.takeIf { it.exists() }?.readText()?.trim()?.takeIf { it.isNotEmpty() } ?: return
+            val locale = Locale.forLanguageTag(lang.replace("_", "-"))
+            if (Locale.getDefault() != locale) {
+                Locale.setDefault(locale)
+                val config = Configuration(resources.configuration).apply { setLocale(locale) }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    resources.updateConfiguration(config, resources.displayMetrics)
+                } else {
+                    @Suppress("DEPRECATION")
+                    resources.updateConfiguration(config, resources.displayMetrics)
+                }
             }
-            if (Locale.getDefault() == locale) return
-            Locale.setDefault(locale)
-            val config = Configuration(resources.configuration)
-            config.setLocale(locale)
-            @Suppress("DEPRECATION")
-            resources.updateConfiguration(config, resources.displayMetrics)
         }
     }
 
@@ -156,7 +155,7 @@ class SplashActivity : AppCompatActivity() {
     // =================== UI ===================
     private fun applyTheme() {
         WindowCompat.setDecorFitsSystemWindows(window, true)
-        val color = getColor(R.color.splash_bg_color)
+        val color = ContextCompat.getColor(this, R.color.splash_bg_color)
         window.statusBarColor = color
         window.navigationBarColor = color
 
@@ -181,7 +180,6 @@ class SplashActivity : AppCompatActivity() {
         }
     }
 
-    // =================== START ===================
     private fun startToFinish() {
         binding.startStateText.text = getString(R.string.pop_started)
         val config = KrScriptConfig().init(this)
@@ -200,7 +198,6 @@ class SplashActivity : AppCompatActivity() {
         finish()
     }
 
-    // =================== RUN SHELL + LOG ===================
     private fun runBeforeStartSh(config: KrScriptConfig, hasRoot: Boolean) {
         // Coroutine IO
         lifecycleScope.launch(Dispatchers.IO) {
@@ -217,11 +214,11 @@ class SplashActivity : AppCompatActivity() {
                             "pio-splash"
                         )
                     }
-
+    
                     // Đọc stdout và stderr bằng coroutine con
                     launch { readStreamAsync(it.inputStream.bufferedReader()) }
                     launch { readStreamAsync(it.errorStream.bufferedReader()) }
-
+    
                     it.waitFor()
                 }
             } finally {
@@ -252,7 +249,6 @@ class SplashActivity : AppCompatActivity() {
                     ignored = true
                 }
                 rows.add(log)
-
                 binding.startStateText.text = rows.joinToString("\n", if (ignored) "……\n" else "")
             }
         }
