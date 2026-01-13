@@ -3,7 +3,7 @@
     android:shareInterpolator="false"
     android:zAdjustment="top">
     <alpha
-        android:duration="300"
+        android:duration="@android:integer/config_mediumAnimTime"
         android:interpolator="@android:anim/linear_interpolator"
         android:fromAlpha="1"
         android:toAlpha="0" />
