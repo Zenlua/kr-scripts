@@ -30,6 +30,7 @@ import java.io.DataOutputStream
 import java.io.File
 import android.os.Handler
 import java.util.Locale
+import android.os.Looper
 
 class SplashActivity : AppCompatActivity() {
 
