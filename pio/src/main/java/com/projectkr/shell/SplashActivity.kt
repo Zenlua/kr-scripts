@@ -30,7 +30,6 @@ import java.io.DataOutputStream
 import java.io.File
 import android.os.Handler
 import java.util.Locale
-import android.os.Looper
 
 class SplashActivity : AppCompatActivity() {
 
@@ -56,9 +55,7 @@ class SplashActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // Animation logo
-        binding.startLogoXml.postDelayed({
-            binding.startLogoXml.startAnimation(AnimationUtils.loadAnimation(this, R.anim.blink))
-        }, 1500)
+        binding.startLogoXml.startAnimation(AnimationUtils.loadAnimation(this, R.anim.blink))
 
         applyTheme()
     }
@@ -174,12 +171,21 @@ class SplashActivity : AppCompatActivity() {
         starting = true
 
         lifecycleScope.launch(Dispatchers.IO) {
-            hasRoot = KeepShellPublic.checkRoot() // Sử dụng KeepShellPublic.checkRoot() thay vì CheckRootStatus
+            hasRoot = KeepShellPublic.checkRoot()
             withContext(Dispatchers.Main) {
                 starting = false
                 startToFinish()
             }
         }
+    }
+
+    private fun startToFinish() {
+        binding.startStateText.text = getString(R.string.pop_started)
+        val config = KrScriptConfig().init(this)
+
+        if (config.beforeStartSh.isNotEmpty()) {
+            runBeforeStartSh(config, hasRoot)
+        } else gotoHome()
     }
 
     private fun gotoHome() {
@@ -191,79 +197,58 @@ class SplashActivity : AppCompatActivity() {
         finish()
     }
 
-    private fun startToFinish() {
-        binding.startStateText.text = getString(R.string.pop_started)
-
-        val config = KrScriptConfig().init(this)
-        if (config.beforeStartSh.isNotEmpty()) {
-            BeforeStartThread(this, config, UpdateLogViewHandler(binding.startStateText) {
-                gotoHome()
-            }).start()
-        } else {
-            gotoHome()
-        }
-    }
-
-    private class UpdateLogViewHandler(private var logView: TextView, private val onExit: Runnable) {
-        private val handler = Handler(Looper.getMainLooper())
-        private var notificationMessageRows = ArrayList<String>()
-        private var someIgnored = false
-
-        fun onLogOutput(log: String) {
-            handler.post {
-                synchronized(notificationMessageRows) {
-                    if (notificationMessageRows.size > 4) {
-                        notificationMessageRows.remove(notificationMessageRows.first())
-                        someIgnored = true
-                    }
-                    notificationMessageRows.add(log)
-                    logView.text =
-                        notificationMessageRows.joinToString("\n", if (someIgnored) "……\n" else "").trim()
-                }
-            }
-        }
-
-        fun onExit() {
-            handler.post { onExit.run() }
-        }
-    }
-
-    private class BeforeStartThread(private var context: Context, private val config: KrScriptConfig, private var updateLogViewHandler: UpdateLogViewHandler) : Thread() {
-        val params: HashMap<String?, String?>? = config.variables
-
-        override fun run() {
+    private fun runBeforeStartSh(config: KrScriptConfig, hasRoot: Boolean) {
+        // Coroutine IO
+        lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val hasRoot = KeepShellPublic.checkRoot() // Sử dụng KeepShellPublic.checkRoot() thay vì CheckRootStatus
                 val process = if (hasRoot) ShellExecutor.getSuperUserRuntime() else ShellExecutor.getRuntime()
-                if (process != null) {
-                    val outputStream = DataOutputStream(process.outputStream)
-
-                    ScriptEnvironmen.executeShell(context, outputStream, config.beforeStartSh, params, null, "pio-splash")
-
-                    StreamReadThread(process.inputStream.bufferedReader(), updateLogViewHandler).start()
-                    StreamReadThread(process.errorStream.bufferedReader(), updateLogViewHandler).start()
-
-                    process.waitFor()
-                    updateLogViewHandler.onExit()
-                } else {
-                    updateLogViewHandler.onExit()
+                process?.let {
+                    DataOutputStream(it.outputStream).use { os ->
+                        ScriptEnvironmen.executeShell(
+                            this@SplashActivity,
+                            os,
+                            config.beforeStartSh,
+                            config.variables,
+                            null,
+                            "pio-splash"
+                        )
+                    }
+    
+                    // Đọc stdout và stderr bằng coroutine con
+                    launch { readStreamAsync(it.inputStream.bufferedReader()) }
+                    launch { readStreamAsync(it.errorStream.bufferedReader()) }
+    
+                    it.waitFor()
                 }
-            } catch (ex: Exception) {
-                updateLogViewHandler.onExit()
+            } finally {
+                withContext(Dispatchers.Main) { gotoHome() }
             }
         }
     }
 
-    private class StreamReadThread(private var reader: BufferedReader, private var updateLogViewHandler: UpdateLogViewHandler) : Thread() {
-        override fun run() {
-            var line: String?
-            while (true) {
-                line = reader.readLine()
-                if (line == null) {
-                    break
-                } else {
-                    updateLogViewHandler.onLogOutput(line)
+    // Buffer lưu 4 dòng cuối
+    private val rows = mutableListOf<String>()
+    private var ignored = false
+    private val maxLines = 4
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+
+    private fun readStreamAsync(reader: BufferedReader) {
+        Thread {
+            reader.forEachLine { line ->
+                onLogOutput(line)
+            }
+        }.start()
+    }
+
+    private fun onLogOutput(log: String) {
+        handler.post {
+            synchronized(rows) {
+                if (rows.size >= maxLines) {
+                    rows.removeAt(0)
+                    ignored = true
                 }
+                rows.add(log)
+                binding.startStateText.text = rows.joinToString("\n", if (ignored) "……\n" else "")
             }
         }
     }
