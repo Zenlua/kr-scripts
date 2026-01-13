@@ -3,141 +3,200 @@ package com.omarea.common.ui
 import android.content.Context
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.BaseAdapter
+import android.widget.CompoundButton
+import android.widget.Filter
+import android.widget.Filterable
+import android.widget.ImageView
+import android.widget.TextView
 import com.omarea.common.R
 import com.omarea.common.model.SelectItem
 import java.util.Locale.getDefault
 
-class AdapterItemChooser(
-    private val context: Context,
-    private var items: ArrayList<SelectItem>,
-    private val multiple: Boolean
-) : BaseAdapter(), Filterable {
-
+class AdapterItemChooser(private val context: Context, private var items: ArrayList<SelectItem>, private val multiple: Boolean) : BaseAdapter(), Filterable {
     interface SelectStateListener {
         fun onSelectChange(selected: List<SelectItem>)
     }
 
     private var selectStateListener: SelectStateListener? = null
     private var filter: Filter? = null
-    internal var filterItems: ArrayList<SelectItem> = ArrayList(items)
+    internal var filterItems: ArrayList<SelectItem> = items
     private val mLock = Any()
 
-    // ------------------------ Filter ------------------------
-    override fun getFilter(): Filter {
-        if (filter == null) filter = ArrayFilter(this)
-        return filter!!
-    }
-
-    private class ArrayFilter(private val adapter: AdapterItemChooser) : Filter() {
-
+    private class ArrayFilter(private var adapter: AdapterItemChooser) : Filter() {
         override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-            @Suppress("UNCHECKED_CAST")
-            adapter.filterItems = results?.values as? ArrayList<SelectItem> ?: arrayListOf()
-            if (adapter.filterItems.isNotEmpty()) adapter.notifyDataSetChanged()
-            else adapter.notifyDataSetInvalidated()
+            adapter.filterItems = results!!.values as ArrayList<SelectItem>
+            if (results.count > 0) {
+                adapter.notifyDataSetChanged()
+            } else {
+                adapter.notifyDataSetInvalidated()
+            }
         }
 
         override fun performFiltering(constraint: CharSequence?): FilterResults {
             val results = FilterResults()
-            val prefix = constraint?.toString()?.lowercase(getDefault()) ?: ""
+            val prefix: String = constraint?.toString() ?: ""
 
-            val allItems: ArrayList<SelectItem>
-            synchronized(adapter.mLock) { allItems = ArrayList(adapter.items) }
-
-            val newValues = if (prefix.isEmpty()) {
-                allItems
+            if (prefix.isEmpty()) {
+                val list: ArrayList<SelectItem>
+                synchronized(adapter.mLock) {
+                    list = ArrayList(adapter.items)
+                }
+                results.values = list
+                results.count = list.size
             } else {
+                val prefixString = prefix.lowercase(getDefault())
+
+                val values: ArrayList<SelectItem>
+                synchronized(adapter.mLock) {
+                    values = ArrayList(adapter.items)
+                }
                 val selected = adapter.getSelectedItems()
-                allItems.filter { item ->
-                    item in selected ||
-                    (item.title?.lowercase(getDefault())?.split(" ")?.any { it.contains(prefix) } == true)
-                } as ArrayList<SelectItem>
+
+                val count = values.size
+                val newValues = ArrayList<SelectItem>()
+
+                for (i in 0 until count) {
+                    val value = values[i]
+                    if (selected.contains(value)) {
+                        newValues.add(value)
+                    } else {
+                        val valueText = if (value.title == null) "" else value.title!!.lowercase(
+                            getDefault()
+                        )
+
+                        // First match against the whole, non-splitted value
+                        if (valueText.contains(prefixString)) {
+                            newValues.add(value)
+                        } else {
+                            val words = valueText.split(" ".toRegex()).dropLastWhile { it.isEmpty() }
+                                .toTypedArray()
+                            val wordCount = words.size
+
+                            // Start at index 0, in case valueText starts with space(s)
+                            for (k in 0 until wordCount) {
+                                if (words[k].contains(prefixString)) {
+                                    newValues.add(value)
+                                    break
+                                }
+                            }
+                        }
+                    }
+                }
+
+                results.values = newValues
+                results.count = newValues.size
             }
 
-            results.values = newValues
-            results.count = newValues.size
             return results
         }
     }
 
-    // ------------------------ BaseAdapter ------------------------
-    override fun getCount() = filterItems.size
-    override fun getItem(position: Int) = filterItems[position]
-    override fun getItemId(position: Int) = position.toLong()
+    override fun getFilter(): Filter {
+        if (filter == null) {
+            filter = ArrayFilter(this)
+        }
+        return filter!!
+    }
 
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-        val view = convertView ?: View.inflate(
-            context,
-            if (multiple) R.layout.item_multiple_chooser_item else R.layout.item_single_chooser_item,
-            null
-        )
-        updateRow(position, view)
-        return view
+    override fun getCount(): Int {
+        return filterItems.size
+    }
+
+    override fun getItem(position: Int): SelectItem {
+        return filterItems[position]
+    }
+
+    override fun getItemId(position: Int): Long {
+        return position.toLong()
+    }
+
+    override fun getView(position: Int, view: View?, parent: ViewGroup): View {
+        var convertView = view
+        if (convertView == null) {
+            convertView = View.inflate(context, if (multiple) {
+                R.layout.item_multiple_chooser_item
+            } else {
+                R.layout.item_single_chooser_item
+            }, null)
+        }
+        updateRow(position, convertView!!)
+        return convertView
+    }
+
+    fun updateRow(position: Int, listView: OverScrollGridView, SelectItem: SelectItem) {
+        try {
+            val visibleFirstPosi = listView.firstVisiblePosition
+            val visibleLastPosi = listView.lastVisiblePosition
+
+            if (position in visibleFirstPosi..visibleLastPosi) {
+                filterItems[position] = SelectItem
+                val view = listView.getChildAt(position - visibleFirstPosi)
+                updateRow(position, view)
+            }
+        } catch (ex: Exception) {
+        }
     }
 
     fun updateRow(position: Int, convertView: View) {
         val item = getItem(position)
-        val viewHolder = (convertView.tag as? ViewHolder) ?: ViewHolder().apply {
-            itemTitle = convertView.findViewById(R.id.ItemTitle)
-            itemDesc = convertView.findViewById(R.id.ItemDesc)
-            imgView = convertView.findViewById(R.id.ItemIcon)
-            checkBox = convertView.findViewById(R.id.ItemChecBox)
-            convertView.tag = this
-        }
+        val viewHolder = ViewHolder()
+        viewHolder.itemTitle = convertView.findViewById(R.id.ItemTitle)
+        viewHolder.itemDesc = convertView.findViewById(R.id.ItemDesc)
+        viewHolder.imgView = convertView.findViewById(R.id.ItemIcon)
+        viewHolder.checkBox = convertView.findViewById(R.id.ItemChecBox)
 
         convertView.setOnClickListener {
             if (multiple) {
                 item.selected = !item.selected
                 viewHolder.checkBox?.isChecked = item.selected
-            } else if (!item.selected) {
-                items.find { it.selected }?.selected = false
-                item.selected = true
-                notifyDataSetChanged()
+            } else {
+                if (item.selected) {
+                    return@setOnClickListener
+                } else {
+                    val current = items.find { it.selected }
+                    current?.selected = false
+                    item.selected = true
+                    notifyDataSetChanged()
+                }
             }
             selectStateListener?.onSelectChange(getSelectedItems())
         }
 
         viewHolder.itemTitle?.text = item.title
-        viewHolder.itemDesc?.apply {
+        viewHolder.itemDesc?.run{
             if (item.title.isNullOrEmpty()) {
-                visibility = View.GONE
-            } else {
                 text = item.title
-                visibility = View.VISIBLE
+            } else {
+                visibility = View.GONE
             }
         }
         viewHolder.checkBox?.isChecked = item.selected
     }
 
-    fun updateRow(position: Int, listView: OverScrollGridView, newItem: SelectItem) {
-        val visibleFirst = listView.firstVisiblePosition
-        val visibleLast = listView.lastVisiblePosition
-        if (position in visibleFirst..visibleLast) {
-            filterItems[position] = newItem
-            val childView = listView.getChildAt(position - visibleFirst)
-            updateRow(position, childView)
-        }
-    }
-
-    // ------------------------ Utility ------------------------
     fun setSelectAllState(allSelected: Boolean) {
-        items.forEach { it.selected = allSelected }
+        items.forEach {
+            it.selected = allSelected
+        }
         notifyDataSetChanged()
     }
 
-    fun setSelectStateListener(listener: SelectStateListener?) {
-        selectStateListener = listener
+    fun setSelectStateListener(selectStateListener: SelectStateListener?) {
+        this.selectStateListener = selectStateListener
     }
 
-    fun getSelectedItems(): List<SelectItem> = items.filter { it.selected }
+    fun getSelectedItems(): List<SelectItem> {
+        return items.filter { it.selected }
+    }
 
-    fun getSelectStatus(): BooleanArray = items.map { it.selected }.toBooleanArray()
+    fun getSelectStatus (): BooleanArray {
+        return items.map { it.selected }.toBooleanArray()
+    }
 
     class ViewHolder {
-        var itemTitle: TextView? = null
-        var itemDesc: TextView? = null
-        var imgView: ImageView? = null
-        var checkBox: CompoundButton? = null
+        internal var itemTitle: TextView? = null
+        internal var itemDesc: TextView? = null
+        internal var imgView: ImageView? = null
+        internal var checkBox: CompoundButton? = null
     }
 }

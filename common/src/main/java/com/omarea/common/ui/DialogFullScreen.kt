@@ -6,48 +6,73 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.DialogFragment
 import com.omarea.common.R
 
-open class DialogFullScreen(
-    private val layoutRes: Int,
-    darkMode: Boolean
-) : DialogFragment() {
 
-    private val themeResId: Int = if (darkMode) R.style.dialog_full_screen_dark else R.style.dialog_full_screen_light
-    lateinit var currentView: View
-        private set
+/*
+继承使用示例：
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        currentView = inflater.inflate(layoutRes, container, false)
+class DialogAppChooser(private val darkMode: Boolean): DialogFullScreen(R.layout.dialog_app_chooser, darkMode) {
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+    }
+
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
+    }
+}
+*/
+
+open class DialogFullScreen(private val layout: Int, darkMode: Boolean) : androidx.fragment.app.DialogFragment() {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        currentView = inflater.inflate(layout, container)
         return currentView
     }
 
+    private var themeResId: Int = 0
+    private lateinit var currentView: View
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val dialogTheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) themeResId else -1
-        return Dialog(requireActivity(), dialogTheme)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Dialog(activity!!, if (themeResId != 0) themeResId else R.style.dialog_full_screen_light)
+        } else {
+            Dialog(activity!!, -1)
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        dialog?.window?.apply {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                setWindowAnimations(android.R.style.Animation_Translucent)
+        val activity = this.activity
+        if (activity != null) {
+            dialog?.window?.run {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                    setWindowAnimations(android.R.style.Animation_Translucent)
+                }
+
+                DialogHelper.setWindowBlurBg(this, activity)
             }
-            // Dùng requireActivity() để chắc chắn là Activity
-            DialogHelper.setWindowBlurBg(this, requireActivity())
         }
     }
 
-    /** Close dialog safely */
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+    }
+
     fun closeView() {
-        if (isAdded && !isRemoving) {
-            dismissAllowingStateLoss()
+        try {
+            dismiss()
+        } catch (ex: java.lang.Exception) {
         }
+    }
+
+    init {
+        themeResId = if (darkMode) R.style.dialog_full_screen_dark else R.style.dialog_full_screen_light
     }
 }
