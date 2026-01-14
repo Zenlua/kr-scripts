@@ -20,5 +20,4 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
--keep class com.omarea.krscript.**{*;}
 -keep class com.omarea.common.**{*;}
