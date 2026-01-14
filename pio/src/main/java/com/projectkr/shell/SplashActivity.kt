@@ -230,7 +230,7 @@ class SplashActivity : AppCompatActivity() {
     // Buffer lưu 4 dòng cuối
     private val rows = mutableListOf<String>()
     private var ignored = false
-    private val maxLines = 4
+    private val maxLines = 5
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
 
     private fun readStreamAsync(reader: BufferedReader) {
