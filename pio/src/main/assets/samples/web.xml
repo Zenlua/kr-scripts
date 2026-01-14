@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <group>
     <group>
-        <page html="https://www.lanzous.com/b838135" title="远程网页加载测试" />
+        <page html="https://cn.bing.com" title="远程网页加载测试" />
         <!--html属性不支持省略file:///android_asset/前缀-->
         <page html="file:///android_asset/samples/html-test/index.html" title="本地网页加载测试" />
     </group>
