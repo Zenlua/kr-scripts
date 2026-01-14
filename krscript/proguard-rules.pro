@@ -19,11 +19,11 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+-keep class com.omarea.krscript.**{*;}
 -keep class com.omarea.krscript.ui.**{*;}
 -keep class com.omarea.krscript.model.**{*;}
 -keep class com.omarea.krscript.config.**{*;}
--keep class com.omarea.krscript.TryOpenActivity
--keep class com.omarea.krscript.WebViewInjector
--keep class com.omarea.krscript.downloader.Downloader
--keep class com.omarea.krscript.executor.ScriptEnvironmen
--keep class com.omarea.krscript.shortcut.ActionShortcutManager
+-keep class com.omarea.krscript.shortcut.**{*;}
+-keep class com.omarea.krscript.executor.**{*;}
+-keep class com.omarea.krscript.downloader.**{*;}
