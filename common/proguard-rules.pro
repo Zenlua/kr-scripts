@@ -19,7 +19,9 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
 -keep class com.omarea.common.ui.**{*;}
 -keep class com.omarea.common.shell.**{*;}
 -keep class com.omarea.common.shared.**{*;}
 -keep class com.omarea.common.model.**{*;}
+-keep class com.omarea.overscroll.**{*;}
