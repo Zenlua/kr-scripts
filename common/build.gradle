@@ -15,7 +15,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     kotlin {
-        jvmToolchain(21)
+        jvmToolchain(17)
     }
 
     buildTypes {
