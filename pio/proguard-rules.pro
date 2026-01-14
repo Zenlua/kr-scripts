@@ -16,7 +16,20 @@
 #   public *;
 #}
 
--keep class com.omarea.krscript.executor.** { *; }
+-keep class com.omarea.common.ui.**{*;}
+-keep class com.omarea.common.shell.**{*;}
+-keep class com.omarea.common.shared.**{*;}
+-keep class com.omarea.common.model.**{*;}
+-keep class com.omarea.overscroll.**{*;}
+
+-keep class com.omarea.krscript.**{*;}
+-keep class com.omarea.krscript.ui.**{*;}
+-keep class com.omarea.krscript.model.**{*;}
+-keep class com.omarea.krscript.config.**{*;}
+-keep class com.omarea.krscript.shortcut.**{*;}
+-keep class com.omarea.krscript.executor.**{*;}
+-keep class com.omarea.krscript.downloader.**{*;}
+
 -keep class com.projectkr.shell.utils.** { *; }
 -keep class com.projectkr.shell.ui.** { *; }
 -keep class com.projectkr.shell.** { *; }
