@@ -8,7 +8,7 @@ android {
         enabled = true
     }
     kotlin {
-        jvmToolchain(21)
+        jvmToolchain(17)
     }
     lint {
         baseline = file("lint-baseline.xml")
