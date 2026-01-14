@@ -1,0 +1,47 @@
+<resources>
+    <string name="btn_exit">Thoát</string>
+    <string name="float_monitor_tips">Nhấn đúp vào cửa sổ nổi để đóng, hoặc nhấn giữ và kéo để điều chỉnh vị trí</string>
+    <string name="permission_float">Vui lòng cấp quyền hiển thị cửa sổ nổi!</string>
+    <string name="please_wait">Vui lòng chờ</string>
+    <string name="title_activity_action_page">Trang chức năng</string>
+
+    <string name="about_title">Giới thiệu · PIO</string>
+    <string name="appliction_desc">Đây là một ứng dụng demo framework</string>
+    <string name="appliction_name">PIO Framework</string>
+    <string name="appliction_author">Tác giả: DuduSki</string>
+    <string name="engine_version_name">Được tạo dựa trên [Kr-Script 4.0.5]</string>
+
+    <string name="tab_home">Trang chủ</string>
+    <string name="tab_favorites">Yêu thích</string>
+    <string name="tab_pages">Tất cả</string>
+
+    <string name="monitor_laod">Tải: %d%%</string>
+    <string name="monitor_core_count">%d nhân</string>
+    <string name="monitor_cache_cleared">Bộ nhớ đệm RAM đã được giải phóng</string>
+    <string name="monitor_ram_cleared">Các phân mảnh RAM đã được dọn dẹp</string>
+
+    <string name="copy_success">Sao chép thành công</string>
+    <string name="btn_retry">Thử lại</string>
+
+    <string name="pio_starting">PIO · Đang khởi động</string>
+    <string name="pop_before_start">Đang chuẩn bị khởi động ứng dụng…</string>
+    <string name="pop_started">Khởi động hoàn tất!</string>
+    <string name="pio_permission_checking">Đang kiểm tra và yêu cầu các quyền cần thiết…</string>
+    <string name="error_root">Không thể lấy quyền ROOT. Nếu thiết bị của bạn đã root, vui lòng chọn Cho phép khi hộp thoại xác thực xuất hiện!</string>
+    <string name="error_su_timeout">Xác thực ROOT bị quá thời gian. Vui lòng kiểm tra trình quản lý cấp quyền có đang chạy nền hay không!</string>
+    <string name="transparent_ui">Ui trong suốt</string>
+    <string name="title_activity_file_selector">Vui lòng chọn tệp</string>
+    <string name="title_activity_folder_selector">Vui lòng chọn thư mục</string>
+
+    <string name="text_power_shutdown">Tắt nguồn</string>
+    <string name="text_power_reboot">Khởi động lại</string>
+    <string name="text_power_dowload">Tải xuống</string>
+    <string name="text_power_recovery">Recovery</string>
+    <string name="text_power_fastboot">Fastboot</string>
+    <string name="text_power_edl">9008 (EDL)</string>
+    <string name="menu_power">Chọn hành động nguồn</string>
+    <string name="storage_available">Khả dụng</string>
+    <string name="permission_dialog_title">Điều khoản sử dụng ứng dụng</string>
+
+    <string name="permission_dialog_message">Yêu cầu các quyền sau:\n\n• Thông báo\n• Truy cập toàn bộ tệp\n• Danh sách ứng dụng\n• Root (nếu được cho phép)\n• Tạo phím tắt\n• Truy cập mạng dữ liệu\n\nTôi đồng ý tiếp tục sử dụng ứng dụng.</string>
+</resources>
