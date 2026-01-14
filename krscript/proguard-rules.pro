@@ -27,3 +27,9 @@
 -keep class com.omarea.krscript.shortcut.**{*;}
 -keep class com.omarea.krscript.executor.**{*;}
 -keep class com.omarea.krscript.downloader.**{*;}
+
+-keep class com.omarea.common.ui.**{*;}
+-keep class com.omarea.common.shell.**{*;}
+-keep class com.omarea.common.shared.**{*;}
+-keep class com.omarea.common.model.**{*;}
+-keep class com.omarea.overscroll.**{*;}
