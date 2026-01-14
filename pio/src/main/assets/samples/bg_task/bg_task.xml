@@ -4,7 +4,7 @@
 
     <group title="后台任务测试">
         <!-- bg-task="true" 属性现建议替换为 shell="bg-task" -->
-        <action shell="bg-task">
+        <action>
             <title>后台任务测试</title>
             <desc>后台任务点击后不显示日志界面，而是在通知栏中显示</desc>
             <set>

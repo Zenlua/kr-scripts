@@ -268,7 +268,6 @@ class DialogHelper {
         }
 
         private fun getWindowBackground(context: Context, defaultColor: Int = Color.TRANSPARENT): Int {
-            // val attrsArray = intArrayOf(android.R.attr.windowBackground)
             val attrsArray = intArrayOf(android.R.attr.background)
             val typedArray = context.obtainStyledAttributes(attrsArray)
             val color = typedArray.getColor(0, defaultColor)
@@ -276,7 +275,6 @@ class DialogHelper {
             return color
         }
 
-        // 设置点击空白区域关闭弹窗
         private fun setOutsideTouchDismiss(view: View, dialogWrap: DialogWrap): DialogWrap {
             val dialog = dialogWrap.dialog
             val rootView = dialog.window?.decorView
@@ -288,8 +286,7 @@ class DialogHelper {
                         val rect = Rect()
                         view.getGlobalVisibleRect(rect)
                         if (!rect.contains(x, y)) {
-                            // TODO: 从何获取呢...
-                            val mCancelable = dialogWrap.isCancelable // false
+                            val mCancelable = dialogWrap.isCancelable
                             if (mCancelable) {
                                 dialogWrap.dismiss()
                             }
@@ -383,24 +380,6 @@ class DialogHelper {
                     decorView.run {
                         systemUiVisibility = context.window.decorView.systemUiVisibility // View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
                     }
-
-                    /*
-                    // 隐藏状态栏和导航栏
-                    decorView.run {
-                        systemUiVisibility = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        setOnSystemUiVisibilityChangeListener {
-                            var uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or  //布局位于状态栏下方
-                                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or  //全屏
-                                    View.SYSTEM_UI_FLAG_FULLSCREEN or  //隐藏导航栏
-                                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            uiOptions = uiOptions or 0x00001000
-                            systemUiVisibility = uiOptions
-                        }
-                    }
-                    */
-
-                    // setWindowAnimations(R.style.windowAnim2)
                 }
             } else {
                 dialog.window?.run {
@@ -420,13 +399,11 @@ class DialogHelper {
                 AppCompatDelegate.MODE_NIGHT_YES -> {
                     return true
                 }
-
                 AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, AppCompatDelegate.MODE_NIGHT_UNSPECIFIED
                     -> {
                     val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
                     return uiModeManager.nightMode == UiModeManager.MODE_NIGHT_YES
                 }
-
                 else -> {
                     return false
                 }
@@ -434,33 +411,19 @@ class DialogHelper {
         }
 
         fun setWindowBlurBg(window: Window, activity: Activity) {
-            // 是否使用了动态壁纸
             val wallpaperMode = activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER != 0
-
             window.run {
-                // TODO:处理模糊背景
-                // BlurBackground(activity).setScreenBgLight(dialog)
-
-                // val attrs = attributes
-                // attrs.alpha = 0.1f
-                // attributes =attrs
-                // decorView.setPadding(0, 0, 0, 0)
-
                 val blurBitmap = if (disableBlurBg || wallpaperMode) {
                     null
                 } else {
                     FastBlurUtility.getBlurBackgroundDrawer(activity)
                 }
-
-                // window.setDimAmount(0f)
                 if (blurBitmap != null) {
                     setBackgroundDrawable(blurBitmap.toDrawable(activity.resources))
                 } else {
-                    // setBackgroundDrawableResource(android.R.color.transparent)
                     try {
                         val bg = getWindowBackground(activity)
                         if (bg == Color.TRANSPARENT) {
-
                             if (isFloating) {
                                 val d = bg.toDrawable()
                                 setBackgroundDrawable(d)
@@ -475,14 +438,18 @@ class DialogHelper {
                                     setBackgroundDrawable(d)
                                 }
                             }
-
                         } else {
                             val d = bg.toDrawable()
                             setBackgroundDrawable(d)
                         }
                     } catch (_: java.lang.Exception) {
-                        val d = Color.argb(255, 245, 245, 245).toDrawable()
-                        setBackgroundDrawable(d)
+                        if (isNightMode(context)) {
+                            val d = Color.argb(255, 18, 18, 18).toDrawable()
+                            setBackgroundDrawable(d)
+                        } else {
+                            val d = Color.argb(255, 245, 245, 245).toDrawable()
+                            setBackgroundDrawable(d)
+                        }
                     }
                 }
             }

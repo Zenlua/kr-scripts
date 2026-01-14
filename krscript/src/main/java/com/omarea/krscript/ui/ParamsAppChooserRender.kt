@@ -10,6 +10,8 @@ import com.omarea.common.ui.AdapterAppChooser
 import com.omarea.common.ui.DialogAppChooser
 import com.omarea.krscript.R
 import com.omarea.krscript.model.ActionParamInfo
+import java.util.Locale
+import java.text.Collator
 
 class ParamsAppChooserRender(private var actionParamInfo: ActionParamInfo, private var context: FragmentActivity) : DialogAppChooser.Callback {
     private val systemUiVisibility = context.window?.decorView?.systemUiVisibility
@@ -51,7 +53,7 @@ class ParamsAppChooserRender(private var actionParamInfo: ActionParamInfo, priva
             it.value
         }
 
-        val packages = pm.getInstalledPackages(PackageManager.GET_UNINSTALLED_PACKAGES).filter {
+        val packages = pm.getInstalledPackages(0).filter {
             filter == null || filter.contains(it.packageName)
         }
 
@@ -104,6 +106,9 @@ class ParamsAppChooserRender(private var actionParamInfo: ActionParamInfo, priva
     // 设置界面显示和元素赋值
     private fun setTextView() {
         packages = ArrayList(loadPackages(actionParamInfo.type == "packages"))
+        // Sắp xếp tên app chuẩn theo locale (đa ngôn ngữ)
+        val collator = Collator.getInstance(Locale.getDefault())
+        packages.sortWith { a, b -> collator.compare(a.appName, b.appName) }
 
         packages.run {
             val labels = map { it.appName }.toTypedArray()
