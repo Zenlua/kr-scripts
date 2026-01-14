@@ -20,3 +20,6 @@
 
 -keep class com.omarea.krscript.model.**{*;}
 
+-keep class com.omarea.krscript.executor.** { *; }
+
+-keepclassmembers class * implements java.io.Serializable { *; }
