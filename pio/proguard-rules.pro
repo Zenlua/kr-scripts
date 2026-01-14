@@ -16,6 +16,7 @@
 #   public *;
 #}
 
+-keep class com.omarea.krscript.executor.** { *; }
 -keep class com.projectkr.shell.utils.** { *; }
 -keep class com.projectkr.shell.ui.** { *; }
 -keep class com.projectkr.shell.** { *; }
