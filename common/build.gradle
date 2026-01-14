@@ -11,19 +11,15 @@ android {
         baseline = file("lint-baseline.xml")
     }
     defaultConfig {
-        minSdkVersion 26
+        minSdkVersion 23
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     kotlin {
-        jvmToolchain(21)
+        jvmToolchain(17)
     }
 
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-        release_mini {
             minifyEnabled = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
@@ -32,18 +28,11 @@ android {
 }
 
 dependencies {
+    testImplementation 'junit:junit:4.13.2'
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
-    // implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'androidx.core:core:1.17.0'
-    // testImplementation 'junit:junit:4.13-beta-3'
-    // androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    // androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-    implementation 'androidx.recyclerview:recyclerview:1.4.0'
-    implementation 'top.yukonga.miuix.kmp:miuix:0.7.2'
-    //api files('libs/overscroll-release-v1.1-20160904.jar')
-    // implementation files('libs/fastscroll_v1.2_20160903.jar')
+    implementation 'androidx.recyclerview:recyclerview:1.4.0'  
 }
 repositories {
     mavenCentral()
