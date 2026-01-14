@@ -11,12 +11,11 @@ android {
         jvmToolchain(21)
     }
     lint {
-        abortOnError false
-        checkReleaseBuilds false
+        baseline = file("lint-baseline.xml")
     }
     defaultConfig {
         resourceConfigurations += ['zh', 'vi']
-        minSdkVersion 24
+        minSdkVersion 21
         targetSdkVersion 28
         versionCode 202111141
         versionName "4.0.5"
@@ -37,8 +36,8 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'com.google.android.material:material:1.13.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-    implementation project(':common') // 添加依赖模块
-    implementation project(':krscript') // 添加依赖模块
+    implementation project(':common')
+    implementation project(':krscript')
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     implementation "androidx.activity:activity-ktx:1.7.2"
 
