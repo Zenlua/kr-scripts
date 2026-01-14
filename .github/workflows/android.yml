@@ -1,0 +1,68 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check current Java version
+        id: java-check
+        run: |
+            java --version | head -n 1
+            echo "CURRENT_JAVA=$(java --version | head -n 1 | grep -co ' 17\.')" >> $GITHUB_ENV
+
+      - name: Set up JDK 17
+        if: env.CURRENT_JAVA != '1'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Build Release APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --daemon -x lint -x test
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: pio/build/outputs/apk/*/*.apk
+
+  build-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check current Java version
+        id: java-check
+        run: |
+            java --version | head -n 1
+            echo "CURRENT_JAVA=$(java --version | head -n 1 | grep -co ' 17\.')" >> $GITHUB_ENV
+
+      - name: Set up JDK 17
+        if: env.CURRENT_JAVA != '1'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Build Debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon -x lint -x test
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: pio/build/outputs/apk/*/*.apk
