@@ -16,10 +16,7 @@
 #   public *;
 #}
 
--keepclassmembers class * implements java.io.Serializable{*;}
-
--keep class com.omarea.krscript.model.**{*;}
-
--keep class com.omarea.krscript.executor.** { *; }
-
+-keep class com.projectkr.shell.utils.** { *; }
+-keep class com.projectkr.shell.ui.** { *; }
+-keep class com.projectkr.shell.** { *; }
 -keepclassmembers class * implements java.io.Serializable { *; }
