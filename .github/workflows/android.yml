@@ -52,7 +52,7 @@ jobs:
             echo "CURRENT_JAVA=$(java --version | head -n 1 | grep -co ' 17\.')" >> $GITHUB_ENV
 
       - name: Set up JDK 17
-        if: env.CURRENT_JAVA != '1'
+        #if: env.CURRENT_JAVA != '1'
         uses: actions/setup-java@v4
         with:
           java-version: '17'
