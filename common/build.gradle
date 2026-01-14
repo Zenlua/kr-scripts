@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 36
+    compileSdkVersion 30
     namespace "com.omarea.common"
     viewBinding {
         enabled = true
