@@ -1,6 +1,5 @@
 package com.projectkr.shell
 
-import android.Manifest
 import android.app.Activity
 import android.app.WallpaperManager
 import android.content.Context
@@ -10,15 +9,12 @@ import android.graphics.drawable.Drawable
 import android.os.Build
 import android.view.View
 import android.view.WindowManager
-import androidx.core.content.PermissionChecker
 import android.content.res.Configuration
-import com.omarea.common.ui.ThemeMode
 import androidx.appcompat.app.AppCompatDelegate
+import com.omarea.common.ui.ThemeMode
 
 object ThemeModeState {
     private var themeMode: ThemeMode = ThemeMode()
-
-    private fun checkPermission(context: Context, permission: String): Boolean = PermissionChecker.checkSelfPermission(context, permission) == PermissionChecker.PERMISSION_GRANTED
 
     // Hàm này vẫn giữ nguyên tính năng cũ: tự động xác định chế độ Dark/Light mode dựa vào cấu hình hệ thống
     fun switchTheme(activity: Activity? = null): ThemeMode {
@@ -27,7 +23,7 @@ object ThemeModeState {
             val isNightMode = nightModeFlags == Configuration.UI_MODE_NIGHT_YES
 
             // Kiểm tra quyền đọc/ghi bộ nhớ ngoài nếu cần thiết
-            if (ThemeConfig(activity).getAllowTransparentUI() && checkPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE) && checkPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            if (ThemeConfig(activity).getAllowTransparentUI() {
                 val wallpaper = WallpaperManager.getInstance(activity)
                 val wallpaperInfo = wallpaper.wallpaperInfo
 
