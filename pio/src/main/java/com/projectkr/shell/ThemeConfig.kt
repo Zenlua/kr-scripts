@@ -5,7 +5,7 @@ import android.content.Context
 import androidx.core.content.edit
 
 class ThemeConfig (private val activity: Activity) {
-    private val config = activity.getSharedPreferences("theme", Context.MODE_PRIVATE)
+    private val config = activity.getSharedPreferences("kr-script-config", Context.MODE_PRIVATE)
 
     fun getAllowTransparentUI(): Boolean {
         return config.getBoolean("TransparentUI", false)
