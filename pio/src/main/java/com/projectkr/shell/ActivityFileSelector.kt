@@ -30,6 +30,7 @@ class ActivityFileSelector : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // TODO:ThemeSwitch.switchTheme(this)
         super.onCreate(savedInstanceState)
+        ThemeModeState.switchTheme(this)
         binding = ActivityFileSelectorBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
