@@ -41,8 +41,6 @@ class MainActivity : AppCompatActivity() {
     private var krScriptConfig = KrScriptConfig()
     private lateinit var binding: ActivityMainBinding
 
-    private fun checkPermission(permission: String): Boolean = PermissionChecker.checkSelfPermission(this, permission) == PermissionChecker.PERMISSION_GRANTED
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ThemeModeState.switchTheme(this)
@@ -108,10 +106,6 @@ class MainActivity : AppCompatActivity() {
             val transaction = fragmentManager.beginTransaction()
             transaction.replace(R.id.main_tabhost_cpu, home)
             transaction.commitAllowingStateLoss()
-        }
-
-        if (!(checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE) && checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 111)
         }
     }
 
@@ -220,16 +214,11 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra("extension", extension)
             startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER_INNER)
         } catch (ex: java.lang.Exception) {
-            Toast.makeText(this, "启动内置文件选择器失败！", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Failed to launch the built-in file selector!", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun chooseFilePath(fileSelectedInterface: ParamsFileChooserRender.FileSelectedInterface): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, getString(com.omarea.krscript.R.string.kr_write_external_storage), Toast.LENGTH_LONG).show()
-            requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 2)
-            return false
-        } else {
             return try {
                 val suffix = fileSelectedInterface.suffix()
                 if (suffix != null && suffix.isNotEmpty()) {
@@ -308,10 +297,7 @@ class MainActivity : AppCompatActivity() {
                 val themeConfig = ThemeConfig(this)
                 transparentUi.setOnClickListener {
                     val isChecked = (it as CompoundButton).isChecked
-                    if (isChecked && !checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                        it.isChecked = false
-                        Toast.makeText(this@MainActivity, com.omarea.krscript.R.string.kr_write_external_storage, Toast.LENGTH_SHORT).show()
-                    } else {
+                    if (isChecked) {
                         themeConfig.setAllowTransparentUI(isChecked)
                     }
                 }
@@ -331,9 +317,6 @@ class MainActivity : AppCompatActivity() {
                     FloatMonitor(this).showPopupWindow()
                     Toast.makeText(this, getString(R.string.float_monitor_tips), Toast.LENGTH_LONG).show()
                 } else {
-                    //若没有权限，提示获取
-                    //val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
-                    //startActivity(intent);
                     val intent = Intent()
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     intent.action = "android.settings.APPLICATION_DETAILS_SETTINGS"
