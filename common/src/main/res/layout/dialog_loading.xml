@@ -14,11 +14,12 @@
 
         <ProgressBar
             android:id="@+id/dialog_app_details_progress"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
             android:layout_gravity="center_horizontal"
             android:layout_margin="30dp"
-            android:indeterminate="false"
+            android:indeterminate="true"
             android:max="100" />
 
         <TextView
