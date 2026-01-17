@@ -18,9 +18,7 @@ import android.widget.CompoundButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.PermissionChecker
 import com.omarea.common.shared.FilePathResolver
 import com.omarea.common.ui.DialogHelper
 import com.omarea.common.ui.ProgressBarDialog
@@ -31,7 +29,7 @@ import com.omarea.krscript.ui.ActionListFragment
 import com.omarea.krscript.ui.ParamsFileChooserRender
 import com.omarea.vtools.FloatMonitor
 import com.projectkr.shell.databinding.ActivityMainBinding
-import com.projectkr.shell.permissions.CheckRootStatus
+import com.omarea.common.shell.KeepShellPublic
 import com.projectkr.shell.ui.TabIconHelper
 import androidx.core.view.isVisible
 
@@ -47,17 +45,15 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        //supportActionBar!!.elevation = 0f
         val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
         setTitle(R.string.app_name)
 
         krScriptConfig = KrScriptConfig()
 
-
         binding.mainTabhost.setup()
         val tabIconHelper = TabIconHelper(binding.mainTabhost, this)
-        if (CheckRootStatus.lastCheckResult && krScriptConfig.allowHomePage) {
+        if (KeepShellPublic.checkRoot() && krScriptConfig.allowHomePage) {
             tabIconHelper.newTabSpec(getString(R.string.tab_home), getDrawable(R.drawable.tab_home)!!, R.id.main_tabhost_cpu)
         } else {
             binding.mainTabhostCpu.visibility = View.GONE
@@ -100,13 +96,15 @@ class MainActivity : AppCompatActivity() {
             }
         }.start()
 
-        if (CheckRootStatus.lastCheckResult && krScriptConfig.allowHomePage) {
+        if (KeepShellPublic.checkRoot() && krScriptConfig.allowHomePage) {
             val home = FragmentHome()
             val fragmentManager = supportFragmentManager
             val transaction = fragmentManager.beginTransaction()
             transaction.replace(R.id.main_tabhost_cpu, home)
             transaction.commitAllowingStateLoss()
         }
+
+        // Đã xóa phần yêu cầu quyền READ/WRITE_EXTERNAL_STORAGE
     }
 
     private fun getItems(pageNode: PageNode): ArrayList<NodeInfoBase>? {
@@ -160,10 +158,9 @@ class MainActivity : AppCompatActivity() {
     private fun getKrScriptActionHandler(pageNode: PageNode, isFavoritesTab: Boolean): KrScriptActionHandler {
         return object : KrScriptActionHandler {
             override fun onActionCompleted(runnableNode: RunnableNode) {
-                if (runnableNode.autoFinish ) {
+                if (runnableNode.autoFinish) {
                     finishAndRemoveTask()
                 } else if (runnableNode.reloadPage) {
-                    // TODO:多线程优化
                     if (isFavoritesTab) {
                         reloadFavoritesTab()
                     } else {
@@ -214,31 +211,31 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra("extension", extension)
             startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER_INNER)
         } catch (ex: java.lang.Exception) {
-            Toast.makeText(this, "Failed to launch the built-in file selector!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "启动内置文件选择器失败！", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun chooseFilePath(fileSelectedInterface: ParamsFileChooserRender.FileSelectedInterface): Boolean {
-            return try {
-                val suffix = fileSelectedInterface.suffix()
-                if (suffix != null && suffix.isNotEmpty()) {
-                    chooseFilePath(suffix)
+        // Đã bỏ kiểm tra quyền READ_EXTERNAL_STORAGE
+        return try {
+            val suffix = fileSelectedInterface.suffix()
+            if (suffix != null && suffix.isNotEmpty()) {
+                chooseFilePath(suffix)
+            } else {
+                val intent = Intent(Intent.ACTION_GET_CONTENT)
+                val mimeType = fileSelectedInterface.mimeType()
+                if (mimeType != null) {
+                    intent.type = mimeType
                 } else {
-                    val intent = Intent(Intent.ACTION_GET_CONTENT)
-                    val mimeType = fileSelectedInterface.mimeType()
-                    if (mimeType != null) {
-                        intent.type = mimeType
-                    } else {
-                        intent.type = "*/*"
-                    }
-                    intent.addCategory(Intent.CATEGORY_OPENABLE)
-                    startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER)
+                    intent.type = "*/*"
                 }
-                this.fileSelectedInterface = fileSelectedInterface
-                true
-            } catch (_: java.lang.Exception) {
-                false
+                intent.addCategory(Intent.CATEGORY_OPENABLE)
+                startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER)
             }
+            this.fileSelectedInterface = fileSelectedInterface
+            true
+        } catch (_: java.lang.Exception) {
+            false
         }
     }
 
@@ -282,9 +279,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main, menu)
-
         menu.findItem(R.id.action_graph).isVisible = (binding.mainTabhostCpu.isVisible)
-
         return true
     }
 
@@ -295,11 +290,11 @@ class MainActivity : AppCompatActivity() {
                 val layout = layoutInflater.inflate(R.layout.dialog_about, null)
                 val transparentUi = layout.findViewById<CompoundButton>(R.id.transparent_ui)
                 val themeConfig = ThemeConfig(this)
+                
                 transparentUi.setOnClickListener {
                     val isChecked = (it as CompoundButton).isChecked
-                    if (isChecked) {
-                        themeConfig.setAllowTransparentUI(isChecked)
-                    }
+                    // Đã bỏ kiểm tra quyền ở đây
+                    themeConfig.setAllowTransparentUI(isChecked)
                 }
                 transparentUi.isChecked = themeConfig.getAllowTransparentUI()
 
