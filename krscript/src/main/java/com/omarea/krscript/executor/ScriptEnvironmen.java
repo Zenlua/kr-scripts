@@ -7,6 +7,7 @@ import android.os.Build;
 import android.os.Environment;
 
 import com.omarea.common.shared.FileWrite;
+import com.omarea.common.shared.MagiskExtend;
 import com.omarea.common.shell.KeepShell;
 import com.omarea.common.shell.KeepShellPublic;
 import com.omarea.common.shell.ShellTranslation;
@@ -22,22 +23,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Locale;
-import android.provider.Settings;
-import android.util.DisplayMetrics;
-import android.content.res.Configuration;
-import android.content.res.Resources;
-import java.util.TimeZone;
-import java.lang.management.ManagementFactory;
-import java.lang.Runtime;
-import java.nio.file.Paths;
-import android.widget.Toast;
-
 
 public class ScriptEnvironmen {
     private static final String ASSETS_FILE = "file:///android_asset/";
     private static boolean inited = false;
     private static String environmentPath = "";
+    // 此目录将添加到PATH尾部，作为应用程序提供的拓展程序库目录，如有需要则需要在初始化executor.sh之前为该变量赋值
     private static String TOOKIT_DIR = "";
     private static boolean rooted = false;
     private static KeepShell privateShell;
@@ -53,6 +44,13 @@ public class ScriptEnvironmen {
         return init(context, configSpf.getString("executor", "kr-script/executor.sh"), configSpf.getString("toolkitDir", "kr-script/toolkit"));
     }
 
+    /**
+     * 初始化执行器
+     *
+     * @param context  Context
+     * @param executor 执行器在Assets中的位置
+     * @return 是否初始化成功
+     */
     public static boolean init(Context context, String executor, String toolkitDir) {
         if (inited) {
             return true;
@@ -131,6 +129,13 @@ public class ScriptEnvironmen {
         return "";
     }
 
+    /**
+     * 写入缓存（脚本代码存入脚本文件）
+     *
+     * @param context
+     * @param script
+     * @return
+     */
     private static String createShellCache(Context context, String script) {
         String md5 = md5(script);
         String outputPath = "kr-script/cache/" + md5 + ".sh";
@@ -149,6 +154,13 @@ public class ScriptEnvironmen {
         return "";
     }
 
+    /**
+     * 执行脚本
+     *
+     * @param context
+     * @param fileName
+     * @return
+     */
     private static String extractScript(Context context, String fileName) {
         if (fileName.startsWith(ASSETS_FILE)) {
             fileName = fileName.substring(ASSETS_FILE.length());
@@ -193,6 +205,11 @@ public class ScriptEnvironmen {
                 stringBuilder.append("export PAGE_WORK_DIR='").append(parentPageConfigDir).append("'\n");
                 stringBuilder.append("export PAGE_WORK_FILE='").append(currentPageConfigPath).append("'\n");
             }
+        } else {
+            stringBuilder.append("export PAGE_CONFIG_DIR=''\n");
+            stringBuilder.append("export PAGE_CONFIG_FILE=''\n");
+            stringBuilder.append("export PAGE_WORK_DIR=''\n");
+            stringBuilder.append("export PAGE_WORK_DIR=''\n");
         }
 
         stringBuilder.append("\n\n");
@@ -214,51 +231,69 @@ public class ScriptEnvironmen {
         return dir;
     }
 
+    /*
+    public static int getUserId() {
+        int value = 0;
+        try {
+            Class<?> c = Class.forName("android.os.UserHandle");
+            Method get = c.getMethod("getUserId", int.class);
+            value = (int)(get.invoke(c, android.os.Process.myUid()));
+        } catch (Exception ignored) {
+        }
+        return value;
+    }*/
+
+    /**
+     * 获取框架的环境变量
+     *
+     * @param context
+     * @return
+     */
     private static HashMap<String, String> getEnvironment(Context context) {
         HashMap<String, String> params = new HashMap<>();
 
         params.put("TOOLKIT", TOOKIT_DIR);
+        if (MagiskExtend.moduleInstalled()) {
+            String magiskPath = MagiskExtend.MAGISK_PATH.endsWith("/") ? (MagiskExtend.MAGISK_PATH.substring(0, MagiskExtend.MAGISK_PATH.length() - 1)) : MagiskExtend.MAGISK_PATH;
+            params.put("MAGISK_PATH", magiskPath);
+        } else {
+            params.put("MAGISK_PATH", "");
+        }
         params.put("START_DIR", getStartPath(context));
+        // params.put("EXECUTOR_PATH", environmentPath);
         params.put("TEMP_DIR", context.getCacheDir().getAbsolutePath());
-        params.put("LANGUAGE", Locale.getDefault().getLanguage());
-        params.put("COUNTRY", Locale.getDefault().getCountry());
-        params.put("TIMEZONE", TimeZone.getDefault().getID());
-        params.put("ANDROID_DEVICE", Build.DEVICE);
-        params.put("ANDROID_BRAND", Build.BRAND);
-        params.put("ANDROID_MANUFACTURER", Build.MANUFACTURER);
-        params.put("ANDROID_FINGERPRINT", Build.FINGERPRINT);
-        params.put("ANDROID_MODEL", Build.MODEL);
-        params.put("ANDROID_ID", Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID));
-        params.put("CPU_ABI", Build.CPU_ABI);
-        params.put("ANDROID_SDK", String.valueOf(Build.VERSION.SDK_INT));
-        params.put("RAM", String.valueOf(availableMemory()));
-        params.put("SCREEN_RESOLUTION", getScreenResolution(context));
-        params.put("TOTAL_MEMORY", String.valueOf(Runtime.getRuntime().totalMemory()));
-        params.put("KERNEL_VERSION", System.getProperty("os.version"));
 
         FileOwner fileOwner = new FileOwner(context);
         int androidUid = fileOwner.getUserId();
-        params.put("ANDROID_UID", String.valueOf(androidUid));
+        params.put("ANDROID_UID", "" + androidUid);
 
         try {
+            // @ https://blog.csdn.net/Gaugamela/article/details/78689580
             params.put("APP_USER_ID", fileOwner.getFileOwner());
+            // params.put("APP_UID", "" + android.os.Process.myPid());
+            // params.put("APP_PID", "" + android.os.Process.myPid());
+            // params.put("APP_TID", "" + android.os.Process.myTid());
         } catch (Exception ignored) {
         }
 
-        params.put("DARK_MODE", (Resources.getSystem().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES ? "true" : "false");
-
+        params.put("ANDROID_SDK", "" + Build.VERSION.SDK_INT);
+        // params.put("ROOT_PERMISSION", rooted ? "granted" : "denied");
         params.put("ROOT_PERMISSION", rooted ? "true" : "false");
         params.put("SDCARD_PATH", Environment.getExternalStorageDirectory().getAbsolutePath());
+        String busyboxPath = FileWrite.INSTANCE.getPrivateFilePath(context, "busybox");
+        if (new File(FileWrite.INSTANCE.getPrivateFilePath(context, "busybox")).exists()) {
+            params.put("BUSYBOX", busyboxPath);
+        } else {
+            params.put("BUSYBOX", "busybox");
+        }
         try {
             PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-        params.put("PACKAGE_NAME", context.getPackageName());
-        params.put("PACKAGE_VERSION_NAME", packageInfo.versionName);
-        params.put("PATH_APK_APP", context.getApplicationInfo().sourceDir);
-        params.put("APP_ID", context.getApplicationInfo().packageName);
+            params.put("PACKAGE_NAME", context.getPackageName());
+            params.put("PACKAGE_VERSION_NAME", packageInfo.versionName);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                params.put("PACKAGE_VERSION_CODE", String.valueOf(packageInfo.getLongVersionCode()));
+                params.put("PACKAGE_VERSION_CODE", "" + packageInfo.getLongVersionCode());
             } else {
-                params.put("PACKAGE_VERSION_CODE", String.valueOf(packageInfo.versionCode));
+                params.put("PACKAGE_VERSION_CODE", "" + packageInfo.versionCode);
             }
         } catch (Exception ex) {
         }
@@ -266,6 +301,10 @@ public class ScriptEnvironmen {
         return params;
     }
 
+    /**
+     * @param params
+     * @return
+     */
     private static ArrayList<String> getVariables(HashMap<String, String> params) {
         ArrayList<String> envp = new ArrayList<>();
 
@@ -297,6 +336,8 @@ public class ScriptEnvironmen {
             cachePath = extractScript(context, script2);
             if (cachePath == null) {
                 cachePath = script;
+                // String error = context.getString(R.string.script_losted) + setState;
+                // Toast.makeText(context, error, Toast.LENGTH_LONG).show();
             }
         } else {
             cachePath = createShellCache(context, script);
@@ -318,6 +359,14 @@ public class ScriptEnvironmen {
         }
     }
 
+    /**
+     * 使用执行器运行脚本
+     *
+     * @param context          Context
+     * @param dataOutputStream Runtime进程的输出流
+     * @param cmds             要执行的脚本
+     * @param params           参数类别
+     */
     public static void executeShell(
             Context context,
             DataOutputStream dataOutputStream,
@@ -343,6 +392,11 @@ public class ScriptEnvironmen {
                 params.put("PAGE_WORK_DIR", parentPageConfigDir);
                 params.put("PAGE_WORK_FILE", currentPageConfigPath);
             }
+        } else {
+            params.put("PAGE_CONFIG_DIR", "");
+            params.put("PAGE_CONFIG_FILE", "");
+            params.put("PAGE_WORK_DIR", "");
+            params.put("PAGE_WORK_FILE", "");
         }
 
         ArrayList<String> envp = getVariables(params);
