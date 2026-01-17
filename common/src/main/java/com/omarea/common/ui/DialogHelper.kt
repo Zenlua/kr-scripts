@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.UiModeManager
 import android.content.Context
 import android.content.DialogInterface
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
 import android.view.LayoutInflater
@@ -395,17 +396,16 @@ class DialogHelper {
         }
 
         private fun isNightMode(context: Context): Boolean {
-            when (AppCompatDelegate.getDefaultNightMode()) {
+            val nightModeFlags = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+            return when (AppCompatDelegate.getDefaultNightMode()) {
                 AppCompatDelegate.MODE_NIGHT_YES -> {
-                    return true
+                    true
                 }
-                AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, AppCompatDelegate.MODE_NIGHT_UNSPECIFIED
-                    -> {
-                    val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
-                    return uiModeManager.nightMode == UiModeManager.MODE_NIGHT_YES
+                AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, AppCompatDelegate.MODE_NIGHT_UNSPECIFIED -> {
+                    nightModeFlags == Configuration.UI_MODE_NIGHT_YES
                 }
                 else -> {
-                    return false
+                    false
                 }
             }
         }
