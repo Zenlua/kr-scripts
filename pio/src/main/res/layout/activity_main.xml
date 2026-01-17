@@ -1,66 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:fitsSystemWindows="true">
 
+    <!-- Toolbar ở trên -->
     <include
         layout="@layout/app_bar_main"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="?attr/actionBarSize" />
 
-    <TabHost
-        android:id="@+id/main_tabhost"
+    <!-- Nội dung tab (ViewPager2) chiếm hết không gian còn lại -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="?android:actionBarSize"
-        android:background="@android:color/transparent">
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+    <!-- TabLayout ở dưới cùng -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:tabMode="fixed"
+        app:tabGravity="fill"
+        app:tabIndicatorHeight="0dp"
+        app:tabBackground="?android:navigationBarColor"
+        android:background="@android:color/transparent" />
 
-            <FrameLayout
-                android:id="@android:id/tabcontent"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1">
-
-                <FrameLayout
-                    android:id="@+id/main_tabhost_cpu"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
-
-                <FrameLayout
-                    android:id="@+id/main_tabhost_2"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-
-                    <FrameLayout
-                        android:id="@+id/list_favorites"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
-                </FrameLayout>
-
-                <FrameLayout
-                    android:id="@+id/main_tabhost_3"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical">
-
-                    <FrameLayout
-                        android:id="@+id/list_pages"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
-                </FrameLayout>
-            </FrameLayout>
-
-            <TabWidget
-                android:id="@android:id/tabs"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?android:navigationBarColor" />
-        </LinearLayout>
-    </TabHost>
-</RelativeLayout>
+</LinearLayout>
