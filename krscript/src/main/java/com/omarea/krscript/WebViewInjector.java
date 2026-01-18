@@ -1,10 +1,8 @@
 package com.omarea.krscript;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -63,21 +61,15 @@ public class WebViewInjector {
 
             webView.addJavascriptInterface(
                     new KrScriptEngine(context),
-                    "KrScriptCore" // 由于类名会被混淆，写死吧... KrScriptEngine.class.getSimpleName()
+                    "KrScriptCore"
             );
             webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
-                if (
-                        context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                    activity.requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 2);
-                    Toast.makeText(context, R.string.kr_write_external_storage, Toast.LENGTH_LONG).show();
-                } else {
-                    DialogHelper.Companion.animDialog(new AlertDialog.Builder(context)
-                            .setTitle(R.string.kr_download_confirm)
-                            .setMessage(url + "\n\n" + mimetype + "\n" + contentLength + "Bytes")
-                            .setPositiveButton(R.string.btn_confirm, (dialog, which) -> new Downloader(context, null).downloadBySystem(url, contentDisposition, mimetype, UUID.randomUUID().toString(), null))
-                            .setNegativeButton(R.string.btn_cancel, (dialog, which) -> {
-                            })).setCancelable(false);
-                }
+                DialogHelper.Companion.animDialog(new AlertDialog.Builder(context)
+                        .setTitle(R.string.kr_download_confirm)
+                        .setMessage(url + "\n\n" + mimetype + "\n" + contentLength + "Bytes")
+                        .setPositiveButton(R.string.btn_confirm, (dialog, which) -> new Downloader(context, null).downloadBySystem(url, contentDisposition, mimetype, UUID.randomUUID().toString(), null))
+                        .setNegativeButton(R.string.btn_cancel, (dialog, which) -> {
+                        })).setCancelable(false);
             });
         }
     }
@@ -90,22 +82,11 @@ public class WebViewInjector {
             this.context = context;
         }
 
-        /**
-         * 检查是否具有ROOT权限
-         *
-         * @return
-         */
         @JavascriptInterface
         public boolean rootCheck() {
             return KeepShellPublic.INSTANCE.checkRoot();
         }
 
-        /**
-         * 同步执行shell脚本 并返回结果（不包含错误信息）
-         *
-         * @param script 脚本内容
-         * @return 执行过程中的输出内容
-         */
         @JavascriptInterface
         public String executeShell(String script) {
             if (script != null && !script.isEmpty()) {
@@ -114,10 +95,6 @@ public class WebViewInjector {
             return "";
         }
 
-        /**
-         * @param script
-         * @param callbackFunction
-         */
         @JavascriptInterface
         public boolean executeShellAsync(String script, String callbackFunction, String env) {
             HashMap<String, String> params = new HashMap<>();
@@ -149,12 +126,6 @@ public class WebViewInjector {
             }
         }
 
-        /**
-         * 提取assets中的文件
-         *
-         * @param assets 要提取的文件
-         * @return 提取成功后所在的目录
-         */
         @JavascriptInterface
         public String extractAssets(String assets) {
             return new ExtractAssets(context).extractResource(assets);

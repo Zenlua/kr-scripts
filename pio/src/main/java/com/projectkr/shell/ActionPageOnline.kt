@@ -1,11 +1,9 @@
 package com.projectkr.shell
 
-import android.Manifest
 import android.app.DownloadManager
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
@@ -102,22 +100,6 @@ class ActionPageOnline : AppCompatActivity() {
                 }
 
                 // config、url 都用于设定要打卡的网页
-                /*
-
-                when {
-                    extras.containsKey("config") -> {
-                        initWebview(extras.getString("config"))
-                        hideWindowTitle() // 作为网页浏览器时，隐藏标题栏
-                    }
-                    extras.containsKey("url") -> {
-                        initWebview(extras.getString("url"))
-                        hideWindowTitle() // 作为网页浏览器时，隐藏标题栏
-                    }
-                    else -> {
-                        setWindowTitleBar()
-                    }
-                }
-                */
                 setWindowTitleBar()
                 when {
                     extras.containsKey("config") -> initWebview(extras.getString("config"))
@@ -129,22 +111,15 @@ class ActionPageOnline : AppCompatActivity() {
                     val url = extras.getString("downloadUrl")!!
                     val taskAliasId = if (extras.containsKey("taskId")) extras.getString("taskId") else UUID.randomUUID().toString()
 
-                    if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    val downloadId = downloader.downloadBySystem(url, null, null, taskAliasId)
+                    if (downloadId != null) {
+                        binding.krDownloadUrl.text = url
+                        val autoClose = extras.containsKey("autoClose") && extras.getBoolean("autoClose")
+
                         downloader.saveTaskStatus(taskAliasId, 0)
-
-                        requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 2)
-                        DialogHelper.helpInfo(this, "", getString(com.omarea.krscript.R.string.kr_write_external_storage))
+                        watchDownloadProgress(downloadId, autoClose, taskAliasId)
                     } else {
-                        val downloadId = downloader.downloadBySystem(url, null, null, taskAliasId)
-                        if (downloadId != null) {
-                            binding.krDownloadUrl.text = url
-                            val autoClose = extras.containsKey("autoClose") && extras.getBoolean("autoClose")
-
-                            downloader.saveTaskStatus(taskAliasId, 0)
-                            watchDownloadProgress(downloadId, autoClose, taskAliasId)
-                        } else {
-                            downloader.saveTaskStatus(taskAliasId, -1)
-                        }
+                        downloader.saveTaskStatus(taskAliasId, -1)
                     }
                 }
             }
@@ -164,7 +139,7 @@ class ActionPageOnline : AppCompatActivity() {
                                 }
                                 .create()
                 )?.setCancelable(false)
-                return true // super.onJsAlert(view, url, message, result)
+                return true
             }
 
             override fun onJsConfirm(view: WebView?, url: String?, message: String?, result: JsResult?): Boolean {
@@ -179,7 +154,7 @@ class ActionPageOnline : AppCompatActivity() {
                                 }
                                 .create()
                 )?.setCancelable(false)
-                return true // super.onJsConfirm(view, url, message, result)
+                return true
             }
         }
 
@@ -226,21 +201,15 @@ class ActionPageOnline : AppCompatActivity() {
     private var fileSelectedInterface: ParamsFileChooserRender.FileSelectedInterface? = null
     private val ACTION_FILE_PATH_CHOOSER = 65400
     private fun chooseFilePath(fileSelectedInterface: ParamsFileChooserRender.FileSelectedInterface): Boolean {
-        if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 2)
-            Toast.makeText(this, getString(com.omarea.krscript.R.string.kr_write_external_storage), Toast.LENGTH_LONG).show()
+        try {
+            val intent = Intent(Intent.ACTION_GET_CONTENT)
+            intent.type = "*/*"
+            intent.addCategory(Intent.CATEGORY_OPENABLE)
+            startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER)
+            this.fileSelectedInterface = fileSelectedInterface
+            return true
+        } catch (ex: java.lang.Exception) {
             return false
-        } else {
-            try {
-                val intent = Intent(Intent.ACTION_GET_CONTENT)
-                intent.type = "*/*"
-                intent.addCategory(Intent.CATEGORY_OPENABLE)
-                startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER)
-                this.fileSelectedInterface = fileSelectedInterface
-                return true
-            } catch (ex: java.lang.Exception) {
-                return false
-            }
         }
     }
 

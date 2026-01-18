@@ -1,10 +1,8 @@
 package com.projectkr.shell
 
-import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.app.ActivityManager
 import android.content.ComponentName
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -42,15 +40,13 @@ class ActionPage : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 如果应用还没启动，就直接打开了actionPage(通常是PIO的快捷方式)，先跳转到启动页面
+        // Nếu ứng dụng chưa được khởi động, chuyển đến trang khởi động (SplashActivity)
         if (!ScriptEnvironmen.isInited()) {
             val initIntent = Intent(this.applicationContext, SplashActivity::class.java)
             initIntent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
             initIntent.putExtras(this.intent)
             initIntent.putExtra("JumpActionPage", true)
             startActivity(initIntent)
-            // overridePendingTransition(0, 0)
-
             finish()
             return
         }
@@ -63,14 +59,14 @@ class ActionPage : AppCompatActivity() {
         setSupportActionBar(toolbar)
         setTitle(R.string.app_name)
 
-        // 显示返回按钮
+        // Hiển thị nút quay lại
         supportActionBar!!.setHomeButtonEnabled(true)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         toolbar.setNavigationOnClickListener {
             finish()
         }
 
-        // 读取intent里的参数
+        // Đọc dữ liệu intent
         val intent = this.intent
         if (intent.extras != null) {
             val extras = intent.extras
@@ -106,7 +102,7 @@ class ActionPage : AppCompatActivity() {
                     }
                     currentPageConfig = page
                 } else {
-                    Toast.makeText(this, "页面信息无效", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Invalid page information", Toast.LENGTH_SHORT).show()
                     finish()
                 }
             }
@@ -169,7 +165,7 @@ class ActionPage : AppCompatActivity() {
             intent.putExtra("mode", ActivityFileSelector.MODE_FILE)
             startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER_INNER)
         } catch (_: Exception) {
-            Toast.makeText(this, "启动内置文件选择器失败！", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Failed to launch the built-in file selector!", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -179,7 +175,7 @@ class ActionPage : AppCompatActivity() {
             intent.putExtra("mode", ActivityFileSelector.MODE_FOLDER)
             startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER_INNER)
         } catch (_: Exception) {
-            Toast.makeText(this, "启动内置文件选择器失败！", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Failed to launch the built-in file selector!", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -316,35 +312,29 @@ class ActionPage : AppCompatActivity() {
     }
 
     private fun chooseFilePath(fileSelectedInterface: ParamsFileChooserRender.FileSelectedInterface): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(READ_EXTERNAL_STORAGE), 2)
-            Toast.makeText(this, getString(com.omarea.krscript.R.string.kr_write_external_storage), Toast.LENGTH_LONG).show()
-            return false
-        } else {
-            return try {
-                if (fileSelectedInterface.type() == ParamsFileChooserRender.FileSelectedInterface.TYPE_FOLDER) {
-                    chooseFolderPath()
+        return try {
+            if (fileSelectedInterface.type() == ParamsFileChooserRender.FileSelectedInterface.TYPE_FOLDER) {
+                chooseFolderPath()
+            } else {
+                val suffix = fileSelectedInterface.suffix()
+                if (!suffix.isNullOrEmpty()) {
+                    chooseFilePath(suffix)
                 } else {
-                    val suffix = fileSelectedInterface.suffix()
-                    if (!suffix.isNullOrEmpty()) {
-                        chooseFilePath(suffix)
+                    val intent = Intent(Intent.ACTION_GET_CONTENT)
+                    val mimeType = fileSelectedInterface.mimeType()
+                    if (mimeType != null) {
+                        intent.type = mimeType
                     } else {
-                        val intent = Intent(Intent.ACTION_GET_CONTENT)
-                        val mimeType = fileSelectedInterface.mimeType()
-                        if (mimeType != null) {
-                            intent.type = mimeType
-                        } else {
-                            intent.type = "*/*"
-                        }
-                        intent.addCategory(Intent.CATEGORY_OPENABLE)
-                        startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER)
+                        intent.type = "*/*"
                     }
+                    intent.addCategory(Intent.CATEGORY_OPENABLE)
+                    startActivityForResult(intent, ACTION_FILE_PATH_CHOOSER)
                 }
-                this.fileSelectedInterface = fileSelectedInterface
-                true
-            } catch (_: java.lang.Exception) {
-                false
             }
+            this.fileSelectedInterface = fileSelectedInterface
+            true
+        } catch (_: java.lang.Exception) {
+            false
         }
     }
 
