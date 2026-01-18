@@ -23,12 +23,10 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
-import android.provider.Settings;
-import android.util.DisplayMetrics;
+import android.provider.Settings;;
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import java.util.TimeZone;
-import java.lang.management.ManagementFactory;
+import java.util.TimeZone;;
 import java.lang.Runtime;
 import java.nio.file.Paths;
 import android.widget.Toast;
@@ -231,8 +229,6 @@ public class ScriptEnvironmen {
         params.put("ANDROID_ID", Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID));
         params.put("CPU_ABI", Build.CPU_ABI);
         params.put("ANDROID_SDK", String.valueOf(Build.VERSION.SDK_INT));
-        params.put("RAM", String.valueOf(availableMemory()));
-        params.put("SCREEN_RESOLUTION", getScreenResolution(context));
         params.put("TOTAL_MEMORY", String.valueOf(Runtime.getRuntime().totalMemory()));
         params.put("KERNEL_VERSION", System.getProperty("os.version"));
 
