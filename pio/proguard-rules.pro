@@ -35,13 +35,6 @@
 -keep class com.projectkr.shell.** { *; }
 -keepclassmembers class * implements java.io.Serializable { *; }
 
-
-# Giảm bớt các lớp không sử dụng
--keep class androidx.startup.** { *; }
--keep class androidx.emoji2.text.** { *; }
--keep class androidx.lifecycle.** { *; }
--keep class androidx.profileinstaller.** { *; }
-
 # Loại bỏ provider và receiver tự sinh ra
 -dontwarn androidx.startup.**
 -dontwarn androidx.emoji2.text.**
