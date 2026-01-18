@@ -6,6 +6,23 @@
         </page>
     </group>
 
+    <group>
+        <action title="Run shell">
+        <param name="shell" type="text" placeholder="#!/system/bin/sh"/>
+        <param name="shell2" type="text" placeholder="#!/system/bin/sh"/>
+        <param name="shell3" type="text" placeholder="#!/system/bin/sh"/>
+        <param name="shell4" type="text" placeholder="#!/system/bin/sh"/>
+        <param name="shell5" type="text" placeholder="#!/system/bin/sh"/>
+        <set>
+            eval "$shell
+            $shell2
+            $shell3
+            $shell4
+            $shell5"
+        </set>
+        </action>
+    </group>
+
     <group title="功能节点">
         <page config="samples/action.xml" title="Action（动作）" />
         <page config="samples/switch.xml" title="Switch（开关）" />
