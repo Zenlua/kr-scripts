@@ -85,10 +85,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
             if (running && !canceled) {
                 canceled = true
                 forceStopRunnable?.run()
-                    binding?.btnExit?.apply {
-                        visibility = View.VISIBLE
-                        text = context?.getString(R.string.btn_exit)
-                    }
+                binding?.btnExit?.visibility = View.VISIBLE
             } else {
                 dismissAllowingStateLoss()
             }
@@ -132,10 +129,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
                 running = false
                 onExit.run()
                 binding?.btnHide?.visibility = View.GONE
-                binding?.btnExit?.apply {
-                    visibility = View.VISIBLE
-                    text = context?.getString(R.string.btn_exit) 
-                }
+                binding?.btnExit?.visibility = View.VISIBLE
                 binding?.actionProgress?.visibility = View.GONE
                 isCancelable = true
             }
@@ -151,10 +145,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
                 canceled = false
                 forceStopRunnable = forceStop
                 if (nodeInfo.interruptable && forceStop != null) {
-                    binding?.btnExit?.apply {
-                        visibility = View.VISIBLE
-                        text = context?.getString(R.string.btn_cancel)
-                    }
+                    binding?.btnCancel?.visibility = View.VISIBLE
                 } else {
                     binding?.btnExit?.visibility = View.GONE
                 }
