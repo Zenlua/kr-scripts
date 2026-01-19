@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.os.PowerManager
 import android.content.DialogInterface
 import android.os.Build
 import android.os.Bundle
@@ -78,6 +79,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
 
         binding?.btnHide?.setOnClickListener {
             uiVisible = false
+            wakeLock?.release()
             dismissAllowingStateLoss()
         }
 
@@ -132,6 +134,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
             override fun onCompleted() {
                 running = false
                 onExit.run()
+                wakeLock?.release()
                 binding?.btnHide?.visibility = View.GONE
                 binding?.btnCancel?.visibility = View.GONE
                 binding?.btnExit?.visibility = View.VISIBLE
@@ -149,6 +152,15 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
                 running = true
                 canceled = false
                 forceStopRunnable = forceStop
+
+                context?.let {
+                    val powerManager = it.getSystemService(Context.POWER_SERVICE) as PowerManager
+                    if (wakeLock == null || !wakeLock!!.isHeld) {
+                        wakeLock = powerManager.newWakeLock(0x2000000a, "KeepScreenOn")
+                        wakeLock?.acquire()
+                    }
+                }
+
                 if (nodeInfo.interruptable && forceStop != null) {
                     binding?.btnCancel?.visibility = View.VISIBLE
                     binding?.btnExit?.visibility = View.GONE
