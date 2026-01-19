@@ -17,7 +17,8 @@ class OpenFileActivity : AppCompatActivity() {
 
         // Hàm trả về MIME type của file
         fun getMimeType(path: String): String {
-            val fileExtension = MimeTypeMap.getFileExtensionFromUrl(path.toLowerCase())
+            // Thay thế toLowerCase() bằng lowercase()
+            val fileExtension = MimeTypeMap.getFileExtensionFromUrl(path.lowercase())
             return mimeTypeMap.getMimeTypeFromExtension(fileExtension)
                 ?: if (path.endsWith(".apk")) "application/vnd.android.package-archive" else "*/*"
         }
@@ -26,7 +27,6 @@ class OpenFileActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Kiểm tra nếu không có đường dẫn
         val filePath = intent.getStringExtra("path") ?: run {
             showToast("No file path provided")
             finish()
@@ -35,26 +35,20 @@ class OpenFileActivity : AppCompatActivity() {
 
         val file = File(filePath)
         
-        // Kiểm tra nếu tệp không tồn tại
         if (!file.exists()) {
             showToast("File does not exist")
             finish()
             return
         }
 
-        // Chuyển đường dẫn file thành Uri
         val uri = FileProvider.getUriForFile(this, "${applicationContext.packageName}.provider", file)
-        
-        // Lấy MIME type của tệp
         val mimeType = getMimeType(file.name)
 
-        // Tạo intent để mở file
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, mimeType)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
-        // Mở file, bắt ngoại lệ nếu không tìm thấy ứng dụng thích hợp
         try {
             startActivity(intent)
         } catch (e: ActivityNotFoundException) {
