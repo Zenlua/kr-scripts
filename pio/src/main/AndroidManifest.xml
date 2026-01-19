@@ -99,5 +99,12 @@
             android:name="android.support.FILE_PROVIDER_PATHS"
             android:resource="@xml/file_paths" />
     </provider>
+    <receiver android:name=".ToastReceiver"
+              android:enabled="true"
+              android:exported="false">
+        <intent-filter>
+            <action android:name="${applicationId}.broadcast.MESSAGE" />
+        </intent-filter>
+    </receiver>
     </application>
 </manifest>
