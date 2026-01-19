@@ -91,6 +91,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
         }
 
         binding?.btnExit?.setOnClickListener {
+            isCancelable = true
             dismissAllowingStateLoss()
         }
 
@@ -155,6 +156,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
                     binding?.btnCancel?.visibility = View.GONE
                 }
             }
+
         }, binding?.shellOutput, binding?.actionProgress)
     }
 
