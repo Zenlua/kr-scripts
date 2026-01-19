@@ -51,6 +51,8 @@ class SplashActivity : AppCompatActivity() {
             return
         }
 
+        applyTheme()
+
         if (!hasAgreed()) showAgreementDialog()
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -60,7 +62,7 @@ class SplashActivity : AppCompatActivity() {
             binding.startLogoXml.startAnimation(AnimationUtils.loadAnimation(this, R.anim.blink))
         }, 1500)
 
-        applyTheme()
+        
     }
 
     private fun applyAppLanguage() {
