@@ -104,10 +104,10 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
 
         if (nodeInfo.interruptable) {
             binding?.btnHide?.visibility = View.VISIBLE
-            binding?.btnCancel?.visibility = View.VISIBLE
+            binding?.btnExit?.visibility = View.VISIBLE
         } else {
             binding?.btnHide?.visibility = View.GONE
-            binding?.btnCancel?.visibility = View.GONE
+            binding?.btnExit?.visibility = View.GONE
         }
 
         if (nodeInfo.title.isNotEmpty()) {
@@ -146,6 +146,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
                 forceStopRunnable = forceStop
                 if (nodeInfo.interruptable && forceStop != null) {
                     binding?.btnExit?.visibility = View.GONE
+                    binding?.btnCancel?.visibility = View.VISIBLE
                 } else {
                     binding?.btnExit?.visibility = View.GONE
                 }
