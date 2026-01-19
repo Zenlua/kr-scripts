@@ -145,7 +145,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
                 canceled = false
                 forceStopRunnable = forceStop
                 if (nodeInfo.interruptable && forceStop != null) {
-                    binding?.btnCancel?.visibility = View.VISIBLE
+                    binding?.btnExit?.visibility = View.GONE
                 } else {
                     binding?.btnExit?.visibility = View.GONE
                 }
