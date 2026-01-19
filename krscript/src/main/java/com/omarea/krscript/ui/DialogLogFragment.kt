@@ -31,6 +31,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
     private var running = false
     private var canceled = false
     private var uiVisible = true
+    private var wakeLock: PowerManager.WakeLock? = null
     private var nodeInfo: RunnableNode? = null
     private lateinit var onExit: Runnable
     private lateinit var script: String
