@@ -81,7 +81,7 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
             dismissAllowingStateLoss()
         }
 
-        binding?.btnExit?.setOnClickListener {
+        binding?.btnCancel?.setOnClickListener {
             if (running && !canceled) {
                 canceled = true
                 forceStopRunnable?.run()
@@ -104,10 +104,10 @@ class DialogLogFragment : androidx.fragment.app.DialogFragment() {
 
         if (nodeInfo.interruptable) {
             binding?.btnHide?.visibility = View.VISIBLE
-            binding?.btnExit?.visibility = View.VISIBLE
+            binding?.btnCancel?.visibility = View.VISIBLE
         } else {
             binding?.btnHide?.visibility = View.GONE
-            binding?.btnExit?.visibility = View.GONE
+            binding?.btnCancel?.visibility = View.GONE
         }
 
         if (nodeInfo.title.isNotEmpty()) {
