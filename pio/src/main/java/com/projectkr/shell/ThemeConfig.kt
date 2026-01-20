@@ -15,4 +15,13 @@ class ThemeConfig (private val activity: Activity) {
         config.edit { putBoolean("TransparentUI", allow) }
         activity.recreate()
     }
+
+    fun getAllowNotificationUI(): Boolean {
+        return config.getBoolean("NotificationUI", false)
+    }
+
+    fun setAllowNotificationUI(allow: Boolean) {
+        config.edit { putBoolean("NotificationUI", allow) }
+        activity.recreate()
+    }
 }
