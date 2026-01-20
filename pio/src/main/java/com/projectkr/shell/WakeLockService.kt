@@ -141,8 +141,10 @@ class WakeLockService : Service() {
 
     companion object {
         private const val CHANNEL_ID = "WakeLockServiceChannel"
-        private const val ACTION_TOGGLE_WAKELOCK = "${applicationContext.packageName}.action.TOGGLE_WAKELOCK"
-        private const val ACTION_STOP_SERVICE = "${applicationContext.packageName}.action.STOP_SERVICE"
+        
+        // Thay vì const val, dùng val cho các giá trị không phải hằng số
+        val ACTION_TOGGLE_WAKELOCK = "${ApplicationContextProvider.getContext().packageName}.action.TOGGLE_WAKELOCK"
+        val ACTION_STOP_SERVICE = "${ApplicationContextProvider.getContext().packageName}.action.STOP_SERVICE"
 
         fun startService(context: Context) {
             val intent = Intent(context, WakeLockService::class.java)
@@ -152,5 +154,18 @@ class WakeLockService : Service() {
         fun stopService(context: Context) {
             context.stopService(Intent(context, WakeLockService::class.java))
         }
+    }
+}
+
+// Cung cấp context từ ứng dụng để sử dụng trong companion object
+object ApplicationContextProvider {
+    private var context: Context? = null
+
+    fun init(context: Context) {
+        this.context = context.applicationContext
+    }
+
+    fun getContext(): Context {
+        return context ?: throw IllegalStateException("Context has not been initialized")
     }
 }
