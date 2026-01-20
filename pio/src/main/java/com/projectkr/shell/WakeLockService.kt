@@ -18,7 +18,8 @@ class WakeLockService : androidx.core.app.JobIntentService() {
     private var isWakeLockActive = false  // Biến kiểm tra trạng thái WakeLock
 
     override fun onHandleWork(intent: Intent) {
-        if (intent.action == ACTION_TOGGLE_WAKELOCK) {
+        val action = intent.action
+        if (action == getActionToggleWakeLock(this)) {
             val powerManager = this.getSystemService(Context.POWER_SERVICE) as PowerManager  // Sử dụng `this` thay vì `applicationContext`
             if (wakeLock == null) {
                 // Sử dụng PARTIAL_WAKE_LOCK để giữ CPU hoạt động mà không làm sáng màn hình
@@ -34,7 +35,7 @@ class WakeLockService : androidx.core.app.JobIntentService() {
                 wakeLock?.acquire()
                 isWakeLockActive = true
             }
-        } else if (intent.action == ACTION_STOP_SERVICE) {
+        } else if (action == getActionStopService(this)) {
             // Khi nhấn nút Stop, giải phóng WakeLock và dừng dịch vụ
             wakeLock?.release()
             stopSelf()
@@ -85,13 +86,13 @@ class WakeLockService : androidx.core.app.JobIntentService() {
 
     private fun stopServicePendingIntent(): PendingIntent {
         val intent = Intent(this, WakeLockService::class.java)
-        intent.action = ACTION_STOP_SERVICE
+        intent.action = getActionStopService(this)
         return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
     private fun toggleWakeLockPendingIntent(): PendingIntent {
         val intent = Intent(this, WakeLockService::class.java)
-        intent.action = ACTION_TOGGLE_WAKELOCK
+        intent.action = getActionToggleWakeLock(this)
         return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
@@ -103,7 +104,7 @@ class WakeLockService : androidx.core.app.JobIntentService() {
     companion object {
         private const val CHANNEL_ID = "WakeLockServiceChannel"
 
-        // Các ACTION này không thể dùng packageName trong `const val`, nên chúng sẽ được tạo động trong phương thức `onCreate` hoặc `onHandleWork`
+        // Phương thức động để lấy ACTION
         fun getActionToggleWakeLock(context: Context): String {
             return "${context.packageName}.action.TOGGLE_WAKELOCK"
         }
