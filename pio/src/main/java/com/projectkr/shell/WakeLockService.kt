@@ -20,7 +20,6 @@ class WakeLockService : Service() {
     private var isWakeLockActive = false
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-
         val action = intent?.action
 
         if (action == ACTION_TOGGLE_WAKELOCK) {
@@ -29,8 +28,7 @@ class WakeLockService : Service() {
             stopWakeLockAndService()
         }
 
-        // Quan trọng: giữ service chạy mãi (sticky)
-        return START_STICKY
+        return START_STICKY  // Giữ service sống lại nếu bị kill (trừ khi swipe recents)
     }
 
     private fun toggleWakeLock() {
@@ -47,17 +45,17 @@ class WakeLockService : Service() {
             wakeLock?.release()
             isWakeLockActive = false
         } else {
-            wakeLock?.acquire()   // hoặc acquire(Long.MAX_VALUE) nếu muốn giới hạn thời gian
+            wakeLock?.acquire()
             isWakeLockActive = true
         }
     }
 
     private fun stopWakeLockAndService() {
         wakeLock?.release()
+        wakeLock = null
+        isWakeLockActive = false
         stopForeground(true)
         stopSelf()
-        // Nếu muốn kill hoàn toàn (không khuyến khích quá)
-        // android.os.Process.killProcess(android.os.Process.myPid())
     }
 
     override fun onCreate() {
@@ -78,7 +76,6 @@ class WakeLockService : Service() {
                 .addAction(R.mipmap.ic_launcher, getString(R.string.toggle_wakelock), toggleWakeLockPendingIntent())
                 .build()
 
-            // Bắt buộc gọi startForeground ngay trong vòng ~5 giây
             startForeground(1, notification)
         }
     }
@@ -88,25 +85,21 @@ class WakeLockService : Service() {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 getString(R.string.wakelock_service_running),
-                NotificationManager.IMPORTANCE_LOW  // LOW để ít làm phiền hơn
+                NotificationManager.IMPORTANCE_LOW
             ).apply {
                 setSound(null, null)
                 enableLights(false)
                 enableVibration(false)
                 setLockscreenVisibility(Notification.VISIBILITY_SECRET)
             }
-
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)
         }
     }
 
-    // PendingIntent giống code cũ của bạn
     private fun stopServicePendingIntent(): PendingIntent {
-        val intent = Intent(this, WakeLockService::class.java).apply {
-            action = ACTION_STOP_SERVICE
-        }
-        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        val intent = Intent(this, WakeLockService::class.java).apply { action = ACTION_STOP_SERVICE }
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         else PendingIntent.FLAG_UPDATE_CURRENT
 
@@ -114,10 +107,8 @@ class WakeLockService : Service() {
     }
 
     private fun toggleWakeLockPendingIntent(): PendingIntent {
-        val intent = Intent(this, WakeLockService::class.java).apply {
-            action = ACTION_TOGGLE_WAKELOCK
-        }
-        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        val intent = Intent(this, WakeLockService::class.java).apply { action = ACTION_TOGGLE_WAKELOCK }
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         else PendingIntent.FLAG_UPDATE_CURRENT
 
@@ -126,7 +117,20 @@ class WakeLockService : Service() {
 
     override fun onDestroy() {
         wakeLock?.release()
+        wakeLock = null
         super.onDestroy()
+    }
+
+    // <-- THÊM PHẦN NÀY: Xử lý khi swipe khỏi recents -->
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+
+        wakeLock?.release()
+        wakeLock = null
+        isWakeLockActive = false
+
+        stopForeground(true)  // Remove notification
+        stopSelf()            // Dừng service
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
