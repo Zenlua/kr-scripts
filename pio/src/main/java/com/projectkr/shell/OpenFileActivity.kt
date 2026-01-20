@@ -1,130 +1,64 @@
 package com.projectkr.shell
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.app.Service
-import android.content.Context
+import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.os.Build
-import android.os.IBinder
-import android.os.PowerManager
-import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
+import android.net.Uri
+import android.os.Bundle
+import android.webkit.MimeTypeMap
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
+import java.io.File
 
-class WakeLockService : Service() {
-
-    private var wakeLock: PowerManager.WakeLock? = null
-    private var isWakeLockActive = false
-    private val WAKE_LOCK_TAG = "${applicationContext.packageName}.WAKE_LOCK"
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
-            ACTION_TOGGLE_WAKELOCK -> toggleWakeLock()
-            ACTION_STOP_SERVICE -> stopWakeLockAndService()
-        }
-        return START_STICKY
-    }
-
-    private fun toggleWakeLock() {
-        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-        if (wakeLock == null) {
-            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)
-        }
-
-        if (isWakeLockActive) {
-            wakeLock?.release()
-            isWakeLockActive = false
-        } else {
-            wakeLock?.acquire()
-            isWakeLockActive = true
-        }
-    }
-
-    private fun stopWakeLockAndService() {
-        wakeLock?.release()
-        wakeLock = null
-        isWakeLockActive = false
-        stopForeground(true)
-        stopSelf()
-    }
-
-    override fun onCreate() {
-        super.onCreate()
-        if (ThemeConfig(applicationContext).getAllowNotificationUI()) {
-            createNotificationChannel()
-            val notification = buildNotification()
-            startForeground(1, notification)
-        }
-    }
-
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                getString(R.string.wakelock_service_running),
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                setSound(null, null)
-                enableLights(false)
-                enableVibration(false)
-                setLockscreenVisibility(Notification.VISIBILITY_SECRET)
-            }
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
-        }
-    }
-
-    private fun buildNotification(): Notification {
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(getString(R.string.app_name))
-            .setContentText(getString(R.string.service_active_with_wakelock))
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .addAction(R.mipmap.ic_launcher, getString(R.string.stop), createPendingIntent(ACTION_STOP_SERVICE))
-            .addAction(R.mipmap.ic_launcher, getString(R.string.toggle_wakelock), createPendingIntent(ACTION_TOGGLE_WAKELOCK))
-            .build()
-    }
-
-    private fun createPendingIntent(action: String): PendingIntent {
-        val intent = Intent(this, WakeLockService::class.java).apply { this.action = action }
-        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        } else PendingIntent.FLAG_UPDATE_CURRENT
-        return PendingIntent.getService(this, 0, intent, flags)
-    }
-
-    override fun onDestroy() {
-        wakeLock?.release()
-        wakeLock = null
-        super.onDestroy()
-    }
-
-    // Xử lý khi swipe khỏi recents
-    override fun onTaskRemoved(rootIntent: Intent?) {
-        super.onTaskRemoved(rootIntent)
-        wakeLock?.release()
-        wakeLock = null
-        isWakeLockActive = false
-        stopForeground(true)
-        stopSelf()
-    }
-
-    override fun onBind(intent: Intent?): IBinder? = null
+class OpenFileActivity : AppCompatActivity() {
 
     companion object {
-        private const val CHANNEL_ID = "WakeLockServiceChannel"
-        const val ACTION_TOGGLE_WAKELOCK = "${applicationContext.packageName}.action.TOGGLE_WAKELOCK"
-        const val ACTION_STOP_SERVICE = "${applicationContext.packageName}.action.STOP_SERVICE"
+        private val mimeTypeMap = MimeTypeMap.getSingleton()
 
-        fun startService(context: Context) {
-            val intent = Intent(context, WakeLockService::class.java)
-            ContextCompat.startForegroundService(context, intent)
+        // Hàm trả về MIME type của file
+        fun getMimeType(path: String): String {
+            // Thay thế toLowerCase() bằng lowercase()
+            val fileExtension = MimeTypeMap.getFileExtensionFromUrl(path.lowercase())
+            return mimeTypeMap.getMimeTypeFromExtension(fileExtension)
+                ?: if (path.endsWith(".apk")) "application/vnd.android.package-archive" else "*/*"
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val filePath = intent.getStringExtra("path") ?: run {
+            showToast("No file path provided")
+            finish()
+            return
         }
 
-        fun stopService(context: Context) {
-            context.stopService(Intent(context, WakeLockService::class.java))
+        val file = File(filePath)
+        
+        if (!file.exists()) {
+            showToast("File does not exist")
+            finish()
+            return
         }
+
+        val uri = FileProvider.getUriForFile(this, "${applicationContext.packageName}.provider", file)
+        val mimeType = getMimeType(file.name)
+
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, mimeType)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        try {
+            startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            showToast("No application found to open this file")
+        }
+
+        finish()
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }
