@@ -54,6 +54,7 @@ class WakeLockService : Service() {
         isWakeLockActive = false
         stopForeground(true)
         stopSelf()
+        Process.killProcess(Process.myPid())
     }
 
     override fun onCreate() {
