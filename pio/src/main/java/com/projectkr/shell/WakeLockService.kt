@@ -14,13 +14,13 @@ import android.app.PendingIntent
 
 class WakeLockService : androidx.core.app.JobIntentService() {
     private var wakeLock: PowerManager.WakeLock? = null
-    private val WAKE_LOCK_TAG = "${this.packageName}.WAKE_LOCK"  // Sử dụng `this.packageName` thay vì `packageName` trong companion object
+    private val WAKE_LOCK_TAG = "com.projectkr.shell.WAKE_LOCK"  // Chúng ta không sử dụng packageName trong `companion object` nữa
     private var isWakeLockActive = false  // Biến kiểm tra trạng thái WakeLock
 
     override fun onHandleWork(intent: Intent) {
         val action = intent.action
         if (action == getActionToggleWakeLock(this)) {
-            val powerManager = this.getSystemService(Context.POWER_SERVICE) as PowerManager  // Sử dụng `this` thay vì `applicationContext`
+            val powerManager = this.getSystemService(Context.POWER_SERVICE) as PowerManager
             if (wakeLock == null) {
                 // Sử dụng PARTIAL_WAKE_LOCK để giữ CPU hoạt động mà không làm sáng màn hình
                 wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)
