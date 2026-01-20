@@ -62,7 +62,7 @@ class WakeLockService : Service() {
     override fun onCreate() {
         super.onCreate()
 
-        val allowNotificationUI = ThemeConfig(activity).getAllowNotificationUI()
+        val allowNotificationUI = ThemeConfig(applicationContext).getAllowNotificationUI()
 
         if (allowNotificationUI) {
             createNotificationChannel()
@@ -124,11 +124,15 @@ class WakeLockService : Service() {
     // <-- THÊM PHẦN NÀY: Xử lý khi swipe khỏi recents -->
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
-
-        wakeLock?.release()
+    
+        wakeLock?.let {
+            if (it.isHeld) {
+                it.release()
+            }
+        }
         wakeLock = null
         isWakeLockActive = false
-
+    
         stopForeground(true)  // Remove notification
         stopSelf()            // Dừng service
     }
