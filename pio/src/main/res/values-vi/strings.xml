@@ -47,7 +47,7 @@
    <string name="notification_ui">Thông báo</string>
 
     <string name="wakelock_service_running">Dịch vụ WakeLock đang chạy</string>
-    <string name="service_active_with_wakelock">Dịch vụ đang hoạt động với điều khiển WakeLock</string>
+    <string name="service_active_with_wakelock">Ứng dụng đang hoạt động trong nền</string>
     <string name="stop">Dừng</string>
     <string name="turn_off_wakelock">Tắt WakeLock</string>
     <string name="turn_on_wakelock">Bật WakeLock</string>
