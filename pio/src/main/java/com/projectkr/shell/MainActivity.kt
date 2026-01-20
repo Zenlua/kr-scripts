@@ -107,16 +107,7 @@ class MainActivity : AppCompatActivity() {
 
         val themeConfig = ThemeConfig(applicationContext)
         if (themeConfig.getAllowNotificationUI()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && 
-                ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                
-                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = Uri.fromParts("package", packageName, null)
-                }
-                startActivity(intent)
-            } else {
-                WakeLockService.startService(applicationContext)
-            }
+            WakeLockService.startService(applicationContext)
         }
     }
 
