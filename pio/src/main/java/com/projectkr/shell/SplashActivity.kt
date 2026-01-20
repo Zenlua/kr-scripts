@@ -61,6 +61,8 @@ class SplashActivity : AppCompatActivity() {
         binding.startLogoXml.postDelayed({
             binding.startLogoXml.startAnimation(AnimationUtils.loadAnimation(this, R.anim.blink))
         }, 1500)
+
+        applyTheme()
     }
 
     private fun applyAppLanguage() {
@@ -78,6 +80,18 @@ class SplashActivity : AppCompatActivity() {
                     resources.updateConfiguration(config, resources.displayMetrics)
                 }
             }
+        }
+    }
+
+    private fun applyTheme() {
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        val color = ContextCompat.getColor(this, R.color.splash_bg_color)
+        window.statusBarColor = color
+        window.navigationBarColor = color
+
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = false
+            isAppearanceLightNavigationBars = false
         }
     }
 
