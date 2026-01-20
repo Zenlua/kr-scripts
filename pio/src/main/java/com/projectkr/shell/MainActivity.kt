@@ -118,6 +118,7 @@ class MainActivity : AppCompatActivity() {
                 WakeLockService.startService(applicationContext)
             }
         }
+    }
 
     private fun getItems(pageNode: PageNode): ArrayList<NodeInfoBase>? {
         var items: ArrayList<NodeInfoBase>? = null
