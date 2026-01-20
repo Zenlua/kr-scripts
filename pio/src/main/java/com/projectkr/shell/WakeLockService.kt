@@ -17,7 +17,7 @@ class WakeLockService : Service() {
 
     private var wakeLock: PowerManager.WakeLock? = null
 
-    // Tự động lấy package name runtime → không lỗi BuildConfig
+    // Tự động lấy package name lúc runtime (an toàn cho library module)
     private val WAKE_LOCK_TAG by lazy { "${applicationContext.packageName}.WAKE_LOCK" }
 
     private var isWakeLockActive = false
@@ -101,19 +101,27 @@ class WakeLockService : Service() {
     }
 
     private fun stopServicePendingIntent(): PendingIntent {
-        val intent = Intent(this, WakeLockService::class.java).apply { action = ACTION_STOP_SERVICE }
-        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+        val intent = Intent(this, WakeLockService::class.java).apply {
+            action = ACTION_STOP_SERVICE
+        }
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        else PendingIntent.FLAG_UPDATE_CURRENT
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
 
         return PendingIntent.getService(this, 0, intent, flags)
     }
 
     private fun toggleWakeLockPendingIntent(): PendingIntent {
-        val intent = Intent(this, WakeLockService::class.java).apply { action = ACTION_TOGGLE_WAKELOCK }
-        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+        val intent = Intent(this, WakeLockService::class.java).apply {
+            action = ACTION_TOGGLE_WAKELOCK
+        }
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        else PendingIntent.FLAG_UPDATE_CURRENT
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
 
         return PendingIntent.getService(this, 1, intent, flags)
     }
@@ -141,9 +149,8 @@ class WakeLockService : Service() {
         private const val CHANNEL_ID = "WakeLockServiceChannel"
 
         // Hardcode package name (từ namespace "com.projectkr.shell" trong build.gradle)
-        // Đây là cách ổn định nhất cho constant trong companion object
         private const val ACTION_TOGGLE_WAKELOCK = "com.projectkr.shell.action.TOGGLE_WAKELOCK"
-        private const val ACTION_STOP_SERVICE    = "com.projectkr.shell.action.STOP_SERVICE"
+        private const val ACTION_STOP_SERVICE = "com.projectkr.shell.action.STOP_SERVICE"
 
         fun startService(context: Context) {
             val intent = Intent(context, WakeLockService::class.java)
