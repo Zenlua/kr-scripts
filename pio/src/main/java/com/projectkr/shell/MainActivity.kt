@@ -40,6 +40,11 @@ class MainActivity : AppCompatActivity() {
     private val hasRoot by lazy { KeepShellPublic.checkRoot() }
     private lateinit var binding: ActivityMainBinding
 
+    override fun onBackPressed() {
+        WakeLockService.stopService(applicationContext)
+        super.onBackPressed()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ThemeModeState.switchTheme(this)
