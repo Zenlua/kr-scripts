@@ -46,4 +46,9 @@
     <string name="permission_dialog_message">Yêu cầu các quyền sau:\n\n• Thông báo\n• Truy cập toàn bộ tệp\n• Danh sách ứng dụng\n• Root (nếu được cho phép)\n• Tạo phím tắt\n• Truy cập mạng dữ liệu\n\nTôi đồng ý tiếp tục sử dụng ứng dụng.</string>
    <string name="notification_ui">Thông báo</string>
 
+    <string name="wakelock_service_running">Dịch vụ WakeLock đang chạy</string>
+    <string name="service_active_with_wakelock">Dịch vụ đang hoạt động với điều khiển WakeLock</string>
+    <string name="stop">Dừng</string>
+    <string name="toggle_wakelock">Chuyển đổi WakeLock</string>
+
 </resources>
