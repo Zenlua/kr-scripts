@@ -150,7 +150,8 @@ class WakeLockService : Service() {
         }
 
         fun stopService(context: Context) {
-            context.stopService(Intent(context, WakeLockService::class.java))
+            val intent = Intent(context, WakeLockService::class.java)
+            context.stopService(intent)
         }
     }
 }
