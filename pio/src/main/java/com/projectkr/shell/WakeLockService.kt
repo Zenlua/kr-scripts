@@ -28,24 +28,29 @@ class WakeLockService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_TOGGLE_WAKELOCK -> toggleWakeLock()
+            ACTION_ENABLE_WAKELOCK -> enableWakeLock()
+            ACTION_DISABLE_WAKELOCK -> disableWakeLock()
             ACTION_STOP_SERVICE -> stopWakeLockAndService()
         }
         return START_STICKY
     }
 
-    private fun toggleWakeLock() {
+    private fun enableWakeLock() {
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         if (wakeLock == null) {
             wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)
         }
 
+        if (!isWakeLockActive) {
+            wakeLock?.acquire()
+            isWakeLockActive = true
+        }
+    }
+
+    private fun disableWakeLock() {
         if (isWakeLockActive) {
             wakeLock?.release()
             isWakeLockActive = false
-        } else {
-            wakeLock?.acquire()
-            isWakeLockActive = true
         }
     }
 
@@ -82,13 +87,16 @@ class WakeLockService : Service() {
     }
 
     private fun buildNotification(): Notification {
+        val wakelockActionText = if (isWakeLockActive) getString(R.string.turn_off_wakelock) else getString(R.string.turn_on_wakelock)
+        val action = if (isWakeLockActive) ACTION_DISABLE_WAKELOCK else ACTION_ENABLE_WAKELOCK
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.app_name))
             .setContentText(getString(R.string.service_active_with_wakelock))
             .setSmallIcon(R.mipmap.ic_launcher)
             .setPriority(NotificationCompat.PRIORITY_MIN)
             .addAction(R.mipmap.ic_launcher, getString(R.string.stop), createPendingIntent(ACTION_STOP_SERVICE))
-            .addAction(R.mipmap.ic_launcher, getString(R.string.toggle_wakelock), createPendingIntent(ACTION_TOGGLE_WAKELOCK))
+            .addAction(R.mipmap.ic_launcher, wakelockActionText, createPendingIntent(action))
             .build()
     }
 
@@ -120,7 +128,8 @@ class WakeLockService : Service() {
 
     companion object {
         private const val CHANNEL_ID = "WakeLockServiceChannel"
-        const val ACTION_TOGGLE_WAKELOCK = "com.projectkr.shell.action.TOGGLE_WAKELOCK"
+        const val ACTION_ENABLE_WAKELOCK = "com.projectkr.shell.action.ENABLE_WAKELOCK"
+        const val ACTION_DISABLE_WAKELOCK = "com.projectkr.shell.action.DISABLE_WAKELOCK"
         const val ACTION_STOP_SERVICE = "com.projectkr.shell.action.STOP_SERVICE"
 
         fun startService(context: Context) {
