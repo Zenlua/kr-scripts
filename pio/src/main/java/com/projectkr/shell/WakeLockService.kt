@@ -52,7 +52,7 @@ class WakeLockService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        if (ThemeConfig(applicationContext).getAllowNotificationUI()) {
+        if (ThemeConfig(activity).getAllowNotificationUI()) {
             startForeground(1, buildNotification())
         }
     }
