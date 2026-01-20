@@ -19,6 +19,7 @@ import com.projectkr.shell.MainActivity
 import com.projectkr.shell.ThemeConfig
 import com.projectkr.shell.R
 import android.os.Process
+import android.app.ActivityManager
 
 class WakeLockService : Service() {
 
@@ -57,12 +58,28 @@ class WakeLockService : Service() {
     }
 
     private fun stopWakeLockAndService() {
+        // Giải phóng WakeLock
         wakeLock?.release()
         wakeLock = null
         isWakeLockActive = false
+
+        // Dừng dịch vụ và dừng foreground
         stopForeground(true)
         stopSelf()
-        Process.killProcess(Process.myPid())
+
+        // Kết thúc tất cả Activity đang chạy
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val tasks = activityManager.appTasks
+        tasks.forEach { task ->
+            task.taskInfo.baseActivity?.let { activity ->
+                if (activity.packageName == packageName) {
+                    activityManager.removeTask(task.id)
+                }
+            }
+        }
+
+        // Kết thúc ứng dụng hoàn toàn
+        System.exit(0)  // Thoát ứng dụng một cách chiệt để
     }
 
     override fun onCreate() {
