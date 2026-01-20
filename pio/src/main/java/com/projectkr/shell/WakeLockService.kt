@@ -73,10 +73,10 @@ class WakeLockService : androidx.core.app.JobIntentService() {
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(getString(R.string.app_name))  // Lấy tên ứng dụng từ strings.xml
                 .setContentText(getString(R.string.service_active_with_wakelock))  // Sử dụng chuỗi từ strings.xml
-                .setSmallIcon(R.drawable.ic_notification)
+                .setSmallIcon(R.mipmap.ic_launcher)  // Sử dụng biểu tượng mặc định của app
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .addAction(R.drawable.ic_stop, getString(R.string.stop), stopServicePendingIntent())
-                .addAction(R.drawable.ic_toggle, getString(R.string.toggle_wakelock), toggleWakeLockPendingIntent())
+                .addAction(R.mipmap.ic_launcher, getString(R.string.stop), stopServicePendingIntent()) // Thay đổi biểu tượng của nút
+                .addAction(R.mipmap.ic_launcher, getString(R.string.toggle_wakelock), toggleWakeLockPendingIntent()) // Thay đổi biểu tượng của nút
                 .build()
 
             startForeground(1, notification)
