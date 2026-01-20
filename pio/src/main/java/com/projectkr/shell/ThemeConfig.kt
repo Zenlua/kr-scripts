@@ -23,5 +23,11 @@ class ThemeConfig (private val activity: Activity) {
     fun setAllowNotificationUI(allow: Boolean) {
         config.edit { putBoolean("NotificationUI", allow) }
         activity.recreate()
+        val context = activity.applicationContext
+        if (allow) {
+            WakeLockService.startService(context)
+        } else {
+            WakeLockService.stopService(context)
+        }
     }
 }
