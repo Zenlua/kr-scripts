@@ -23,7 +23,7 @@ object ThemeModeState {
             val isNightMode = nightModeFlags == Configuration.UI_MODE_NIGHT_YES
 
             // Kiểm tra quyền đọc/ghi bộ nhớ ngoài nếu cần thiết
-            if (ThemeConfig.getAllowTransparentUI()) {
+            if (ThemeConfig(applicationContext).getAllowTransparentUI()) {
                 val wallpaper = WallpaperManager.getInstance(activity)
                 val wallpaperInfo = wallpaper.wallpaperInfo
 
