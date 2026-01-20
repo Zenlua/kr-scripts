@@ -14,7 +14,7 @@ import android.app.PendingIntent
 
 class WakeLockService : androidx.core.app.JobIntentService() {
     private var wakeLock: PowerManager.WakeLock? = null
-    private val WAKE_LOCK_TAG = "${packageName}.WAKE_LOCK"  // Thay applicationContext bằng packageName
+    private val WAKE_LOCK_TAG = "${this.packageName}.WAKE_LOCK"  // Sử dụng `this.packageName` thay vì `packageName` trong companion object
     private var isWakeLockActive = false  // Biến kiểm tra trạng thái WakeLock
 
     override fun onHandleWork(intent: Intent) {
@@ -102,8 +102,15 @@ class WakeLockService : androidx.core.app.JobIntentService() {
 
     companion object {
         private const val CHANNEL_ID = "WakeLockServiceChannel"
-        private const val ACTION_TOGGLE_WAKELOCK = "${packageName}.action.TOGGLE_WAKELOCK"  // Thay applicationContext bằng packageName
-        private const val ACTION_STOP_SERVICE = "${packageName}.action.STOP_SERVICE"  // Thay applicationContext bằng packageName
+
+        // Các ACTION này không thể dùng packageName trong `const val`, nên chúng sẽ được tạo động trong phương thức `onCreate` hoặc `onHandleWork`
+        fun getActionToggleWakeLock(context: Context): String {
+            return "${context.packageName}.action.TOGGLE_WAKELOCK"
+        }
+
+        fun getActionStopService(context: Context): String {
+            return "${context.packageName}.action.STOP_SERVICE"
+        }
 
         fun startService(context: Context) {
             val intent = Intent(context, WakeLockService::class.java)
