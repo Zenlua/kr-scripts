@@ -63,7 +63,7 @@
 <string name="power_hot_reboot_cmd">Available</string>
     <string name="notification_ui">Notification</string>
     <string name="wakelock_service_running">WakeLock Service Running</string>
-    <string name="service_active_with_wakelock">Service is active with WakeLock control.</string>
+    <string name="service_active_with_wakelock">App running in the background</string>
     <string name="stop">Stop</string>
      <string name="turn_off_wakelock">Turn off WakeLock</string>
     <string name="turn_on_wakelock">Turn on WakeLock</string>
