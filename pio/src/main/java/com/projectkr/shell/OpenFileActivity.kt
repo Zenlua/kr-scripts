@@ -1,6 +1,5 @@
 package com.projectkr.shell
 
-import android.app.Activity
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -17,29 +16,21 @@ import androidx.core.content.ContextCompat
 class WakeLockService : Service() {
 
     private var wakeLock: PowerManager.WakeLock? = null
-    val WAKE_LOCK_TAG = "${applicationContext.packageName}.WAKE_LOCK"
     private var isWakeLockActive = false
+    private val WAKE_LOCK_TAG = "${applicationContext.packageName}.WAKE_LOCK"
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val action = intent?.action
-
-        if (action == ACTION_TOGGLE_WAKELOCK) {
-            toggleWakeLock()
-        } else if (action == ACTION_STOP_SERVICE) {
-            stopWakeLockAndService()
+        when (intent?.action) {
+            ACTION_TOGGLE_WAKELOCK -> toggleWakeLock()
+            ACTION_STOP_SERVICE -> stopWakeLockAndService()
         }
-
-        return START_STICKY  // Giữ service sống lại nếu bị kill (trừ khi swipe recents)
+        return START_STICKY
     }
 
     private fun toggleWakeLock() {
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-
         if (wakeLock == null) {
-            wakeLock = powerManager.newWakeLock(
-                PowerManager.PARTIAL_WAKE_LOCK,
-                WAKE_LOCK_TAG
-            )
+            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)
         }
 
         if (isWakeLockActive) {
@@ -61,21 +52,9 @@ class WakeLockService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-
-        val allowNotificationUI = ThemeConfig(applicationContext).getAllowNotificationUI()
-
-        if (allowNotificationUI) {
+        if (ThemeConfig(applicationContext).getAllowNotificationUI()) {
             createNotificationChannel()
-
-            val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle(getString(R.string.app_name))
-                .setContentText(getString(R.string.service_active_with_wakelock))
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .addAction(R.mipmap.ic_launcher, getString(R.string.stop), stopServicePendingIntent())
-                .addAction(R.mipmap.ic_launcher, getString(R.string.toggle_wakelock), toggleWakeLockPendingIntent())
-                .build()
-
+            val notification = buildNotification()
             startForeground(1, notification)
         }
     }
@@ -97,22 +76,23 @@ class WakeLockService : Service() {
         }
     }
 
-    private fun stopServicePendingIntent(): PendingIntent {
-        val intent = Intent(this, WakeLockService::class.java).apply { action = ACTION_STOP_SERVICE }
-        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        else PendingIntent.FLAG_UPDATE_CURRENT
-
-        return PendingIntent.getService(this, 0, intent, flags)
+    private fun buildNotification(): Notification {
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(getString(R.string.app_name))
+            .setContentText(getString(R.string.service_active_with_wakelock))
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .addAction(R.mipmap.ic_launcher, getString(R.string.stop), createPendingIntent(ACTION_STOP_SERVICE))
+            .addAction(R.mipmap.ic_launcher, getString(R.string.toggle_wakelock), createPendingIntent(ACTION_TOGGLE_WAKELOCK))
+            .build()
     }
 
-    private fun toggleWakeLockPendingIntent(): PendingIntent {
-        val intent = Intent(this, WakeLockService::class.java).apply { action = ACTION_TOGGLE_WAKELOCK }
-        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+    private fun createPendingIntent(action: String): PendingIntent {
+        val intent = Intent(this, WakeLockService::class.java).apply { this.action = action }
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        else PendingIntent.FLAG_UPDATE_CURRENT
-
-        return PendingIntent.getService(this, 1, intent, flags)
+        } else PendingIntent.FLAG_UPDATE_CURRENT
+        return PendingIntent.getService(this, 0, intent, flags)
     }
 
     override fun onDestroy() {
@@ -121,28 +101,22 @@ class WakeLockService : Service() {
         super.onDestroy()
     }
 
-    // <-- THÊM PHẦN NÀY: Xử lý khi swipe khỏi recents -->
+    // Xử lý khi swipe khỏi recents
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
-    
-        wakeLock?.let {
-            if (it.isHeld) {
-                it.release()
-            }
-        }
+        wakeLock?.release()
         wakeLock = null
         isWakeLockActive = false
-    
-        stopForeground(true)  // Remove notification
-        stopSelf()            // Dừng service
+        stopForeground(true)
+        stopSelf()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
-        private val CHANNEL_ID = "WakeLockServiceChannel"
-        val ACTION_TOGGLE_WAKELOCK = "${applicationContext.packageName}.action.TOGGLE_WAKELOCK"
-        val ACTION_STOP_SERVICE = "${applicationContext.packageName}.action.STOP_SERVICE"
+        private const val CHANNEL_ID = "WakeLockServiceChannel"
+        const val ACTION_TOGGLE_WAKELOCK = "${applicationContext.packageName}.action.TOGGLE_WAKELOCK"
+        const val ACTION_STOP_SERVICE = "${applicationContext.packageName}.action.STOP_SERVICE"
 
         fun startService(context: Context) {
             val intent = Intent(context, WakeLockService::class.java)
