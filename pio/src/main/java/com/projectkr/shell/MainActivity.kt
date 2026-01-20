@@ -113,7 +113,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onBackPressed() {
         WakeLockService.stopService(applicationContext)
-        super.onBackPressed()
+        finishAffinity()
+        System.exit(0)
     }
 
     private fun getItems(pageNode: PageNode): ArrayList<NodeInfoBase>? {
