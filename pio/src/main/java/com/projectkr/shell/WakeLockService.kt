@@ -52,11 +52,8 @@ class WakeLockService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        val themeConfig = ThemeConfig(applicationContext)
-        if (themeConfig.getAllowNotificationUI()) {
-            createNotificationChannel()
-            val notification = buildNotification()
-            startForeground(1, notification)
+        if (ThemeConfig(applicationContext).getAllowNotificationUI()) {
+            startForeground(1, buildNotification())
         }
     }
 
