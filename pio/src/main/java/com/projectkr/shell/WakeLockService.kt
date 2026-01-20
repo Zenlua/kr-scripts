@@ -40,17 +40,19 @@ class WakeLockService : Service() {
         if (wakeLock == null) {
             wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)
         }
-
+    
         if (!isWakeLockActive) {
             wakeLock?.acquire()
             isWakeLockActive = true
+            startForeground(1, buildNotification())
         }
     }
-
+    
     private fun disableWakeLock() {
         if (isWakeLockActive) {
             wakeLock?.release()
             isWakeLockActive = false
+            startForeground(1, buildNotification())
         }
     }
 
