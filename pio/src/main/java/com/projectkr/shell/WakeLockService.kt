@@ -18,6 +18,7 @@ import androidx.core.app.ActivityCompat
 import com.projectkr.shell.MainActivity
 import com.projectkr.shell.ThemeConfig
 import com.projectkr.shell.R
+import android.os.Process
 
 class WakeLockService : Service() {
 
