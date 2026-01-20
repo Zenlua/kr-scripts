@@ -298,7 +298,7 @@ private fun chooseFilePath(fileSelectedInterface: ParamsFileChooserRender.FileSe
                 }
                 transparentUi.isChecked = themeConfig.getAllowTransparentUI()
 
-                val notificationUi = layout.findViewById<CompoundButton>(R.id.transparent_ui)
+                val notificationUi = layout.findViewById<CompoundButton>(R.id.notification_ui)
                 notificationUi.setOnClickListener {
                     val isChecked = (it as CompoundButton).isChecked
                     themeConfig.setAllowNotificationUI(isChecked)
