@@ -14,12 +14,12 @@ import android.app.PendingIntent
 
 class WakeLockService : androidx.core.app.JobIntentService() {
     private var wakeLock: PowerManager.WakeLock? = null
-    private val WAKE_LOCK_TAG = "${applicationContext.packageName}.WAKE_LOCK" // Thay com.projectkr.shell bằng packageName
+    private val WAKE_LOCK_TAG = "${packageName}.WAKE_LOCK"  // Thay applicationContext bằng packageName
     private var isWakeLockActive = false  // Biến kiểm tra trạng thái WakeLock
 
     override fun onHandleWork(intent: Intent) {
         if (intent.action == ACTION_TOGGLE_WAKELOCK) {
-            val powerManager = applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
+            val powerManager = this.getSystemService(Context.POWER_SERVICE) as PowerManager  // Sử dụng `this` thay vì `applicationContext`
             if (wakeLock == null) {
                 // Sử dụng PARTIAL_WAKE_LOCK để giữ CPU hoạt động mà không làm sáng màn hình
                 wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)
@@ -73,10 +73,10 @@ class WakeLockService : androidx.core.app.JobIntentService() {
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(getString(R.string.app_name))  // Lấy tên ứng dụng từ strings.xml
                 .setContentText(getString(R.string.service_active_with_wakelock))  // Sử dụng chuỗi từ strings.xml
-                .setSmallIcon(R.mipmap.ic_launcher)  // Sử dụng biểu tượng mặc định của app
+                .setSmallIcon(R.mipmap.ic_launcher)  // Sử dụng biểu tượng mặc định của app (icon mặc định)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .addAction(R.mipmap.ic_launcher, getString(R.string.stop), stopServicePendingIntent()) // Thay đổi biểu tượng của nút
-                .addAction(R.mipmap.ic_launcher, getString(R.string.toggle_wakelock), toggleWakeLockPendingIntent()) // Thay đổi biểu tượng của nút
+                .addAction(R.mipmap.ic_launcher, getString(R.string.stop), stopServicePendingIntent()) // Nút Stop
+                .addAction(R.mipmap.ic_launcher, getString(R.string.toggle_wakelock), toggleWakeLockPendingIntent()) // Nút Toggle WakeLock
                 .build()
 
             startForeground(1, notification)
@@ -102,8 +102,8 @@ class WakeLockService : androidx.core.app.JobIntentService() {
 
     companion object {
         private const val CHANNEL_ID = "WakeLockServiceChannel"
-        private const val ACTION_TOGGLE_WAKELOCK = "${applicationContext.packageName}.action.TOGGLE_WAKELOCK"  // Thay com.projectkr.shell bằng packageName
-        private const val ACTION_STOP_SERVICE = "${applicationContext.packageName}.action.STOP_SERVICE"  // Thay com.projectkr.shell bằng packageName
+        private const val ACTION_TOGGLE_WAKELOCK = "${packageName}.action.TOGGLE_WAKELOCK"  // Thay applicationContext bằng packageName
+        private const val ACTION_STOP_SERVICE = "${packageName}.action.STOP_SERVICE"  // Thay applicationContext bằng packageName
 
         fun startService(context: Context) {
             val intent = Intent(context, WakeLockService::class.java)
