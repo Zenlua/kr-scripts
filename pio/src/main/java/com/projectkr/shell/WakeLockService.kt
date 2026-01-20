@@ -23,7 +23,7 @@ class WakeLockService : Service() {
 
     private var wakeLock: PowerManager.WakeLock? = null
     private var isWakeLockActive = false
-    private val WAKE_LOCK_TAG get() = "com.projectkr.shell.WAKE_LOCK"  // Đưa ra ngoài companion object
+    private val WAKE_LOCK_TAG get() = "com.projectkr.shell.WAKE_LOCK"
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
@@ -58,21 +58,23 @@ class WakeLockService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Kiểm tra và yêu cầu quyền thông báo trên Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Kiểm tra quyền thông báo
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                // Yêu cầu quyền nếu chưa được cấp
+                val intent = Intent(this, MainActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+                return
+            }
+        }
+
         val themeConfig = ThemeConfig(applicationContext)
         if (themeConfig.getAllowNotificationUI()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                // Kiểm tra quyền thông báo trên Android 13 trở lên
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                    // Yêu cầu quyền nếu chưa được cấp
-                    val intent = Intent(this, MainActivity::class.java) // Hoặc activity phù hợp để yêu cầu quyền
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    startActivity(intent)
-                    return
-                }
-            }
-            
-            createNotificationChannel()  // Đảm bảo kênh thông báo được tạo
-            startForeground(1, buildNotification())  // Bắt đầu foreground service ngay lập tức
+            createNotificationChannel() // Tạo kênh thông báo nếu chưa có
+            startForeground(1, buildNotification()) // Gọi startForeground ngay lập tức
         }
     }
 
