@@ -49,6 +49,7 @@
     <string name="wakelock_service_running">Dịch vụ WakeLock đang chạy</string>
     <string name="service_active_with_wakelock">Dịch vụ đang hoạt động với điều khiển WakeLock</string>
     <string name="stop">Dừng</string>
-    <string name="toggle_wakelock">Chuyển đổi WakeLock</string>
+    <string name="turn_off_wakelock">Tắt WakeLock</string>
+    <string name="turn_on_wakelock">Bật WakeLock</string>
 
 </resources>
