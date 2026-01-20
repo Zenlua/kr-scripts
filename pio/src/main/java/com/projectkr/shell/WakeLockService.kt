@@ -3,115 +3,138 @@ package com.projectkr.shell
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.IBinder
 import android.os.PowerManager
-import android.os.Process
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import android.app.PendingIntent
 
-class WakeLockService : androidx.core.app.JobIntentService() {
+class WakeLockService : Service() {
+
     private var wakeLock: PowerManager.WakeLock? = null
-    private val WAKE_LOCK_TAG = "com.projectkr.shell.WAKE_LOCK"  // Chúng ta không sử dụng packageName trong `companion object` nữa
-    private var isWakeLockActive = false  // Biến kiểm tra trạng thái WakeLock
+    private val WAKE_LOCK_TAG = "${BuildConfig.APPLICATION_ID}.WAKE_LOCK"
+    private var isWakeLockActive = false
 
-    override fun onHandleWork(intent: Intent) {
-        val action = intent.action
-        if (action == getActionToggleWakeLock(this)) {
-            val powerManager = this.getSystemService(Context.POWER_SERVICE) as PowerManager
-            if (wakeLock == null) {
-                // Sử dụng PARTIAL_WAKE_LOCK để giữ CPU hoạt động mà không làm sáng màn hình
-                wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)
-            }
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
-            if (isWakeLockActive) {
-                // Nếu WakeLock đang hoạt động, giải phóng nó
-                wakeLock?.release()
-                isWakeLockActive = false
-            } else {
-                // Nếu WakeLock không hoạt động, giữ nó chạy liên tục
-                wakeLock?.acquire()
-                isWakeLockActive = true
-            }
-        } else if (action == getActionStopService(this)) {
-            // Khi nhấn nút Stop, giải phóng WakeLock và dừng dịch vụ
-            wakeLock?.release()
-            stopSelf()
+        val action = intent?.action
 
-            // Đóng ứng dụng hoàn toàn (bao gồm cả dịch vụ nền)
-            Process.killProcess(Process.myPid())
+        if (action == ACTION_TOGGLE_WAKELOCK) {
+            toggleWakeLock()
+        } else if (action == ACTION_STOP_SERVICE) {
+            stopWakeLockAndService()
         }
+
+        // Quan trọng: giữ service chạy mãi (sticky)
+        return START_STICKY
+    }
+
+    private fun toggleWakeLock() {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+
+        if (wakeLock == null) {
+            wakeLock = powerManager.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK,
+                WAKE_LOCK_TAG
+            )
+        }
+
+        if (isWakeLockActive) {
+            wakeLock?.release()
+            isWakeLockActive = false
+        } else {
+            wakeLock?.acquire()   // hoặc acquire(Long.MAX_VALUE) nếu muốn giới hạn thời gian
+            isWakeLockActive = true
+        }
+    }
+
+    private fun stopWakeLockAndService() {
+        wakeLock?.release()
+        stopForeground(true)
+        stopSelf()
+        // Nếu muốn kill hoàn toàn (không khuyến khích quá)
+        // android.os.Process.killProcess(android.os.Process.myPid())
     }
 
     override fun onCreate() {
         super.onCreate()
 
-        // Kiểm tra trạng thái thông báo từ SharedPreferences
         val themeConfig = ThemeConfig(this)
-        val allowNotificationUI = themeConfig.getAllowNotificationUI()  // Kiểm tra trạng thái bật/tắt thông báo
+        val allowNotificationUI = themeConfig.getAllowNotificationUI()
 
         if (allowNotificationUI) {
-            // Kiểm tra API Level để cấu hình NotificationChannel cho API 26 trở lên
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(
-                    CHANNEL_ID,
-                    getString(R.string.wakelock_service_running),  // Lấy tên ứng dụng từ strings.xml
-                    NotificationManager.IMPORTANCE_DEFAULT
-                ).apply {
-                    setSound(null, null)
-                    enableLights(false)
-                    enableVibration(false)
-                    setLockscreenVisibility(Notification.VISIBILITY_SECRET)
-                }
+            createNotificationChannel()
 
-                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                notificationManager.createNotificationChannel(channel)
-            }
-
-            // Thực hiện dịch vụ dưới dạng foreground
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle(getString(R.string.app_name))  // Lấy tên ứng dụng từ strings.xml
-                .setContentText(getString(R.string.service_active_with_wakelock))  // Sử dụng chuỗi từ strings.xml
-                .setSmallIcon(R.mipmap.ic_launcher)  // Sử dụng biểu tượng mặc định của app (icon mặc định)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText(getString(R.string.service_active_with_wakelock))
+                .setSmallIcon(R.mipmap.ic_launcher)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .addAction(R.mipmap.ic_launcher, getString(R.string.stop), stopServicePendingIntent()) // Nút Stop
-                .addAction(R.mipmap.ic_launcher, getString(R.string.toggle_wakelock), toggleWakeLockPendingIntent()) // Nút Toggle WakeLock
+                .addAction(R.mipmap.ic_launcher, getString(R.string.stop), stopServicePendingIntent())
+                .addAction(R.mipmap.ic_launcher, getString(R.string.toggle_wakelock), toggleWakeLockPendingIntent())
                 .build()
 
+            // Bắt buộc gọi startForeground ngay trong vòng ~5 giây
             startForeground(1, notification)
         }
     }
 
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                getString(R.string.wakelock_service_running),
+                NotificationManager.IMPORTANCE_LOW  // LOW để ít làm phiền hơn
+            ).apply {
+                setSound(null, null)
+                enableLights(false)
+                enableVibration(false)
+                setLockscreenVisibility(Notification.VISIBILITY_SECRET)
+            }
+
+            val manager = getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(channel)
+        }
+    }
+
+    // PendingIntent giống code cũ của bạn
     private fun stopServicePendingIntent(): PendingIntent {
-        val intent = Intent(this, WakeLockService::class.java)
-        intent.action = getActionStopService(this)
-        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        val intent = Intent(this, WakeLockService::class.java).apply {
+            action = ACTION_STOP_SERVICE
+        }
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        else PendingIntent.FLAG_UPDATE_CURRENT
+
+        return PendingIntent.getService(this, 0, intent, flags)
     }
 
     private fun toggleWakeLockPendingIntent(): PendingIntent {
-        val intent = Intent(this, WakeLockService::class.java)
-        intent.action = getActionToggleWakeLock(this)
-        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        val intent = Intent(this, WakeLockService::class.java).apply {
+            action = ACTION_TOGGLE_WAKELOCK
+        }
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        else PendingIntent.FLAG_UPDATE_CURRENT
+
+        return PendingIntent.getService(this, 1, intent, flags)
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         wakeLock?.release()
+        super.onDestroy()
     }
+
+    override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
         private const val CHANNEL_ID = "WakeLockServiceChannel"
-
-        // Phương thức động để lấy ACTION
-        fun getActionToggleWakeLock(context: Context): String {
-            return "${context.packageName}.action.TOGGLE_WAKELOCK"
-        }
-
-        fun getActionStopService(context: Context): String {
-            return "${context.packageName}.action.STOP_SERVICE"
-        }
+        private const val ACTION_TOGGLE_WAKELOCK = "${BuildConfig.APPLICATION_ID}.action.TOGGLE_WAKELOCK"
+        private const val ACTION_STOP_SERVICE = "${BuildConfig.APPLICATION_ID}.action.STOP_SERVICE"
 
         fun startService(context: Context) {
             val intent = Intent(context, WakeLockService::class.java)
@@ -119,8 +142,7 @@ class WakeLockService : androidx.core.app.JobIntentService() {
         }
 
         fun stopService(context: Context) {
-            val intent = Intent(context, WakeLockService::class.java)
-            context.stopService(intent)
+            context.stopService(Intent(context, WakeLockService::class.java))
         }
     }
 }
