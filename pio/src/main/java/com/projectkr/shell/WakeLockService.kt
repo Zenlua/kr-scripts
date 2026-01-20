@@ -70,7 +70,9 @@ class WakeLockService : Service() {
                     return
                 }
             }
-            startForeground(1, buildNotification())
+            
+            createNotificationChannel()  // Đảm bảo kênh thông báo được tạo
+            startForeground(1, buildNotification())  // Bắt đầu foreground service ngay lập tức
         }
     }
 
@@ -87,7 +89,7 @@ class WakeLockService : Service() {
                 setLockscreenVisibility(Notification.VISIBILITY_SECRET)
             }
             val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
+            manager?.createNotificationChannel(channel)
         }
     }
 
