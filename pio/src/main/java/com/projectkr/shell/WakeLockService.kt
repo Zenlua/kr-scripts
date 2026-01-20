@@ -16,7 +16,10 @@ import androidx.core.content.ContextCompat
 class WakeLockService : Service() {
 
     private var wakeLock: PowerManager.WakeLock? = null
-    private val WAKE_LOCK_TAG = "${BuildConfig.APPLICATION_ID}.WAKE_LOCK"
+
+    // Tự động lấy package name runtime → không lỗi BuildConfig
+    private val WAKE_LOCK_TAG by lazy { "${applicationContext.packageName}.WAKE_LOCK" }
+
     private var isWakeLockActive = false
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -121,7 +124,6 @@ class WakeLockService : Service() {
         super.onDestroy()
     }
 
-    // <-- THÊM PHẦN NÀY: Xử lý khi swipe khỏi recents -->
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
 
@@ -137,8 +139,11 @@ class WakeLockService : Service() {
 
     companion object {
         private const val CHANNEL_ID = "WakeLockServiceChannel"
-        private const val ACTION_TOGGLE_WAKELOCK = "${BuildConfig.APPLICATION_ID}.action.TOGGLE_WAKELOCK"
-        private const val ACTION_STOP_SERVICE = "${BuildConfig.APPLICATION_ID}.action.STOP_SERVICE"
+
+        // Hardcode package name (từ namespace "com.projectkr.shell" trong build.gradle)
+        // Đây là cách ổn định nhất cho constant trong companion object
+        private const val ACTION_TOGGLE_WAKELOCK = "com.projectkr.shell.action.TOGGLE_WAKELOCK"
+        private const val ACTION_STOP_SERVICE    = "com.projectkr.shell.action.STOP_SERVICE"
 
         fun startService(context: Context) {
             val intent = Intent(context, WakeLockService::class.java)
