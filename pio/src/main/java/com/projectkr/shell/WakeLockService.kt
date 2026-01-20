@@ -17,7 +17,7 @@ class WakeLockService : Service() {
 
     private var wakeLock: PowerManager.WakeLock? = null
 
-    // Tự động lấy package name lúc runtime (an toàn cho library module)
+    // Sử dụng runtime package name để tránh lỗi BuildConfig trong library
     private val WAKE_LOCK_TAG by lazy { "${applicationContext.packageName}.WAKE_LOCK" }
 
     private var isWakeLockActive = false
@@ -31,7 +31,7 @@ class WakeLockService : Service() {
             stopWakeLockAndService()
         }
 
-        return START_STICKY  // Giữ service sống lại nếu bị kill (trừ khi swipe recents)
+        return START_STICKY
     }
 
     private fun toggleWakeLock() {
@@ -100,6 +100,7 @@ class WakeLockService : Service() {
         }
     }
 
+    // ĐÃ SỬA: dùng getService thay vì getActivity
     private fun stopServicePendingIntent(): PendingIntent {
         val intent = Intent(this, WakeLockService::class.java).apply {
             action = ACTION_STOP_SERVICE
@@ -109,10 +110,10 @@ class WakeLockService : Service() {
         } else {
             PendingIntent.FLAG_UPDATE_CURRENT
         }
-
         return PendingIntent.getService(this, 0, intent, flags)
     }
 
+    // ĐÃ SỬA: dùng getService thay vì getActivity
     private fun toggleWakeLockPendingIntent(): PendingIntent {
         val intent = Intent(this, WakeLockService::class.java).apply {
             action = ACTION_TOGGLE_WAKELOCK
@@ -122,7 +123,6 @@ class WakeLockService : Service() {
         } else {
             PendingIntent.FLAG_UPDATE_CURRENT
         }
-
         return PendingIntent.getService(this, 1, intent, flags)
     }
 
@@ -139,16 +139,14 @@ class WakeLockService : Service() {
         wakeLock = null
         isWakeLockActive = false
 
-        stopForeground(true)  // Remove notification
-        stopSelf()            // Dừng service
+        stopForeground(true)
+        stopSelf()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
         private const val CHANNEL_ID = "WakeLockServiceChannel"
-
-        // Hardcode package name (từ namespace "com.projectkr.shell" trong build.gradle)
         private const val ACTION_TOGGLE_WAKELOCK = "com.projectkr.shell.action.TOGGLE_WAKELOCK"
         private const val ACTION_STOP_SERVICE = "com.projectkr.shell.action.STOP_SERVICE"
 
