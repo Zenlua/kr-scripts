@@ -61,5 +61,6 @@
     <string name="permission_dialog_title">Application Terms of Use</string>
     <string name="permission_dialog_message">Request the following permissions:\n\n• Notification\n• Access all files\n• List of applications\n• Root (if permitted)\n• Create shortcut\n• Data network access\n\nI agree to continue using the application.</string>
 <string name="power_hot_reboot_cmd">Available</string>
-    
+    <string name="notification_ui">Notification</string>
+
 </resources>
