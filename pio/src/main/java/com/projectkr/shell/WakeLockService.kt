@@ -31,6 +31,7 @@ class WakeLockService : Service() {
         when (intent?.action) {
             ACTION_ENABLE_WAKELOCK -> enableWakeLock()
             ACTION_DISABLE_WAKELOCK -> disableWakeLock()
+            ACTION_END_WAKELOCK -> endWakeLock()
             ACTION_STOP_SERVICE -> stopWakeLockAndService()
         }
         return START_STICKY
@@ -56,6 +57,11 @@ class WakeLockService : Service() {
             startForeground(1, buildNotification())
         }
     }
+
+    private fun endWakeLock() {
+            stopForeground(true)
+            stopSelf()
+        }
 
     private fun stopWakeLockAndService() {
         // Giải phóng WakeLock
@@ -142,6 +148,7 @@ class WakeLockService : Service() {
         private const val CHANNEL_ID = "WakeLockServiceChannel"
         const val ACTION_ENABLE_WAKELOCK = "com.projectkr.shell.action.ENABLE_WAKELOCK"
         const val ACTION_DISABLE_WAKELOCK = "com.projectkr.shell.action.DISABLE_WAKELOCK"
+        const val ACTION_END_WAKELOCK = "com.projectkr.shell.action.END_WAKELOCK"
         const val ACTION_STOP_SERVICE = "com.projectkr.shell.action.STOP_SERVICE"
 
         fun startService(context: Context) {
