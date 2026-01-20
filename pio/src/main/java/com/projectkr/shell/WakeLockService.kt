@@ -1,5 +1,6 @@
 package com.projectkr.shell
 
+import android.app.Activity
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -16,10 +17,7 @@ import androidx.core.content.ContextCompat
 class WakeLockService : Service() {
 
     private var wakeLock: PowerManager.WakeLock? = null
-
-    // Sử dụng runtime package name để tránh lỗi BuildConfig trong library
-    private val WAKE_LOCK_TAG by lazy { "${applicationContext.packageName}.WAKE_LOCK" }
-
+    private val WAKE_LOCK_TAG = "${applicationContext.packageName}.WAKE_LOCK"
     private var isWakeLockActive = false
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -31,7 +29,7 @@ class WakeLockService : Service() {
             stopWakeLockAndService()
         }
 
-        return START_STICKY
+        return START_STICKY  // Giữ service sống lại nếu bị kill (trừ khi swipe recents)
     }
 
     private fun toggleWakeLock() {
@@ -64,8 +62,7 @@ class WakeLockService : Service() {
     override fun onCreate() {
         super.onCreate()
 
-        val themeConfig = ThemeConfig(this)
-        val allowNotificationUI = themeConfig.getAllowNotificationUI()
+        val allowNotificationUI = ThemeConfig(activity).getAllowNotificationUI()
 
         if (allowNotificationUI) {
             createNotificationChannel()
@@ -100,29 +97,21 @@ class WakeLockService : Service() {
         }
     }
 
-    // ĐÃ SỬA: dùng getService thay vì getActivity
     private fun stopServicePendingIntent(): PendingIntent {
-        val intent = Intent(this, WakeLockService::class.java).apply {
-            action = ACTION_STOP_SERVICE
-        }
-        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val intent = Intent(this, WakeLockService::class.java).apply { action = ACTION_STOP_SERVICE }
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        } else {
-            PendingIntent.FLAG_UPDATE_CURRENT
-        }
+        else PendingIntent.FLAG_UPDATE_CURRENT
+
         return PendingIntent.getService(this, 0, intent, flags)
     }
 
-    // ĐÃ SỬA: dùng getService thay vì getActivity
     private fun toggleWakeLockPendingIntent(): PendingIntent {
-        val intent = Intent(this, WakeLockService::class.java).apply {
-            action = ACTION_TOGGLE_WAKELOCK
-        }
-        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val intent = Intent(this, WakeLockService::class.java).apply { action = ACTION_TOGGLE_WAKELOCK }
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        } else {
-            PendingIntent.FLAG_UPDATE_CURRENT
-        }
+        else PendingIntent.FLAG_UPDATE_CURRENT
+
         return PendingIntent.getService(this, 1, intent, flags)
     }
 
@@ -132,6 +121,7 @@ class WakeLockService : Service() {
         super.onDestroy()
     }
 
+    // <-- THÊM PHẦN NÀY: Xử lý khi swipe khỏi recents -->
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
 
@@ -139,16 +129,16 @@ class WakeLockService : Service() {
         wakeLock = null
         isWakeLockActive = false
 
-        stopForeground(true)
-        stopSelf()
+        stopForeground(true)  // Remove notification
+        stopSelf()            // Dừng service
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
         private const val CHANNEL_ID = "WakeLockServiceChannel"
-        private const val ACTION_TOGGLE_WAKELOCK = "com.projectkr.shell.action.TOGGLE_WAKELOCK"
-        private const val ACTION_STOP_SERVICE = "com.projectkr.shell.action.STOP_SERVICE"
+        private const val ACTION_TOGGLE_WAKELOCK = "${applicationContext.packageName}.action.TOGGLE_WAKELOCK"
+        private const val ACTION_STOP_SERVICE = "${applicationContext.packageName}.action.STOP_SERVICE"
 
         fun startService(context: Context) {
             val intent = Intent(context, WakeLockService::class.java)
