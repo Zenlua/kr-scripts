@@ -40,11 +40,6 @@ class MainActivity : AppCompatActivity() {
     private val hasRoot by lazy { KeepShellPublic.checkRoot() }
     private lateinit var binding: ActivityMainBinding
 
-    override fun onBackPressed() {
-        WakeLockService.stopService(applicationContext)
-        super.onBackPressed()
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ThemeModeState.switchTheme(this)
@@ -114,6 +109,14 @@ class MainActivity : AppCompatActivity() {
         if (themeConfig.getAllowNotificationUI()) {
             WakeLockService.startService(applicationContext)
         }
+    }
+
+    override fun onBackPressed() {
+        val themeConfig = ThemeConfig(applicationContext)
+        if (themeConfig.getAllowNotificationUI()) {
+            WakeLockService.stopService(applicationContext)
+        }
+        super.onBackPressed()
     }
 
     private fun getItems(pageNode: PageNode): ArrayList<NodeInfoBase>? {
