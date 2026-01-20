@@ -62,22 +62,15 @@ class WakeLockService : Service() {
         wakeLock?.release()
         wakeLock = null
         isWakeLockActive = false
-
         // Dừng dịch vụ và dừng foreground
         stopForeground(true)
         stopSelf()
-
-        // Kết thúc tất cả Activity đang chạy
+        // Đóng tất cả các Activity trong ứng dụng mà không cần mở lại bất kỳ Activity nào
         val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val tasks = activityManager.appTasks
-        tasks.forEach { task ->
-            task.taskInfo.baseActivity?.let { activity ->
-                if (activity.packageName == packageName) {
-                    activityManager.removeTask(task.id)
-                }
-            }
+        val appTasks = activityManager.appTasks
+        appTasks.forEach { task ->
+            task.finishAndRemoveTask()  // Dừng task hiện tại
         }
-
         // Kết thúc ứng dụng hoàn toàn
         System.exit(0)  // Thoát ứng dụng một cách chiệt để
     }
