@@ -32,7 +32,6 @@ import com.projectkr.shell.databinding.ActivityMainBinding
 import com.omarea.common.shell.KeepShellPublic
 import com.projectkr.shell.ui.TabIconHelper
 import androidx.core.view.isVisible
-import com.projectkr.shell.WakeLockService.Companion.ACTION_STOP_SERVICE
 
 class MainActivity : AppCompatActivity() {
     private val progressBarDialog = ProgressBarDialog(this)
@@ -113,9 +112,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        val intent = Intent(this, WakeLockService::class.java)
-        intent.action = WakeLockService.ACTION_STOP_SERVICE
-        ContextCompat.startForegroundService(this, intent)
+        WakeLockService.stopService(this)
         super.onBackPressed()
     }
 
