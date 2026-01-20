@@ -58,24 +58,8 @@ class WakeLockService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-
-        // Kiểm tra và yêu cầu quyền thông báo trên Android 13+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // Kiểm tra quyền thông báo
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                // Yêu cầu quyền nếu chưa được cấp
-                val intent = Intent(this, MainActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                startActivity(intent)
-                return
-            }
-        }
-
-        val themeConfig = ThemeConfig(applicationContext)
-        if (themeConfig.getAllowNotificationUI()) {
-            createNotificationChannel() // Tạo kênh thông báo nếu chưa có
-            startForeground(1, buildNotification()) // Gọi startForeground ngay lập tức
-        }
+        createNotificationChannel()
+        startForeground(1, buildNotification())
     }
 
     private fun createNotificationChannel() {
@@ -100,7 +84,7 @@ class WakeLockService : Service() {
             .setContentTitle(getString(R.string.app_name))
             .setContentText(getString(R.string.service_active_with_wakelock))
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_MIN)
             .addAction(R.mipmap.ic_launcher, getString(R.string.stop), createPendingIntent(ACTION_STOP_SERVICE))
             .addAction(R.mipmap.ic_launcher, getString(R.string.toggle_wakelock), createPendingIntent(ACTION_TOGGLE_WAKELOCK))
             .build()
