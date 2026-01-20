@@ -17,7 +17,7 @@ class ThemeConfig (private val activity: Activity) {
     }
 
     fun getAllowNotificationUI(): Boolean {
-        return config.getBoolean("NotificationUI", false)
+        return config.getBoolean("NotificationUI", true)
     }
 
     fun setAllowNotificationUI(allow: Boolean) {
