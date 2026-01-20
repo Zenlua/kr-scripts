@@ -112,7 +112,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        WakeLockService.stopService(this)
+        WakeLockService.stopService(applicationContext)
         super.onBackPressed()
     }
 
