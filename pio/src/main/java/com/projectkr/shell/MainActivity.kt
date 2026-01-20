@@ -289,9 +289,9 @@ private fun chooseFilePath(fileSelectedInterface: ParamsFileChooserRender.FileSe
             R.id.option_menu_info -> {
                 val layoutInflater = LayoutInflater.from(this)
                 val layout = layoutInflater.inflate(R.layout.dialog_about, null)
-                val transparentUi = layout.findViewById<CompoundButton>(R.id.transparent_ui)
                 val themeConfig = ThemeConfig(this)
-                
+
+                val transparentUi = layout.findViewById<CompoundButton>(R.id.transparent_ui)
                 transparentUi.setOnClickListener {
                     val isChecked = (it as CompoundButton).isChecked
                     themeConfig.setAllowTransparentUI(isChecked)
@@ -299,7 +299,7 @@ private fun chooseFilePath(fileSelectedInterface: ParamsFileChooserRender.FileSe
                 transparentUi.isChecked = themeConfig.getAllowTransparentUI()
 
                 val notificationUi = layout.findViewById<CompoundButton>(R.id.transparent_ui)
-                 notificationUi.setOnClickListener {
+                notificationUi.setOnClickListener {
                     val isChecked = (it as CompoundButton).isChecked
                     themeConfig.setAllowNotificationUI(isChecked)
                 }
