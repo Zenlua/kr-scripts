@@ -113,10 +113,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onBackPressed() {
         val intent = Intent(this, WakeLockService::class.java)
-        intent.action = WakeLockService.ACTION_STOP_SERVICE
+        intent.action = WakeLockService.ACTION_END_WAKELOCK
         startService(intent)
         finishAffinity()
-        System.exit(0)
         super.onBackPressed()
     }
 
