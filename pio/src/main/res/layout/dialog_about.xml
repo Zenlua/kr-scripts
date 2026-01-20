@@ -12,12 +12,27 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <TextView
+        <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/about_title"
-            android:textColor="#aaaaaa"
-            android:textSize="11dp" />
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/about_title"
+                android:textColor="#aaaaaa"
+                android:textSize="11dp" />
+            <CheckBox
+                    android:textSize="11sp"
+                    android:textColor="#aaaaaa"
+                    android:id="@+id/notification_ui"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/notification_ui"
+                    android:textAlignment="textEnd"
+                    android:layoutDirection="rtl" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"
