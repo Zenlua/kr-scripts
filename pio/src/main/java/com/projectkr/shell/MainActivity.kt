@@ -112,10 +112,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        val themeConfig = ThemeConfig(applicationContext)
-        if (themeConfig.getAllowNotificationUI()) {
-            WakeLockService.stopService(applicationContext)
-        }
+        WakeLockService.stopService(this)
         super.onBackPressed()
     }
 
