@@ -93,4 +93,15 @@
             <set>eval "$test"</set>
         </action>
     </group>
+    <group>
+        <action auto-kill="true" auto-off="true" >
+            <title>自动关闭</title>
+            <desc>再配合auto-kill自动关闭当前页面</desc>
+            <script>
+                echo '我是快捷方式，你点了我！'
+                echo '2秒后关闭'
+                sleep 2
+            </script>
+        </action>
+    </group>
 </page>
