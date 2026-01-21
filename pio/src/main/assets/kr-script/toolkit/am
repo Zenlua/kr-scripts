@@ -2,6 +2,7 @@
 
 if [ "$USER_ID" != "0" ] && [ "$USER_ID" != "1000" ] && [ "$USER_ID" != "2000" ]; then
 export CLASSPATH="$START_DIR/kr-script/am.apk"
+chmod 400 "$CLASSPATH"
 exec /system/bin/app_process -Xnoimage-dex2oat /system/bin \
                           com.termux.termuxam.Am "$@"
 else
