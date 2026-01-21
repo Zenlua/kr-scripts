@@ -39,7 +39,7 @@ class NotiService : Service() {
 
     // Hiển thị thông báo
     private fun showNotification(id: Int, message: String, title: String) {
-        val notificationManager = getSystemService(NotificationManager::class.java)
+        var notificationManager = getSystemService(NotificationManager::class.java)
 
         // Tạo Notification Channel nếu cần (Android O trở lên)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
