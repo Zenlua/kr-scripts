@@ -10,11 +10,11 @@ import android.os.IBinder
 
 class NotiService : Service() {
     private val CHANNEL_ID = "notification_id"
+    private val notificationManager by lazy { getSystemService(NotificationManager::class.java) }
 
     // Xóa thông báo
     private fun deleteNotification(id: Int) {
-        val notificationManager = getSystemService(NotificationManager::class.java)
-        notificationManager.cancel(id)
+        notificationManager?.cancel(id)
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -39,11 +39,9 @@ class NotiService : Service() {
 
     // Hiển thị thông báo
     private fun showNotification(id: Int, message: String, title: String) {
-        var notificationManager = getSystemService(NotificationManager::class.java)
-
         // Tạo Notification Channel nếu cần (Android O trở lên)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            var notificationChannel = NotificationChannel(
+            val notificationChannel = NotificationChannel(
                 CHANNEL_ID,
                 "Notification",
                 NotificationManager.IMPORTANCE_HIGH // Đặt độ ưu tiên cao để thông báo có thể hiện thị ở chế độ Heads-Up
