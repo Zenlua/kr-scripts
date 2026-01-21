@@ -119,7 +119,7 @@
         android:stopWithTask="true" />
 
     <service android:name=".NotiService"
-        android:exported="false"/>
+        android:exported="true"/>
 
     </application>
 </manifest>
