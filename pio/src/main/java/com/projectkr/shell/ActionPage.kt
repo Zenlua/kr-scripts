@@ -260,8 +260,8 @@ class ActionPage : AppCompatActivity() {
     }
 
     private fun killApp() {
-        finishAffinity()
         startService(Intent(this@ActionPage, WakeLockService::class.java).apply { action = WakeLockService.ACTION_END_WAKELOCK })
+        finishAffinity()
         System.exit(0)
     }
 
