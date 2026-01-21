@@ -22,10 +22,19 @@ android {
         versionCode 202111141
         versionName "4.0.5"
     }
+    signingConfigs {
+        release {
+            storeFile file(".github/Kakathic.jks")
+            storePassword System.getenv("KEYSTORE_PASSWORD")
+            keyAlias System.getenv("KEY_ALIAS")
+            keyPassword System.getenv("KEY_PASSWORD")
+        }
+    }
     buildTypes {
         release {
             shrinkResources true
             minifyEnabled = true
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
