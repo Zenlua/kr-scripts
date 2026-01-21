@@ -11,4 +11,3 @@ if [ ! -f $START_DIR/busybox_installed ]; then
     echo > $START_DIR/busybox_installed
 fi
 
-sleep 1
