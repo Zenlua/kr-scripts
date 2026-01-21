@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <page>
 
-
     <group>
         <action warning="我了个去，你还真点啊，此功能的主要作用是防止用户误触或提示功能危险性，相当于以前的 [confirm=true] 属性优化版本">
             <title>测试操作警告</title>
@@ -12,9 +11,6 @@
             <slice br="true">在执行有参数输入界面的Action时，警告内容会显示在参数输入界面顶部，而不再单独弹出</slice>
         </text>
     </group>
-
-
-
 
     <group title="操作锁">
         <text>
@@ -82,5 +78,19 @@
             echo "$test" > kr-script/language
         </set>
     </action>
+    </group>
+    <group>
+        <action>
+            <title>Notification</title>
+            <param name="test" title="Input box title" type="text" value="am startservice -n com.projectkr.shell/.NotiService --es delete false --ei id 123 --es title 'Hello' --es message 'Xin chào'"/>
+            <set>$test</set>
+        </action>
+    </group>
+    <group>
+        <action>
+            <title>Show toast</title>
+            <param name="test" title="Input box title" type="text" value="am broadcast -n com.projectkr.shell/.ToastReceiver -a com.projectkr.shell.broadcast.MESSAGE --es text 'Xin chào'"/>
+            <set>$test</set>
+        </action>
     </group>
 </page>
