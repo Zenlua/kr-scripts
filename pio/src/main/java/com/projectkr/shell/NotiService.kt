@@ -69,7 +69,7 @@ class NotiService : Service() {
             setContentTitle(title)  // Tiêu đề là tên app mặc định
             setContentText(message)
             setStyle(Notification.BigTextStyle().bigText(message))
-            setSmallIcon(android.R.drawable.ic_notification_clear_all)
+            setSmallIcon(applicationInfo.icon)  // Sử dụng biểu tượng mặc định của ứng dụng
             setAutoCancel(true)
         }
 
