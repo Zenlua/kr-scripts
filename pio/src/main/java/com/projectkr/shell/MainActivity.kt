@@ -116,7 +116,6 @@ class MainActivity : AppCompatActivity() {
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                Toast.makeText(this@MainActivity, "Failed to launch...", Toast.LENGTH_SHORT).show()
                 startService(Intent(this@MainActivity, WakeLockService::class.java).apply { action = WakeLockService.ACTION_END_WAKELOCK })
                 isEnabled = false
                 onBackPressedDispatcher.onBackPressed()
