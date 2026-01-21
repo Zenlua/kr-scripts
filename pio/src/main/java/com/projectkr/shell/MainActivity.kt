@@ -115,13 +115,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
+        Toast.makeText(this, "Failed to launch the built-in file selector!", Toast.LENGTH_SHORT).show()
         val intent = Intent(this, WakeLockService::class.java)
         intent.action = WakeLockService.ACTION_END_WAKELOCK
         startService(intent)
         finishAffinity()
-        if (!supportFragmentManager.popBackStackImmediate()) {
-            super.onBackPressed()
-        }
+        super.onBackPressed()
     }
 
     private fun getItems(pageNode: PageNode): ArrayList<NodeInfoBase>? {
