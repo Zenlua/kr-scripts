@@ -35,6 +35,7 @@ import com.projectkr.shell.ui.TabIconHelper
 import androidx.core.view.isVisible
 import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 
 class MainActivity : AppCompatActivity() {
     private val progressBarDialog = ProgressBarDialog(this)
@@ -112,15 +113,18 @@ class MainActivity : AppCompatActivity() {
         if (themeConfig.getAllowNotificationUI()) {
             WakeLockService.startService(applicationContext)
         }
+
+        val callback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                Toast.makeText(this@MainActivity, "Failed to launch the built-in file selector!", Toast.LENGTH_SHORT).show()
+                val intent = Intent(this, WakeLockService::class.java)
+                intent.action = WakeLockService.ACTION_END_WAKELOCK
+                startService(intent)
+            }
+        }
     }
 
-    override fun onBackPressed() {
-        Toast.makeText(this, "Failed to launch the built-in file selector!", Toast.LENGTH_SHORT).show()
-        val intent = Intent(this, WakeLockService::class.java)
-        intent.action = WakeLockService.ACTION_END_WAKELOCK
-        startService(intent)
-        super.onBackPressed()
-    }
+    onBackPressedDispatcher.addCallback(this, callback)
 
     private fun getItems(pageNode: PageNode): ArrayList<NodeInfoBase>? {
         var items: ArrayList<NodeInfoBase>? = null
