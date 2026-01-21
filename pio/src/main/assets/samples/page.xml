@@ -56,6 +56,7 @@
             <option type="default" id="b">自定义 2</option>
             <option type="refresh">刷新界面</option>
             <option type="finish">关闭页面</option>
+            <option type="killapp">killapp</option>
             <option type="file">选择文件</option>
             <handler>
                 echo '此脚本的作用是处理菜单点击事件'
