@@ -83,14 +83,14 @@
         <action>
             <title>Notification</title>
             <param name="test" title="Input box title" type="text" value="am startservice -n com.projectkr.shell/.NotiService --es delete false --ei id 123 --es title 'Hello' --es message 'Xin chào'"/>
-            <set>$test</set>
+            <set>"$test"</set>
         </action>
     </group>
     <group>
         <action>
             <title>Show toast</title>
             <param name="test" title="Input box title" type="text" value="am broadcast -n com.projectkr.shell/.ToastReceiver -a com.projectkr.shell.broadcast.MESSAGE --es text 'Xin chào'"/>
-            <set>$test</set>
+            <set>"$test"</set>
         </action>
     </group>
 </page>
