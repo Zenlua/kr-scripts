@@ -1,5 +1,6 @@
 package com.projectkr.shell
 
+import android.app.Activity
 import android.Manifest
 import android.content.ComponentName
 import android.content.Intent
@@ -32,6 +33,8 @@ import com.projectkr.shell.databinding.ActivityMainBinding
 import com.omarea.common.shell.KeepShellPublic
 import com.projectkr.shell.ui.TabIconHelper
 import androidx.core.view.isVisible
+import androidx.activity.OnBackPressedDispatcher
+import androidx.activity.ComponentActivity
 
 class MainActivity : AppCompatActivity() {
     private val progressBarDialog = ProgressBarDialog(this)
