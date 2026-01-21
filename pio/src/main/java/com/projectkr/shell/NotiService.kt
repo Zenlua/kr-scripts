@@ -41,18 +41,18 @@ class NotiService : Service() {
     private fun showNotification(id: Int, message: String, title: String) {
         val notificationManager = getSystemService(NotificationManager::class.java)
 
-        // Tạo Notification Channel nếu cần
+        // Tạo Notification Channel nếu cần (Android O trở lên)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationChannel = NotificationChannel(
                 CHANNEL_ID,
                 "Notification",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH // Đặt độ ưu tiên cao để thông báo có thể hiện thị ở chế độ Heads-Up
             ).apply {
                 // Thiết lập thông tin cho Notification Channel
                 sound = null
                 enableLights(false)
                 enableVibration(false)
-                importance = NotificationManager.IMPORTANCE_DEFAULT
+                importance = NotificationManager.IMPORTANCE_HIGH // Đảm bảo rằng thông báo có độ ưu tiên cao
             }
 
             notificationManager?.createNotificationChannel(notificationChannel)
@@ -71,8 +71,10 @@ class NotiService : Service() {
             setStyle(Notification.BigTextStyle().bigText(message))
             setSmallIcon(applicationInfo.icon)  // Sử dụng biểu tượng mặc định của ứng dụng
             setAutoCancel(true)
+            setPriority(Notification.PRIORITY_HIGH)  // Đặt độ ưu tiên cao để hiển thị heads-up notification
         }
 
+        // Hiển thị thông báo
         notificationManager?.notify(id, builder.build())
     }
 }
