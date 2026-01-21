@@ -1,0 +1,9 @@
+# Kakathic
+
+if [ "$USER_ID" != "0" ] && [ "$USER_ID" != "1000" ] && [ "$USER_ID" != "2000" ]; then
+export CLASSPATH="$START_DIR/am.apk"
+exec /system/bin/app_process -Xnoimage-dex2oat /system/bin \
+                          com.termux.termuxam.Am "$@"
+else
+exec /system/bin/am "$@"
+fi
