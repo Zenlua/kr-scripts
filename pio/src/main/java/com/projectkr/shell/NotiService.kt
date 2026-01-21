@@ -43,7 +43,7 @@ class NotiService : Service() {
 
         // Tạo Notification Channel nếu cần (Android O trở lên)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationChannel = NotificationChannel(
+            var notificationChannel = NotificationChannel(
                 CHANNEL_ID,
                 "Notification",
                 NotificationManager.IMPORTANCE_HIGH // Đặt độ ưu tiên cao để thông báo có thể hiện thị ở chế độ Heads-Up
