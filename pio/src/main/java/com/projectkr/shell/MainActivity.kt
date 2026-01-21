@@ -116,7 +116,9 @@ class MainActivity : AppCompatActivity() {
         intent.action = WakeLockService.ACTION_END_WAKELOCK
         startService(intent)
         finishAffinity()
-        super.onBackPressed()
+        if (!supportFragmentManager.popBackStackImmediate()) {
+            super.onBackPressed()
+        }
     }
 
     private fun getItems(pageNode: PageNode): ArrayList<NodeInfoBase>? {
