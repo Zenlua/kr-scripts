@@ -121,7 +121,7 @@ class ActionPage : AppCompatActivity() {
             } else if (runnableNode.reloadPage) {
                 loadPageConfig()
             } else if (runnableNode.autoKill) {
-                finishAffinity()
+                killApp()
             }
         }
 
@@ -245,7 +245,7 @@ class ActionPage : AppCompatActivity() {
                 finish()
             }
             "killapp" -> {
-                finishAffinity()
+                killApp()
             }
             "file" -> {
                 menuItemChooseFile(menuOption)
@@ -259,6 +259,12 @@ class ActionPage : AppCompatActivity() {
         }
     }
 
+    private fun killApp() {
+        finishAffinity()
+        startService(Intent(this@MainActivity, WakeLockService::class.java).apply { action = WakeLockService.ACTION_END_WAKELOCK })
+        System.exit(0)
+    }
+
     private fun menuItemExecute(menuOption: PageMenuOption, params: HashMap<String, String>) {
         val onDismiss = Runnable {
             if (menuOption.autoFinish) {
@@ -266,7 +272,7 @@ class ActionPage : AppCompatActivity() {
             } else if (menuOption.reloadPage) {
                 recreate()
             } else if (menuOption.autoKill) {
-                finishAffinity()
+                killApp()
             } else if (menuOption.updateBlocks != null) {
                 // TODO rootGroup.triggerUpdateByKey(item.updateBlocks!!)
             }
