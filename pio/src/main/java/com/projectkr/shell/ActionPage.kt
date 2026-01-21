@@ -120,6 +120,8 @@ class ActionPage : AppCompatActivity() {
                 finishAndRemoveTask()
             } else if (runnableNode.reloadPage) {
                 loadPageConfig()
+            } else if (runnableNode.autoKill) {
+                finishAffinity()
             }
         }
 
