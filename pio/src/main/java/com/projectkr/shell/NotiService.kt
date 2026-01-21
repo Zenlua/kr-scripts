@@ -47,7 +47,7 @@ class NotiService : Service() {
                 NotificationManager.IMPORTANCE_HIGH // Đặt độ ưu tiên cao để thông báo có thể hiện thị ở chế độ Heads-Up
             ).apply {
                 // Thiết lập thông tin cho Notification Channel
-                sound = null
+                setSound(null, null)
                 enableLights(false)
                 enableVibration(false)
                 importance = NotificationManager.IMPORTANCE_HIGH // Đảm bảo rằng thông báo có độ ưu tiên cao
