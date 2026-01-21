@@ -114,17 +114,15 @@ class MainActivity : AppCompatActivity() {
             WakeLockService.startService(applicationContext)
         }
 
-        val callback = object : OnBackPressedCallback(true) {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                Toast.makeText(this@MainActivity, "Failed to launch the built-in file selector!", Toast.LENGTH_SHORT).show()
-                val intent = Intent(this, WakeLockService::class.java)
-                intent.action = WakeLockService.ACTION_END_WAKELOCK
-                startService(intent)
+                Toast.makeText(this@MainActivity, "Failed to launch...", Toast.LENGTH_SHORT).show()
+                startService(Intent(this@MainActivity, WakeLockService::class.java).apply { action = WakeLockService.ACTION_END_WAKELOCK })
+                isEnabled = false
+                onBackPressedDispatcher.onBackPressed()
             }
-        }
+        })
     }
-
-    onBackPressedDispatcher.addCallback(this, callback)
 
     private fun getItems(pageNode: PageNode): ArrayList<NodeInfoBase>? {
         var items: ArrayList<NodeInfoBase>? = null
