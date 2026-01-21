@@ -242,6 +242,9 @@ class ActionPage : AppCompatActivity() {
             "exit", "finish", "close" -> {
                 finish()
             }
+            "killapp" -> {
+                killApp()
+            }
             "file" -> {
                 menuItemChooseFile(menuOption)
             }
@@ -254,12 +257,19 @@ class ActionPage : AppCompatActivity() {
         }
     }
 
+    private fun killApp() {
+        finishAffinity()
+        System.exit(0)
+    }
+
     private fun menuItemExecute(menuOption: PageMenuOption, params: HashMap<String, String>) {
         val onDismiss = Runnable {
             if (menuOption.autoFinish) {
                 finish()
             } else if (menuOption.reloadPage) {
                 recreate()
+            } else if (menuOption.autoKill) {
+                killApp()
             } else if (menuOption.updateBlocks != null) {
                 // TODO rootGroup.triggerUpdateByKey(item.updateBlocks!!)
             }
