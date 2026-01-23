@@ -225,6 +225,7 @@ public class ScriptEnvironmen {
         params.put("ANDROID_BRAND", Build.BRAND);
         params.put("ANDROID_MANUFACTURER", Build.MANUFACTURER);
         params.put("ANDROID_FINGERPRINT", Build.FINGERPRINT);
+        params.put("ANDROID_RELEASE", Build.VERSION.RELEASE);
         params.put("ANDROID_MODEL", Build.MODEL);
         params.put("ANDROID_ID", Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID));
         params.put("CPU_ABI", Build.CPU_ABI);
